@@ -22,6 +22,7 @@ import { describeRequestError } from "./request-errors";
 import { E, SERIF } from "../EnotaryChrome";
 import { RequestTrail } from "../RequestTrail";
 import { DetailNotes, bookingRows, detailRows } from "../request-details";
+import { RequestDocumentPanel } from "../RequestDocumentPanel";
 import { CLIENT_STEPS, EnotaryCaseFrame, PartyCard, type ClientStepId, type PartyRow, type TrailEntry } from "../CaseFrame";
 import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryStates";
 import {
@@ -142,8 +143,8 @@ function leadFor(invitation: Invitation): string {
   const who = `Atty. ${notaryNameOf(invitation)}`;
   switch (invitation.status) {
     case "awaiting": case "claimed":
-      return `Your identity is verified. Your request has been sent to ${who}. When they accept, you meet them on a video call and choose the document together.`;
-    case "accepted": return `${who} will meet you in a private room on a video call. You choose the document together.`;
+      return `Your identity is verified. Your request has been sent to ${who}. When they accept, you meet them on a video call.`;
+    case "accepted": return `${who} will meet you in a private room on a video call.`;
     case "declined": return "You can ask another notary from the Notary Directory.";
     case "expired":
       if (invitation.booking?.kind === "now") return "A request for right now waits 15 minutes for an answer. Book a time with this notary, or ask again for right now.";
@@ -155,7 +156,7 @@ function leadFor(invitation: Invitation): string {
 const NEXT_STEPS: readonly { title: string; text: string }[] = [
   { title: "The lawyer accepts.", text: "You are told here, on this page." },
   { title: "You meet on a video call.", text: "On the call, the notary confirms it is you, and what you need notarized." },
-  { title: "You choose the document together.", text: "From Completed, Shared Documents, or a file you upload." },
+  { title: "The notary reads your document.", text: "The PDF you attach on this page, or one you bring to the call." },
   { title: "The lawyer confirms the notarial act and the fee.", text: "You are not charged before that." },
   { title: "The document is notarized.", text: "You preview it, download it, and may ask for a Certified True Copy." },
 ];
@@ -306,6 +307,8 @@ export function ClientRequestPage() {
   };
 
   const canSetEmail = invitation.status === "awaiting" && !invitation.notary.emailOnRecord;
+  // 131. The directory sent the request but could not attach its document.
+  const documentFailed = new URLSearchParams(window.location.search).get("document") === "failed" && (invitation.document ?? null) === null;
 
   const place = [invitation.notary.city, invitation.notary.province].filter(part => part !== "").join(", ");
   const rows: PartyRow[] = [
@@ -331,6 +334,14 @@ export function ClientRequestPage() {
     >
       {confirmDialog}
 
+      {/* 131. The document to be notarized, until the session begins (then the session holds it). */}
+      {(open || invitation.status === "accepted") && (invitation.session ?? null) === null && (
+        <RequestDocumentPanel
+          invitationId={invitation.id} document={invitation.document ?? null} role="client" editable
+          failedBefore={documentFailed}
+          onChanged={document => { setLoaded({ kind: "ready", invitation: { ...invitation, document } }); }}
+        />
+      )}
       {(invitation.status === "awaiting" || invitation.status === "claimed") && (
         <Panel testId="next-steps">
           <PanelTitle>What happens next</PanelTitle>

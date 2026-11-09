@@ -16,7 +16,7 @@
 // All API access for this feature is in this file and notary-applications.service.ts,
 // so a change of path or shape is made in one place.
 
-import { apiRequest, ApiError } from "../api-client";
+import { apiRequest, apiUpload, ApiError } from "../api-client";
 import { API_BASE_URL } from "../backend-flag";
 
 export type InvitationStatus = "awaiting" | "claimed" | "accepted" | "declined" | "expired" | "revoked";
@@ -103,8 +103,18 @@ export interface RequestBooking {
   answerBy: string | null;
 }
 
+/** 131. The PDF the client attached to a request, for the notary to read before the call. */
+export interface RequestDocument {
+  name: string;
+  /** Bytes. */
+  size: number;
+  addedAt: string;
+}
+
 export interface Invitation {
   id: string;
+  /** 131. The PDF attached to the request; null: none. Absent from an older server. */
+  document?: RequestDocument | null;
   /** When the client wants the notary. Absent from an older server. */
   booking?: RequestBooking | null;
   /** The request's number, EN-2026-000004. Absent from an older server. */
@@ -152,6 +162,8 @@ export interface ClaimResult {
 
 export interface DeskRequest {
   id: string;
+  /** 131. The PDF the client attached to the request. Absent from an older server. */
+  document?: RequestDocument | null;
   booking?: RequestBooking | null;
   details?: RequestDetails | null;
   status: InvitationStatus;
@@ -175,6 +187,8 @@ export interface DeskRequest {
 /** A request sent to this notary's own listing that they have not taken yet. */
 export interface DeskIncoming {
   id: string;
+  /** 131. The PDF the client attached to the request. Absent from an older server. */
+  document?: RequestDocument | null;
   booking?: RequestBooking | null;
   details?: RequestDetails | null;
   client: { name: string; identityVerified: boolean };
@@ -282,6 +296,31 @@ class RealEnotaryInvitationsService {
     if (notaryEmail !== undefined && notaryEmail.trim() !== "") body.notaryEmail = notaryEmail.trim();
     const answer = await apiRequest<{ invitation: Invitation }>("/me/enotary/invitations", { method: "POST", body });
     return answer.invitation;
+  }
+
+  /** 131. Attaches (or replaces) the PDF to be notarized. 422 `session_document_rejected` says what is wrong with it. */
+  async attachDocument(id: string, file: File): Promise<RequestDocument | null> {
+    const form = new FormData();
+    form.append("file", file, file.name);
+    return (await apiUpload<{ document: RequestDocument | null }>(`/me/enotary/requests/${encodeURIComponent(id)}/document`, form)).document;
+  }
+
+  /** 131. Takes the attached PDF off the request. */
+  async removeDocument(id: string): Promise<void> {
+    await apiRequest(`/me/enotary/requests/${encodeURIComponent(id)}/document`, { method: "DELETE" });
+  }
+
+  /** 131. The attached PDF itself, for the client or the notary. */
+  async document(id: string): Promise<Blob> {
+    if (API_BASE_URL === null || API_BASE_URL === "") throw new ApiError(0, undefined, "No server is configured.");
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE_URL}/me/enotary/requests/${encodeURIComponent(id)}/document`, { credentials: "include" });
+    } catch {
+      throw new ApiError(0, undefined, "Could not reach the server. Check your connection and try again.");
+    }
+    if (!response.ok) throw new ApiError(response.status, undefined, `Request failed with status ${String(response.status)}.`);
+    return response.blob();
   }
 
   async revoke(id: string): Promise<Invitation> {

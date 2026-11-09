@@ -600,6 +600,7 @@
             "<div><dt>Your name</dt><dd>" + esc(ME.name) + "</dd></div><div><dt>Identity verified in LAGDA</dt><dd>Yes</dd></div></dl>" +
           detailsForm(SEL) +
           bookingForm(SEL) +
+          docForm(SEL) +
           reach +
           '<p class="fine left">Nothing is booked, paid or notarized by this step. Online notarial sessions are not currently available.</p>' +
           (SEL.error ? '<p class="err-box" role="alert" id="step-err" tabindex="-1">' + esc(SEL.error) + "</p>" : "");
@@ -836,6 +837,27 @@
     return html + "</fieldset>";
   }
 
+  // ── 131. the document to be notarized, attached to the request so the notary can read it before the call ──
+  var DOC_MAX = 20 * 1024 * 1024;
+  function fileSize(n) { return n >= 1024 * 1024 ? (n / 1024 / 1024).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB"; }
+  function docForm(sel) {
+    var f = sel.file;
+    return '<fieldset class="req-doc"><legend><b>The document to be notarized</b> <span class="fine">(optional)</span></legend>' +
+      (f ? '<p class="req-doc-file" role="status"><b>' + esc(f.name) + "</b> · PDF · " + esc(fileSize(f.size)) + ' <button type="button" class="btn outline small" data-doc-remove>Remove</button></p>'
+        : '<div class="field"><label for="rf-doc">Attach the PDF</label><input id="rf-doc" type="file" accept="application/pdf,.pdf"></div>') +
+      (sel.fileError ? '<p class="err-box" role="alert">' + esc(sel.fileError) + "</p>" : "") +
+      '<p class="fine left">PDF only, up to 20 MB. The notary can read it before they accept and before the call. You can also add it later, on your request’s page or in the session.</p>' +
+      "</fieldset>";
+  }
+  /** Sends the attached file to a request just made. Never rejects: true when it was kept. */
+  function sendDocument(id, file) {
+    var csrf = cookie("lagda_csrf"), form = new FormData();
+    form.append("file", file, file.name);
+    var headers = { Accept: "application/json" }; if (csrf) headers["X-CSRF-Token"] = csrf;
+    return fetch("/api/me/enotary/requests/" + encodeURIComponent(id) + "/document", { method: "POST", credentials: "include", headers: headers, body: form })
+      .then(function (res) { return res.ok; }).catch(function () { return false; });
+  }
+
   /** Sends the request, then the person goes to its page in the app, where the link and QR code are. */
   function request(withEmail) {
     var sel = SEL, l = sel && sel.lawyer; if (!sel || sel.busy) return;
@@ -853,7 +875,13 @@
     api("POST", "/me/enotary/invitations", body).then(function (r) {
       if (SEL !== sel) return;
       var inv = r.ok && r.data ? r.data.invitation || r.data : null;
-      if (inv && inv.id) { store(PENDING, null); location.assign(requestPath(inv.id)); return; }
+      if (inv && inv.id) {
+        store(PENDING, null);
+        if (!sel.file) { location.assign(requestPath(inv.id)); return; }
+        // The request is made; the document follows it. If it could not be kept, the request's page says so and offers it again.
+        sendDocument(inv.id, sel.file).then(function (kept) { location.assign(requestPath(inv.id) + (kept ? "" : "?document=failed")); });
+        return;
+      }
       sel.busy = false;
       if (r.status === 422 && r.code === "notary_email_not_allowed") { request(false); return; } // LAGDA already has a way to reach this notary
       if (r.status === 409 && r.code === "enotary_invitation_open") {
@@ -941,7 +969,7 @@
   }
 
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-go],[data-open],[data-select],[data-close],[data-page],[data-clear],[data-step],[data-idv-start],[data-idv-ask],[data-idv-retry],[data-idv-reload],[data-register],[data-request],#clear,#veil,[data-wait-hide],[data-wait-show],[data-sel-wrap]");
+    var t = e.target.closest("[data-go],[data-open],[data-select],[data-close],[data-page],[data-clear],[data-step],[data-idv-start],[data-idv-ask],[data-idv-retry],[data-idv-reload],[data-register],[data-request],[data-doc-remove],#clear,#veil,[data-wait-hide],[data-wait-show],[data-sel-wrap]");
     if (!t) return;
     if (t.id === "veil") { if (e.target === t) closeProfile(); return; }
     if (t.hasAttribute("data-go")) { e.preventDefault(); if (t.hasAttribute("data-forget")) forget(); go(t.getAttribute("data-go")); }
@@ -955,6 +983,7 @@
     else if (t.hasAttribute("data-clear") || t.id === "clear") reset();
     else if (!SEL) return;
     else if (t.hasAttribute("data-step")) { if (t.hasAttribute("data-outcome")) SEL.outcome = t.getAttribute("data-outcome"); SEL.step = t.getAttribute("data-step"); SEL.error = ""; store(CHECK, null); redraw(true); }
+    else if (t.hasAttribute("data-doc-remove")) { SEL.file = null; SEL.fileError = ""; redraw(false); var fi = document.getElementById("rf-doc"); if (fi) fi.focus(); }
     else if (t.hasAttribute("data-idv-start")) { if (SEL.agree) startCheck(); }
     else if (t.hasAttribute("data-idv-ask")) ask();
     else if (t.hasAttribute("data-idv-retry")) { if (t.hasAttribute("data-back-to-identity")) { SEL.step = "identity"; INV = undefined; } SEL.idv = "consent"; SEL.error = ""; store(CHECK, null); redraw(true); }
@@ -1006,6 +1035,15 @@
   document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshStatus(); });
   document.addEventListener("change", function (e) {
     var id = e.target.id;
+    if (SEL && id === "rf-doc") {
+      var picked = e.target.files && e.target.files[0];
+      SEL.fileError = "";
+      if (picked && !/\.pdf$/i.test(picked.name) && picked.type !== "application/pdf") SEL.fileError = "Only a PDF can be notarized here.";
+      else if (picked && picked.size > DOC_MAX) SEL.fileError = "The file is larger than 20 MB.";
+      else if (picked && picked.size === 0) SEL.fileError = "The file is empty.";
+      else SEL.file = picked || null;
+      redraw(false); var fd = document.querySelector("[data-doc-remove]") || document.getElementById("rf-doc"); if (fd) fd.focus(); return;
+    }
     if (SEL && id === "rb-day") { var bd = booking(SEL); bd.day = e.target.value; bd.at = null; SEL.error = ""; redraw(false); var dd = document.getElementById("rb-day"); if (dd) dd.focus(); return; }
     if (SEL && id === "rb-time") { var opt = e.target.selectedOptions && e.target.selectedOptions[0]; booking(SEL).at = opt && !opt.disabled ? e.target.value || null : null; SEL.error = ""; redraw(false); var tt = document.getElementById("rb-time"); if (tt) tt.focus(); return; }
     if (SEL && (id === "rb-now" || id === "rb-later")) { var bk = booking(SEL); bk.kind = id === "rb-now" ? "now" : "scheduled"; SEL.error = ""; redraw(false); var r0 = document.getElementById(id); if (r0) r0.focus(); return; }

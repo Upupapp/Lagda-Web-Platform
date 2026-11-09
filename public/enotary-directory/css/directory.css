@@ -107,6 +107,17 @@
 @media (max-width: 560px) { .slot-pickers { grid-template-columns: minmax(0, 1fr); } }
 .slot-pick { margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--ok-wash); color: #14532D; font-size: 14px; line-height: 1.5; }
 
+/* ── the request step: the document to be notarized (131) ── */
+.req-doc { margin: 18px 0 0; padding: 0; border: 0; min-width: 0; }
+.req-doc legend { margin-bottom: 8px; padding: 0; }
+.req-doc .field { display: grid; gap: 6px; min-width: 0; }
+.req-doc label { font-weight: 600; font-size: 14px; color: #0B1F44; }
+.req-doc input[type="file"] { width: 100%; padding: 10px 12px; border: 1px solid #9DB3CC; border-radius: 6px; background: var(--paper); color: #0B1F44; font: 500 14px var(--sans); }
+.req-doc input[type="file"]:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.req-doc-file { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0; padding: 10px 12px; border: 1px solid #9DB3CC; border-radius: 8px; background: var(--paper); color: #0B1F44; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.req-doc-file .btn { margin-left: auto; min-height: 36px; padding: 0 14px; font-size: 14px; }
+.req-doc .err-box { margin-top: 10px; }
+
 /* a link to the directory or to "How it works" lands below the sticky header, not under it */
 #find, .how { scroll-margin-top: 84px; }
 @media (max-width: 760px) { #find, .how { scroll-margin-top: 56px; } }

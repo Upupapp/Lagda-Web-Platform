@@ -11,6 +11,7 @@ import { ActionButton, GF, Notice } from "../../../../components/system/design-s
 import { E } from "../EnotaryChrome";
 import { RequestTrail } from "../RequestTrail";
 import { DetailNotes, bookingRows, detailRows } from "../request-details";
+import { RequestDocumentPanel } from "../RequestDocumentPanel";
 import { EnotaryCaseFrame, NOTARY_STEPS, PartyCard, type NotaryStepId, type PartyRow } from "../CaseFrame";
 import { OnrampNote, Panel, PanelTitle, bodyText, linkButton } from "../onramp-ui";
 import { ExpiryClock, countdownText, expiryLabel, stampLabel } from "../requests/expiry";
@@ -86,6 +87,10 @@ export function NotaryRequestView({ focus, request, incoming, banner, said, prob
     >
       {confirmDialog}
       <DetailNotes details={request?.details ?? incoming?.details} />
+      {/* 131. The document the client attached, to read before accepting and before the call (the session holds it once it begins). */}
+      {client !== null && (incoming !== null || (request !== null && (request.session ?? null) === null && (request.status === "claimed" || request.status === "accepted"))) && (
+        <RequestDocumentPanel invitationId={(incoming ?? request)?.id ?? focus} document={incoming?.document ?? request?.document ?? null} role="notary" editable={false} />
+      )}
       {banner !== null && (
         <div data-testid="desk-banner">
           <Notice icon={Clock} tone={banner.tone}>

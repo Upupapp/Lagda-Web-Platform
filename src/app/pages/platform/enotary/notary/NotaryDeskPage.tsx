@@ -450,6 +450,9 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
               <DetailNotes details={request.details} />
             </>
           )}
+          {(request.document ?? null) !== null && (request.session ?? null) === null && (
+            <p data-testid="desk-document" style={{ margin: 0, fontSize: 13.5, color: E.text }}>Document attached: <strong>{request.document?.name}</strong></p>
+          )}
           {open && (
             <p data-testid="desk-countdown" data-tone={tone} style={{ margin: "8px 0 0", fontSize: 13.5, fontWeight: 700, color: tone === "red" ? "#B0182B" : tone === "amber" ? "#8A5A00" : E.skyDeep, display: "flex", gap: 6, alignItems: "center" }}>
               <Clock size={14} aria-hidden /> {countdownText(msLeft)} left · until {expiryLabel(request.expiresAt)}
@@ -647,6 +650,7 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
                 >
                   {item.details !== undefined && item.details !== null && <p data-testid="desk-new-details" style={{ margin: 0, fontSize: 13.5, color: E.text }}>Asked for: {detailsLine(item.details)}</p>}
                   <DetailNotes details={item.details} />
+                  {(item.document ?? null) !== null && <p data-testid="desk-new-document" style={{ margin: 0, fontSize: 13.5, color: E.text }}>Document attached: <strong>{item.document?.name}</strong> (open the request to read it)</p>}
                   {msLeft > 0 && (
                     <p data-testid="desk-new-countdown" style={{ margin: "8px 0 0", fontSize: 13.5, fontWeight: 700, color: E.skyDeep, display: "flex", alignItems: "center", gap: 6 }}>
                       <Clock size={14} aria-hidden /> {countdownText(msLeft)} left · until {expiryLabel(item.expiresAt)}
