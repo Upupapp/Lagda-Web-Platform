@@ -506,7 +506,7 @@ export function NotarizePanel({
     <Panel testId="notarize-panel" tone="maroon">
       <PanelTitle>{stated !== null ? `Apply your seal: ${stated.actTypeLabel}` : "Record the notarial act"}</PanelTitle>
       <p data-testid="notarize-intro" style={{ ...bodyText, margin: "0 0 12px" }}>
-        <strong>Final step: record the notarial act.</strong> Say where you are, place your notarial block, tick what you attest, and notarize. The document is then sealed and entered in your register.
+        <strong>Final step: record the notarial act.</strong> Say where you are, check where your notarial block was placed, tick what you attest, and notarize. The document is then sealed and entered in your register.
         {locationWanted(session) && " Both of your locations are checked again just before the act."}
       </p>
       {block !== null && <p data-testid="notarize-block" style={{ ...bodyText, color: "#8A3B12" }}>{BLOCK_WORDS[block]}</p>}
@@ -523,10 +523,10 @@ export function NotarizePanel({
       <fieldset style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
         <legend style={labelStyle}>Your notarial block (seal and signature)</legend>
         <p data-testid="placement-summary" style={{ ...bodyText, margin: "0 0 10px" }}>
-          {blockWords(placements)}.{hasSignature === false ? " No signature picture is saved, so the block shows none." : ""}
+          {blockWords(placements)}{Object.keys(placements).length === 0 ? "" : ", placed for you in the clear space; move it only if you wish"}.{hasSignature === false ? " No signature picture is saved, so the block shows none." : ""}
         </p>
         <Link to={`/app/enotary/room/${encodeURIComponent(session.invitationId)}/place`} data-testid="open-placer" style={{ ...linkButton("secondary"), display: "inline-flex", alignItems: "center", gap: 8 }}>
-          <Stamp size={16} aria-hidden /> Place my notarial block
+          <Stamp size={16} aria-hidden /> {Object.keys(placements).length === 0 ? "Place my notarial block" : "Move my notarial block"}
         </Link>
       </fieldset>
       <TextField label="Remarks for your register (optional)" value={remarks} onChange={setRemarks} maxLength={300} placeholder="e.g. The document was read aloud to the client before the act." hint="For example: the document was read aloud to the client. They are kept in your notarial register." />
