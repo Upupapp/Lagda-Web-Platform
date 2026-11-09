@@ -774,10 +774,12 @@
       '<p class="fine left" id="rd-blocked" role="note" hidden>Wills and certified copies of public records cannot be notarized remotely.</p>' +
       '<div class="req-where"><b>Where will you be during the call?</b>' +
         '<label class="idv-agree"><input type="radio" name="rd-where" id="rd-ph" checked><span>In the Philippines</span></label>' +
-        '<div class="two"><div class="field"><label for="rd-city">City or municipality</label><input id="rd-city" type="text" maxlength="80" autocomplete="address-level2" value="' + esc(d.city) + '"></div>' +
-        '<div class="field"><label for="rd-province">Province</label><input id="rd-province" type="text" maxlength="80" autocomplete="address-level1" value="' + esc(d.province) + '"></div></div></div>' +
-      '<label class="idv-agree"><input type="checkbox" id="rd-abroad-use"' + (d.usedAbroad ? " checked" : "") + '><span>The document will be used outside the Philippines.</span></label>' +
-      (d.usedAbroad ? '<p class="fine left" role="note"><b>Please note.</b> A document for use abroad may need an apostille after it is notarized. Ask the office that will receive it what it needs.</p>' : "") +
+        '<div class="two"><div class="field place-field"><label for="rd-city">City or municipality</label><input id="rd-city" type="text" maxlength="80" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="rd-city-list" placeholder="Start typing, e.g. Naga" value="' + esc(d.city) + '"></div>' +
+        '<div class="field place-field"><label for="rd-province">Province</label><input id="rd-province" type="text" maxlength="80" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="rd-province-list" placeholder="Filled in from the city" value="' + esc(d.province) + '"></div></div>' +
+        '<p class="fine left" id="rd-place-note" role="status">' + (d.provinceAuto ? "The province was filled in from the city you chose. Change it if it is wrong." : "Choose your city or municipality from the list: the province is filled in for you.") + "</p></div>" +
+      '<label class="idv-agree req-abroad"><input type="checkbox" id="rd-abroad-use" aria-describedby="rd-abroad-help"' + (d.usedAbroad ? " checked" : "") + '><span><b>The document will be used outside the Philippines</b> <span class="fine">(optional)</span>' +
+        '<small id="rd-abroad-help">Tick this only if the notarized document will be given to an office, embassy, school, bank or employer abroad. Leave it unticked if it stays in the Philippines. It does not change the notarization or the fee: the notary sees it with your request, and LAGDA reminds you of the extra step a document for use abroad may need.</small></span></label>' +
+      (d.usedAbroad ? '<p class="fine left" role="note"><b>Please note.</b> A document for use abroad usually needs an apostille from the Department of Foreign Affairs (DFA) after it is notarized. Some countries ask for more. Ask the office that will receive it what it needs before you book.</p>' : "") +
       "</fieldset>";
   }
 
@@ -834,6 +836,92 @@
     }
     return html + "</fieldset>";
   }
+
+  // ── where the client will be: a city or municipality from the official list, and its province filled in ──
+  var PLACE_LIST = (window.PH_PLACES || []).map(function (r) { return { name: r[0], province: r[1], alias: r[2] || "" }; });
+  var PROVINCES = PLACE_LIST.reduce(function (all, p) { if (all.indexOf(p.province) < 0) all.push(p.province); return all; }, []).sort();
+  // Shown before anything is typed: the places most people ask from.
+  var STARTERS = [["Manila", "Metro Manila"], ["Quezon City", "Metro Manila"], ["Makati City", "Metro Manila"], ["Taguig City", "Metro Manila"], ["Pasig City", "Metro Manila"],
+    ["Cebu City", "Cebu"], ["Davao City", "Davao del Sur"], ["Naga City", "Camarines Sur"], ["Iloilo City", "Iloilo"], ["Baguio City", "Benguet"],
+    ["Cagayan de Oro City", "Misamis Oriental"], ["Zamboanga City", "Zamboanga del Sur"]];
+  function fold(v) { return String(v || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim(); }
+  PLACE_LIST.forEach(function (p) { p.fkey = fold(p.name + " " + p.alias); });
+  function placeMatches(q) {
+    q = fold(q);
+    if (!q) return STARTERS.map(function (s) { return PLACE_LIST.filter(function (p) { return p.name === s[0] && p.province === s[1]; })[0]; }).filter(Boolean);
+    var starts = [], words = [], inside = [];
+    PLACE_LIST.forEach(function (p) {
+      if (p.fkey.indexOf(q) === 0) starts.push(p);
+      else if (p.fkey.indexOf(" " + q) > 0) words.push(p);
+      else if (p.fkey.indexOf(q) > 0 || fold(p.province).indexOf(q) === 0) inside.push(p);
+    });
+    return starts.concat(words, inside).slice(0, 40);
+  }
+  function provinceMatches(q) { q = fold(q); return PROVINCES.filter(function (p) { return !q || fold(p).indexOf(q) === 0 || fold(p).indexOf(" " + q) > 0; }).slice(0, 40); }
+  var COMBO = null; // the list open under a field: { input, list, items, active }
+  function closeCombo() {
+    if (!COMBO) return;
+    COMBO.list.remove(); COMBO.input.setAttribute("aria-expanded", "false"); COMBO.input.removeAttribute("aria-activedescendant"); COMBO = null;
+  }
+  function openCombo(input) {
+    var isCity = input.id === "rd-city", items = isCity ? placeMatches(input.value) : provinceMatches(input.value);
+    if (!COMBO || COMBO.input !== input) {
+      closeCombo();
+      var list = document.createElement("ul");
+      list.id = input.id + "-list"; list.className = "place-list"; list.setAttribute("role", "listbox");
+      list.setAttribute("aria-label", isCity ? "Cities and municipalities" : "Provinces");
+      input.parentNode.appendChild(list);
+      COMBO = { input: input, list: list, items: [], active: -1 };
+    }
+    COMBO.items = items; COMBO.active = -1;
+    COMBO.list.innerHTML = items.length
+      ? items.map(function (it, i) {
+        return '<li role="option" id="' + input.id + "-opt-" + i + '" data-place="' + i + '" aria-selected="false">' +
+          (isCity ? "<b>" + esc(it.name) + '</b><span class="pl-prov">' + esc(it.province) + "</span>" : "<b>" + esc(it) + "</b>") + "</li>";
+      }).join("") + (isCity && !fold(input.value) ? '<li class="pl-hint" aria-hidden="true">Type to search all ' + PLACE_LIST.length.toLocaleString("en-US") + " cities and municipalities</li>" : "")
+      : '<li class="pl-hint" aria-hidden="true">' + (isCity ? "No city or municipality by that name. Check the spelling, or keep what you typed." : "No province by that name.") + "</li>";
+    input.setAttribute("aria-expanded", "true");
+  }
+  function moveCombo(step) {
+    if (!COMBO || !COMBO.items.length) return;
+    COMBO.active = (COMBO.active + step + COMBO.items.length) % COMBO.items.length;
+    [].forEach.call(COMBO.list.querySelectorAll("[role=option]"), function (li, i) { li.setAttribute("aria-selected", i === COMBO.active ? "true" : "false"); });
+    var on = document.getElementById(COMBO.input.id + "-opt-" + COMBO.active);
+    if (on) { COMBO.input.setAttribute("aria-activedescendant", on.id); on.scrollIntoView({ block: "nearest" }); }
+  }
+  function choosePlace(i) {
+    if (!COMBO || !SEL) return;
+    var it = COMBO.items[i]; if (it === undefined) return;
+    var d = details(SEL), city = document.getElementById("rd-city"), prov = document.getElementById("rd-province"), note = document.getElementById("rd-place-note");
+    if (COMBO.input.id === "rd-city") {
+      d.city = it.name; d.province = it.province; d.provinceAuto = true;
+      if (city) city.value = it.name;
+      if (prov) prov.value = it.province;
+      if (note) note.textContent = "The province was filled in from the city you chose. Change it if it is wrong.";
+    } else {
+      d.province = it; d.provinceAuto = false;
+      if (prov) prov.value = it;
+    }
+    var input = COMBO.input; closeCombo(); syncRequestButton(); input.focus();
+  }
+  document.addEventListener("focusin", function (e) { if (SEL && (e.target.id === "rd-city" || e.target.id === "rd-province")) openCombo(e.target); });
+  document.addEventListener("click", function (e) { if (SEL && (e.target.id === "rd-city" || e.target.id === "rd-province") && !COMBO) openCombo(e.target); });
+  document.addEventListener("focusout", function (e) {
+    if (COMBO && e.target === COMBO.input) setTimeout(function () { if (COMBO && document.activeElement !== COMBO.input) closeCombo(); }, 150);
+  });
+  document.addEventListener("mousedown", function (e) {
+    var li = e.target.closest && e.target.closest(".place-list [data-place]");
+    if (li) { e.preventDefault(); choosePlace(Number(li.getAttribute("data-place"))); }
+    else if (COMBO && !(e.target.closest && e.target.closest(".place-field"))) closeCombo();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (!COMBO || e.target !== COMBO.input) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); moveCombo(1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); moveCombo(-1); }
+    else if (e.key === "Enter" && COMBO.active >= 0) { e.preventDefault(); choosePlace(COMBO.active); }
+    else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeCombo(); }
+    else if (e.key === "Tab") closeCombo();
+  }, true);
 
   // ── 131. the document to be notarized, attached to the request so the notary can read it before the call ──
   var DOC_MAX = 20 * 1024 * 1024;
@@ -1113,7 +1201,15 @@
   });
   var typing;
   document.addEventListener("input", function (e) {
-    if (SEL && (e.target.id === "rd-city" || e.target.id === "rd-province")) { details(SEL)[e.target.id === "rd-city" ? "city" : "province"] = e.target.value; syncRequestButton(); return; }
+    if (SEL && (e.target.id === "rd-city" || e.target.id === "rd-province")) {
+      var pd = details(SEL);
+      pd[e.target.id === "rd-city" ? "city" : "province"] = e.target.value;
+      if (e.target.id === "rd-province" && pd.provinceAuto) {
+        pd.provinceAuto = false;
+        var pn = document.getElementById("rd-place-note"); if (pn) pn.textContent = "Choose your city or municipality from the list: the province is filled in for you.";
+      }
+      openCombo(e.target); syncRequestButton(); return;
+    }
     if (e.target.id === "req-email") { if (SEL) SEL.email = e.target.value; return; } if (e.target.id !== "f-q") return; F.q = e.target.value; F.page = 0; clearTimeout(typing); typing = setTimeout(list, 160); });
   document.addEventListener("keydown", function (e) {
     if (VIEW) {

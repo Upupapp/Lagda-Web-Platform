@@ -170,3 +170,18 @@ body.doc-view-open { overflow: hidden; }
   .doc-view .dv-panel { width: 100%; height: 100%; border-radius: 0; }
   .doc-view .dv-foot .btn { flex: 1 1 0; }
 }
+
+/* ── "used outside the Philippines": optional, and what it means ── */
+.req-abroad { align-items: flex-start; }
+.req-abroad > span { line-height: 1.5; }
+.req-abroad small { display: block; margin-top: 4px; font-size: 13px; line-height: 1.55; color: var(--quiet, #56677D); font-weight: 400; }
+
+/* ── city or municipality, and province: suggestions from the official list ── */
+.place-field { position: relative; }
+.place-list { position: absolute; left: 0; right: 0; top: 100%; z-index: 40; margin: 4px 0 0; padding: 6px 0; list-style: none; max-height: 280px; overflow-y: auto; background: var(--paper, #fff); border: 1px solid #9DB3CC; border-radius: 8px; box-shadow: 0 14px 30px -12px rgba(11,31,68,.35); }
+.place-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 14px; font-size: 15px; color: #0B1F44; cursor: pointer; }
+.place-list li b { font-weight: 600; }
+.place-list li .pl-prov { flex: 0 0 auto; font-size: 13px; color: #56677D; }
+.place-list li[aria-selected="true"], .place-list li[data-place]:hover { background: #EEF3F9; }
+.place-list li.pl-hint { display: block; cursor: default; font-size: 13px; color: #56677D; border-top: 1px solid #E3EAF2; }
+.place-list li.pl-hint:first-child { border-top: 0; }
