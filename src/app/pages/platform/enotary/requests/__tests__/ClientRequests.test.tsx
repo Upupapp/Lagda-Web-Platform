@@ -407,12 +407,24 @@ describe("a request that has ended", () => {
     expect(screen.queryByRole("button", { name: /Cancel|Renew/ })).toBeNull();
   });
 
-  it("a declined one points back to the directory", async () => {
+  it("a declined one shows the notary's reason, and leads back to the requests or on to another notary", async () => {
+    get.mockResolvedValue(invitation({ status: "declined", link: null, decidedAt: "2026-11-09T05:00:00.000Z", declineReason: "I do not notarize this kind of document." }));
+    renderRequest();
+    await settle();
+    expect(screen.getByTestId("declined-card")).toHaveTextContent(/declined this request/);
+    expect(screen.getByTestId("declined-reason")).toHaveTextContent("I do not notarize this kind of document.");
+    expect(screen.getByTestId("declined-back")).toHaveAttribute("href", "/app/enotary/requests");
+    expect(screen.getByTestId("declined-find")).toHaveAttribute("href", expect.stringContaining("enotary-directory"));
+    expect(screen.queryByTestId("request-notice")).toBeNull();
+    expect(screen.getByTestId("party-status")).toHaveTextContent("Declined");
+  });
+
+  it("a declined one with no reason on record still shows the card, without a quotation", async () => {
     get.mockResolvedValue(invitation({ status: "declined", link: null }));
     renderRequest();
     await settle();
-    expect(screen.getByTestId("request-notice")).toHaveTextContent(/declined this request/);
-    expect(screen.getByTestId("party-status")).toHaveTextContent("Declined");
+    expect(screen.getByTestId("declined-card")).toBeInTheDocument();
+    expect(screen.queryByTestId("declined-reason")).toBeNull();
   });
 });
 

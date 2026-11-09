@@ -15,7 +15,7 @@ import { RequestDocumentPanel } from "../RequestDocumentPanel";
 import { EnotaryCaseFrame, NOTARY_STEPS, PartyCard, type NotaryStepId, type PartyRow } from "../CaseFrame";
 import { OnrampNote, Panel, PanelTitle, bodyText, linkButton } from "../onramp-ui";
 import { ExpiryClock, countdownText, expiryLabel, stampLabel } from "../requests/expiry";
-import { Clock } from "lucide-react";
+import { ArrowLeft, Clock } from "lucide-react";
 import { DESK_CARD_STYLES } from "./DeskCard";
 import { DeclineReasonPanel } from "./DeclineReasonPanel";
 import type { DeskIncoming, DeskRequest } from "../../../../services/real/enotary-invitations.service";
@@ -104,6 +104,14 @@ export function NotaryRequestView({ focus, request, incoming, banner, said, prob
         </div>
       )}
       {said !== null && <div role="status" style={{ ...GF, fontSize: 14, fontWeight: 600, color: E.ok }}>{said}</div>}
+      {/* After declining: the way back to the desk, where every client's request waits. */}
+      {request !== null && request.status === "declined" && (
+        <Panel testId="declined-done">
+          <PanelTitle>You declined this request</PanelTitle>
+          <p style={{ ...bodyText }}>{request.client.name} was told, with your reason, and can ask another notary. Nothing more is needed here.</p>
+          <Link to="/app/enotary/desk" data-testid="back-to-desk" style={linkButton("maroon")}><ArrowLeft size={16} aria-hidden /> Return to the Notary Desk</Link>
+        </Panel>
+      )}
       {problem !== null && <Notice icon={Clock} tone="danger">{problem}</Notice>}
 
       {client === null && (

@@ -32,6 +32,7 @@ import { ENOTARY_DIRECTORY_PATH } from "../../../../config/enotary-directory";
 import { QrCard } from "./QrCard";
 import { shortRequestId } from "./qr-card";
 import { StatusBanner } from "../RecordCard";
+import { DeclinedCard } from "./DeclinedCard";
 import { SessionPanel } from "../room/SessionPanel";
 import { ClientPaymentPanel, paymentIsPending } from "../payments/ClientPaymentPanel";
 import { ExpiryClock, countdownText, expiryLabel, expiryTone, stampLabel, type ExpiryTone } from "./expiry";
@@ -381,7 +382,11 @@ export function ClientRequestPage() {
       )}
 
       <DetailNotes details={invitation.details} />
-      {notice !== null && (
+      {/* A declined request: its own card, with the notary's reason as a quotation and the way on. */}
+      {invitation.status === "declined" && (
+        <DeclinedCard notaryName={notaryNameOf(invitation)} reason={invitation.declineReason ?? null} decidedAt={invitation.decidedAt} directoryPath={ENOTARY_DIRECTORY_PATH} />
+      )}
+      {notice !== null && invitation.status !== "declined" && (
         <StatusBanner
           icon={invitation.status === "accepted" ? ShieldCheck : invitation.status === "awaiting" || invitation.status === "claimed" ? Hourglass : XCircle}
           tone={notice.tone === "success" ? "ok" : notice.tone === "warn" ? "warn" : "info"}
