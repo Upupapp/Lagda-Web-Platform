@@ -243,6 +243,7 @@ export function processScreen(kind: ProcessKind, who = "", failure?: (error: unk
   const done = s.done?.(who.trim());
   return {
     message: s.message(who.trim()), detail: s.detail, tag: { label: s.tag, icon: s.icon }, minDuration: PROCESS_HOLD_MS,
+    ...(kind.startsWith("enotary-") ? { brand: "enotary" as const } : {}),
     ...(done === undefined ? {} : { result: { success: done, ...(failure === undefined ? {} : { failure }) } }),
   };
 }

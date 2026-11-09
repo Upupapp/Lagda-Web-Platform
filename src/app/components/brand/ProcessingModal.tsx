@@ -31,6 +31,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Z } from "../../utils/z-index";
+import { EnotaryLockup } from "./EnotaryLockup";
 
 /** The official LAGDA shield, shared with LagdaLoader. */
 const SHIELD_PATH =
@@ -64,6 +65,8 @@ export interface ProcessingModalProps {
   tag?: { label: string; icon?: LucideIcon };
   /** Fades the modal out. The parent unmounts after EXIT_MS. */
   isExiting?: boolean;
+  /** "enotary": the notarial screens' panel — the LAGDA.io | eNotary lockup above the same LAGDA mark, in maroon and gold. */
+  brand?: "lagda" | "enotary";
   children?: ReactNode;
 }
 
@@ -107,7 +110,7 @@ const STYLES = `
  * moves: the arc that carries the motion orbits OUTSIDE the mark, and the only
  * thing crossing the logo is the sanctioned light sweep.
  */
-function ProcessingMark() {
+function ProcessingMark({ ring = AZURE }: { ring?: string }) {
   const [logoFailed, setLogoFailed] = useState(false);
 
   return (
@@ -128,7 +131,7 @@ function ProcessingMark() {
           position: "absolute",
           inset: 0,
           borderRadius: "50%",
-          background: `conic-gradient(from 0deg, transparent 0deg, transparent 240deg, ${AZURE} 340deg, transparent 360deg)`,
+          background: `conic-gradient(from 0deg, transparent 0deg, transparent 240deg, ${ring} 340deg, transparent 360deg)`,
           WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px))",
           mask: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px))",
           animation: "lagda-proc-orbit 1.15s linear infinite",
@@ -192,7 +195,7 @@ function ProcessingMark() {
 }
 
 /** Indeterminate bar. Deliberately not a percentage: we do not know one. */
-function Shimmer() {
+function Shimmer({ tint = AZURE }: { tint?: string }) {
   return (
     <div
       aria-hidden="true"
@@ -209,7 +212,7 @@ function Shimmer() {
           width: "33%",
           height: "100%",
           borderRadius: 2,
-          background: `linear-gradient(90deg, transparent, ${AZURE}, transparent)`,
+          background: `linear-gradient(90deg, transparent, ${tint}, transparent)`,
           transform: "translateX(-100%)",
           animation: "lagda-proc-shimmer 1.4s ease-in-out infinite",
         }}
@@ -264,8 +267,10 @@ export function ProcessingModal({
   steps,
   tag,
   isExiting = false,
+  brand = "lagda",
   children,
 }: ProcessingModalProps) {
+  const notarial = brand === "enotary";
   const cardRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
@@ -346,6 +351,7 @@ export function ProcessingModal({
           borderRadius: 16,
           padding: "28px 24px 24px",
           boxShadow: "0 18px 50px rgba(7,17,31,0.28)",
+          ...(notarial ? { borderTop: "4px solid transparent", backgroundImage: "linear-gradient(#FFFFFF, #FFFFFF), linear-gradient(90deg, #7A1535, #C9960C)", backgroundOrigin: "border-box", backgroundClip: "padding-box, border-box" } : {}),
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -354,13 +360,15 @@ export function ProcessingModal({
           animation: "lagda-proc-in 220ms cubic-bezier(0.2,0,0.2,1) both",
         }}
       >
-        <ProcessingMark />
+        {notarial && <EnotaryLockup />}
+
+        <ProcessingMark ring={notarial ? "#8C1D3F" : AZURE} />
 
         {tag && (
           <span data-testid="processing-tag" style={{
             ...GF, display: "inline-flex", alignItems: "center", gap: 6, marginBottom: -6,
-            padding: "4px 10px", borderRadius: 999, background: "#EBF4FC", border: "1px solid #BFDBFE",
-            color: "#005A9E", fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase",
+            padding: "4px 10px", borderRadius: 999, background: notarial ? "#FAEFF2" : "#EBF4FC", border: `1px solid ${notarial ? "#E6C5CF" : "#BFDBFE"}`,
+            color: notarial ? "#7A1535" : "#005A9E", fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase",
           }}>
             {tag.icon && <tag.icon size={13} aria-hidden />}
             {tag.label}
@@ -383,7 +391,7 @@ export function ProcessingModal({
           )}
         </div>
 
-        {steps && steps.length > 0 ? <StepList steps={steps} /> : <Shimmer />}
+        {steps && steps.length > 0 ? <StepList steps={steps} /> : <Shimmer tint={notarial ? "#8C1D3F" : AZURE} />}
 
         {children}
       </div>

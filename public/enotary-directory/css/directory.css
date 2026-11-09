@@ -252,3 +252,37 @@ body.dir-busy-open { overflow: hidden; }
 .dd-copy { display: flex; flex-direction: column; align-items: center; }
 .dd-title span { margin-left: 4px; }
 .dd-btn { margin-top: 12px; }
+
+/* ── the processing panel, as the app's eNotary panel: the LAGDA.io | eNotary lockup above the LAGDA mark ── */
+.dir-busy { background: rgba(7,17,31,.55); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.dir-busy .db-card { width: min(340px, 100%); display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 24px 22px 22px; border-top: 4px solid transparent;
+  background-image: linear-gradient(#fff, #fff), linear-gradient(90deg, #7A1535, #C9960C); background-origin: border-box; background-clip: padding-box, border-box; animation: db-in .22s cubic-bezier(.2,0,.2,1) both; }
+.dir-busy .db-spin { display: none; }
+.db-lockup { display: inline-flex; align-items: center; gap: clamp(8px, 2.6vw, 12px); max-width: 100%; box-sizing: border-box; padding: 8px 16px; border-radius: 999px;
+  background: linear-gradient(180deg, #fff 0%, #FBF6EC 100%); border: 1px solid #EADBBE; box-shadow: 0 8px 20px -14px rgba(122,21,53,.55), inset 0 1px 0 #fff; }
+.db-lockup img { display: block; height: clamp(15px, 4.4vw, 22px); width: auto; min-width: 0; flex-shrink: 1; }
+.db-lockup i { flex: 0 0 auto; width: 1px; align-self: stretch; margin: 2px 0; background: linear-gradient(180deg, transparent, #C9960C, transparent); }
+.db-lockup b { flex: 0 0 auto; font-family: Tinos, "Times New Roman", Times, serif; font-weight: 700; font-size: clamp(15px, 4.6vw, 20px); color: #8C1D3F; line-height: 1; white-space: nowrap; }
+.db-lockup em { flex: 0 0 auto; width: 6px; height: 6px; background: #C9960C; transform: rotate(45deg); border-radius: 1px; }
+.db-mark { position: relative; width: 72px; height: 72px; flex-shrink: 0; animation: db-breathe 2.4s ease-in-out infinite; }
+.db-ring { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0deg, transparent 240deg, #8C1D3F 340deg, transparent 360deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px)); mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px)); animation: db-spin 1.15s linear infinite; }
+.db-logo { position: absolute; inset: 11px; border-radius: 11px; overflow: hidden; background: #0078D4; }
+.db-logo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.db-scan { position: absolute; left: 0; right: 0; height: 38%; background: linear-gradient(180deg, transparent, rgba(255,255,255,.55), transparent); animation: db-scan 1.9s cubic-bezier(.45,0,.55,1) infinite; }
+.db-diamond { position: absolute; right: 6px; bottom: 6px; width: 9px; height: 9px; background: #C9960C; animation: db-diamond 1.9s ease-in-out infinite; }
+.dir-busy .db-msg { font-size: 15px; font-weight: 600; text-align: center; }
+.dir-busy .db-detail { margin-top: -6px; font-size: 12px; text-align: center; }
+.db-bar { width: 100%; height: 3px; border-radius: 2px; background: #F1E6EA; overflow: hidden; }
+.db-bar span { display: block; width: 33%; height: 100%; border-radius: 2px; background: linear-gradient(90deg, transparent, #8C1D3F, transparent); transform: translateX(-100%); animation: db-shimmer 1.4s ease-in-out infinite; }
+@keyframes db-scan { 0% { transform: translateY(-120%); opacity: 0; } 15%, 85% { opacity: 1; } 100% { transform: translateY(120%); opacity: 0; } }
+@keyframes db-diamond { 0%, 100% { opacity: .25; transform: rotate(45deg) scale(.85); } 50% { opacity: 1; transform: rotate(45deg) scale(1.1); } }
+@keyframes db-shimmer { to { transform: translateX(300%); } }
+@keyframes db-breathe { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
+@keyframes db-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .db-ring, .db-scan, .db-diamond, .db-bar span, .db-mark, .dir-busy .db-card { animation: none; } }
+
+/* The processing panel is a modal <dialog> (the browser's top layer): full screen, centred, above everything. */
+dialog.dir-busy { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; border: 0; padding: 16px; box-sizing: border-box; display: grid; place-items: center; background: transparent; color: inherit; overflow: hidden; }
+dialog.dir-busy:not([open]) { display: none; }
+dialog.dir-busy::backdrop { background: rgba(7,17,31,.55); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }

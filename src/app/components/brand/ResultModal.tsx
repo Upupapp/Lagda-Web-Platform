@@ -12,6 +12,7 @@
 import { useEffect, useId, useRef } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Z } from "../../utils/z-index";
+import { EnotaryLockup } from "./EnotaryLockup";
 
 /** How long a success stays up by itself. */
 export const RESULT_SUCCESS_MS = 4000;
@@ -34,6 +35,8 @@ export interface ResultModalProps {
   readonly detail?: string;
   /** The same tag as the loading screen it follows ("Notary session"). */
   readonly tag?: { label: string; icon?: LucideIcon };
+  /** "enotary": the notarial screens' result — the LAGDA.io | eNotary lockup on top, the maroon and gold edge. */
+  readonly brand?: "lagda" | "enotary" | undefined;
   readonly onClose: () => void;
 }
 
@@ -50,7 +53,8 @@ const STYLES = `
 .lagda-result-ok:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,120,212,0.35); }
 `;
 
-export function ResultModal({ tone, title, detail, tag, onClose }: ResultModalProps) {
+export function ResultModal({ tone, title, detail, tag, brand, onClose }: ResultModalProps) {
+  const notarial = brand === "enotary";
   const t = TONES[tone];
   const titleId = useId();
   const detailId = useId();
@@ -103,8 +107,10 @@ export function ResultModal({ tone, title, detail, tag, onClose }: ResultModalPr
           background: "#FFFFFF", borderRadius: 16, padding: "28px 24px 24px", boxShadow: "0 18px 50px rgba(7,17,31,0.28)",
           display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
           animation: "lagda-result-in 200ms cubic-bezier(0.2,0,0.2,1) both",
+          ...(notarial ? { borderTop: "4px solid transparent", backgroundImage: "linear-gradient(#FFFFFF, #FFFFFF), linear-gradient(90deg, #7A1535, #C9960C)", backgroundOrigin: "border-box", backgroundClip: "padding-box, border-box" } : {}),
         }}
       >
+        {notarial && <EnotaryLockup />}
         <div aria-hidden="true" style={{ position: "relative", width: 72, height: 72, flexShrink: 0 }}>
           <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: t.wash, boxShadow: `0 0 0 1px ${t.line} inset` }} />
           <div style={{

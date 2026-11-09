@@ -146,6 +146,15 @@ describe("wiring", () => {
   });
 });
 
+// The notarial screens carry the LAGDA.io | eNotary panel; the rest of LAGDA keeps its own.
+describe("the brand", () => {
+  it("is eNotary for every eNotary kind, and LAGDA's own for the rest", () => {
+    for (const kind of PROCESS_KINDS) {
+      expect(processScreen(kind).brand, kind).toBe(kind.startsWith("enotary-") ? "enotary" : undefined);
+    }
+  });
+});
+
 // After the loading screen, an eNotary action says how it ended: its result in the screen's place.
 describe("the result", () => {
   beforeEach(() => { vi.useFakeTimers(); });

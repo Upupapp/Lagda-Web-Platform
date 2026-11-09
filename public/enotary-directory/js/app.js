@@ -845,11 +845,17 @@
   /** Shows (or updates) the panel: what is happening, and what happens next. */
   function busyShow(message, detail) {
     if (!WORKING) {
-      var el = document.createElement("div");
-      el.className = "dir-busy"; el.setAttribute("role", "alertdialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-busy", "true");
+      // A modal <dialog>: the browser puts it in the top layer, over the whole screen, whatever the page's own layout.
+      var el = document.createElement("dialog");
+      el.className = "dir-busy"; el.setAttribute("role", "alertdialog"); el.setAttribute("aria-busy", "true");
+      el.addEventListener("cancel", function (e) { e.preventDefault(); }); // Escape does not close it: the work goes on
       el.setAttribute("aria-labelledby", "dir-busy-msg"); el.setAttribute("aria-describedby", "dir-busy-detail");
-      el.innerHTML = '<div class="db-card" tabindex="-1"><span class="db-spin" aria-hidden="true"></span><p class="db-msg" id="dir-busy-msg"></p><p class="db-detail" id="dir-busy-detail"></p></div>';
-      document.documentElement.appendChild(el); document.body.classList.add("dir-busy-open");
+      el.innerHTML = '<div class="db-card" tabindex="-1">' +
+        '<div class="db-lockup" role="img" aria-label="LAGDA eNotary"><img src="/brand/LagdaLogoHorizontalCropped.png" alt=""><i aria-hidden="true"></i><b aria-hidden="true">eNotary</b><em aria-hidden="true"></em></div>' +
+        '<div class="db-mark" aria-hidden="true"><span class="db-ring"></span><span class="db-logo"><img src="/brand/LagdaLogoIconFullColorSquare.png" alt=""><span class="db-scan"></span></span><span class="db-diamond"></span></div>' +
+        '<p class="db-msg" id="dir-busy-msg"></p><p class="db-detail" id="dir-busy-detail"></p><div class="db-bar" aria-hidden="true"><span></span></div></div>';
+      document.body.appendChild(el); document.body.classList.add("dir-busy-open");
+      if (typeof el.showModal === "function") el.showModal(); else el.setAttribute("open", "");
       WORKING = { el: el, back: document.activeElement };
       el.querySelector(".db-card").focus();
     }
@@ -858,6 +864,7 @@
   }
   function busyHide() {
     if (!WORKING) return;
+    if (typeof WORKING.el.close === "function" && WORKING.el.open) WORKING.el.close();
     WORKING.el.remove(); document.body.classList.remove("dir-busy-open");
     WORKING = null;
   }
@@ -1006,9 +1013,16 @@
     var z = e.target.closest && e.target.closest("[data-doc-drop]"); if (!z || !SEL) return;
     e.preventDefault(); z.classList.remove("is-over");
     var picked = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (!picked) return;
-    SEL.fileError = fileProblem(picked); if (!SEL.fileError) SEL.file = picked;
-    redraw(false); var fd = document.querySelector("[data-doc-view]") || document.getElementById("rf-doc"); if (fd) fd.focus();
+    checkingFile(function () {
+      SEL.fileError = fileProblem(picked); if (!SEL.fileError) SEL.file = picked;
+      redraw(false); var fd = document.querySelector("[data-doc-view]") || document.getElementById("rf-doc"); if (fd) fd.focus();
+    });
   });
+  /** A file just chosen: the panel for a moment while it is checked, then `then` (1.2 seconds: long enough to read). */
+  function checkingFile(then) {
+    busyShow("Checking your document…", "Making sure it is a PDF of 20 MB or less.");
+    setTimeout(function () { busyHide(); then(); }, 1200);
+  }
   /** The page's own checks on a chosen file: "" when it may be attached, else why not. */
   function fileProblem(f) {
     if (!f) return "";
@@ -1055,9 +1069,11 @@
     el.querySelector("#rf-doc-change").addEventListener("change", function (e) {
       var picked = e.target.files && e.target.files[0]; e.target.value = "";
       if (!picked) return;
-      var why = fileProblem(picked), err = el.querySelector(".dv-err");
-      if (why) { err.textContent = why; err.hidden = false; return; }
-      SEL.file = picked; SEL.fileError = ""; fillDocView(); redraw(false);
+      checkingFile(function () {
+        var why = fileProblem(picked), err = el.querySelector(".dv-err");
+        if (why) { err.textContent = why; err.hidden = false; return; }
+        SEL.file = picked; SEL.fileError = ""; fillDocView(); redraw(false);
+      });
     });
     el.querySelector(".dv-x").focus();
   }
@@ -1255,9 +1271,13 @@
     var id = e.target.id;
     if (SEL && id === "rf-doc") {
       var picked = e.target.files && e.target.files[0];
-      SEL.fileError = fileProblem(picked);
-      if (!SEL.fileError) SEL.file = picked || null;
-      redraw(false); var fd = document.querySelector("[data-doc-remove]") || document.getElementById("rf-doc"); if (fd) fd.focus(); return;
+      if (!picked) return;
+      checkingFile(function () {
+        SEL.fileError = fileProblem(picked);
+        if (!SEL.fileError) SEL.file = picked;
+        redraw(false); var fd = document.querySelector("[data-doc-remove]") || document.getElementById("rf-doc"); if (fd) fd.focus();
+      });
+      return;
     }
     if (SEL && id === "rb-day") { var bd = booking(SEL); bd.day = e.target.value; bd.at = null; SEL.error = ""; redraw(false); var dd = document.getElementById("rb-day"); if (dd) dd.focus(); return; }
     if (SEL && id === "rb-time") { var opt = e.target.selectedOptions && e.target.selectedOptions[0]; booking(SEL).at = opt && !opt.disabled ? e.target.value || null : null; SEL.error = ""; redraw(false); var tt = document.getElementById("rb-time"); if (tt) tt.focus(); return; }

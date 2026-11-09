@@ -86,6 +86,8 @@ export interface ProcessingOptions {
   minDuration?: number;
   /** Follow the work with its result, success or failure, in the screen's place. */
   result?: ProcessingResult;
+  /** "enotary": the notarial panel (process-screens.ts sets it for every eNotary kind). */
+  brand?: "lagda" | "enotary";
 }
 
 /** Handed to the body of `run` so it can narrate its own progress. */
@@ -220,10 +222,10 @@ export function ProcessingProvider({ children }: { children: ReactNode }) {
             await new Promise<void>(resolve => setTimeout(resolve, remaining));
           }
         }
-        if (opts.result !== undefined) ended = { tone: "success", ...opts.result.success, tag: opts.tag };
+        if (opts.result !== undefined) ended = { tone: "success", ...opts.result.success, tag: opts.tag, ...(opts.brand === undefined ? {} : { brand: opts.brand }) };
         return result;
       } catch (error) {
-        if (opts.result?.failure !== undefined) ended = { tone: "failure", title: RESULT_FAILURE_TITLE, detail: opts.result.failure(error), tag: opts.tag };
+        if (opts.result?.failure !== undefined) ended = { tone: "failure", title: RESULT_FAILURE_TITLE, detail: opts.result.failure(error), tag: opts.tag, ...(opts.brand === undefined ? {} : { brand: opts.brand }) };
         throw error;
       } finally {
         // The result takes the screen's place before the screen goes, so the two read as one step.
@@ -257,13 +259,14 @@ export function ProcessingProvider({ children }: { children: ReactNode }) {
     <ProcessingContext.Provider value={value}>
       {children}
       {outcome !== null ? (
-        <ResultModal key={outcome.id} tone={outcome.tone} title={outcome.title} detail={outcome.detail} tag={outcome.tag} onClose={() => { setOutcome(null); }} />
+        <ResultModal key={outcome.id} tone={outcome.tone} title={outcome.title} detail={outcome.detail} tag={outcome.tag} brand={outcome.brand} onClose={() => { setOutcome(null); }} />
       ) : visible && (
         <ProcessingModal
           message={options.message}
           detail={options.detail}
           steps={options.steps}
           tag={options.tag}
+          brand={options.brand}
           isExiting={exiting}
         />
       )}
