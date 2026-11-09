@@ -30,6 +30,20 @@ const ACTS: { value: ActType; label: string; hint: string }[] = [
 ];
 
 const pesos = (centavos: number) => `PHP ${formatPesos(centavos)}`;
+/** 132. A request without a fee through LAGDA: free, or settled between the client and the notary directly. */
+export const NO_FEE = "No fee on LAGDA";
+
+/** 132. The act the client asked for, as the form's first choice; "not_sure" (or none) leaves the usual one. */
+const askedAct = (s: Session): ActType => {
+  const wanted = s.request?.actWanted;
+  return wanted === "acknowledgment" || wanted === "jurat" || wanted === "signature_witnessing" ? wanted : "acknowledgment";
+};
+/** 132. The note starts from the kind of document the client named, or the file's name. */
+const askedNote = (s: Session): string => {
+  const kind = s.request?.documentLabel ?? "";
+  if (kind !== "" && kind !== "Document") return kind;
+  return (s.document?.name ?? "").replace(/\.pdf$/i, "");
+};
 
 const row = (label: string, value: ReactNode, first = false) => (
   <div key={label} style={{ display: "grid", gridTemplateColumns: "minmax(110px, 160px) 1fr", gap: 12, padding: "9px 0", borderTop: first ? "none" : `1px solid ${E.line}`, fontSize: 14.5 }}>
@@ -49,7 +63,7 @@ export function FeeChoice({ clientName, noFee, setNoFee, fee, setFee, problem }:
         <div role="radiogroup" aria-label="Fee choice" style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", margin: "0 0 12px" }}>
           {([
             { free: false, title: "Charge a fee", note: "The client pays you directly.", testId: "fee-mode-charge" },
-            { free: true, title: "No fee", note: "Free of charge for this client.", testId: "no-fee" },
+            { free: true, title: "No fee on LAGDA", note: "Settled directly with the client, or free of charge.", testId: "no-fee" },
           ] as const).map(option => {
             const chosen = noFee === option.free;
             return (
@@ -67,7 +81,7 @@ export function FeeChoice({ clientName, noFee, setNoFee, fee, setFee, problem }:
       <label htmlFor="fee-amount" style={labelStyle}>{noFee ? "Fee (PHP)" : "Amount to ask for (PHP)"}</label>
       <input
         id="fee-amount" data-testid="fee-input" inputMode="decimal" autoComplete="off"
-        value={noFee ? "No fee: free of charge" : fee} maxLength={noFee ? undefined : 12} readOnly={noFee} aria-readonly={noFee || undefined}
+        value={noFee ? "No fee on LAGDA" : fee} maxLength={noFee ? undefined : 12} readOnly={noFee} aria-readonly={noFee || undefined}
         placeholder="e.g. 600" aria-invalid={problem !== null ? true : undefined}
         onChange={event => { if (!noFee) setFee(event.target.value); }}
         style={noFee ? { ...fieldStyle(false), background: "#F3F4F6", color: E.quiet, cursor: "not-allowed", fontWeight: 600 } : fieldStyle(problem !== null)}
@@ -75,9 +89,9 @@ export function FeeChoice({ clientName, noFee, setNoFee, fee, setFee, problem }:
       {problem !== null && <p role="alert" style={{ ...hintStyle, color: "#B0182B" }}>{problem}</p>}
       {noFee ? (
         <div data-testid="no-fee-notice" role="status" style={{ ...GF, margin: "12px 0 0", padding: "12px 14px", borderRadius: 10, background: "#EEF7F0", border: "1px solid #BFE0C8" }}>
-          <strong style={{ display: "block", fontSize: 14, color: E.ok, marginBottom: 6 }}>You are notarizing this free of charge</strong>
+          <strong style={{ display: "block", fontSize: 14, color: E.ok, marginBottom: 6 }}>No fee on LAGDA</strong>
           <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, color: E.text, lineHeight: 1.6 }}>
-            <li>{clientName} will not be asked to pay, and will see that you are not charging a fee.</li>
+            <li>{clientName} is not asked to pay through LAGDA. If you charge them, you settle it with them directly.</li>
             <li>There is no payment to confirm. You can apply your seal as soon as they approve.</li>
             <li>Once they approve, the fee cannot be changed.</li>
             <li>You do not need a payment QR for a request without a fee.</li>
@@ -149,10 +163,10 @@ export function ClientFlow({ s, busy, act, onChanged }: { s: Session; busy: stri
           {row("Document", s.document.name)}
           {row("Notarial act", statement.actTypeLabel)}
           {row("Note from the notary", statement.note)}
-          {row("Fee", <strong data-testid="stated-fee">{statement.feeCentavos === 0 ? "No fee" : pesos(statement.feeCentavos)}</strong>)}
+          {row("Fee", <strong data-testid="stated-fee">{statement.feeCentavos === 0 ? NO_FEE : pesos(statement.feeCentavos)}</strong>)}
         </dl>
         <p data-testid="consent-text" style={{ ...bodyText, margin: "12px 0" }}>{s.consent.text}</p>
-        <p style={{ ...hintStyle, margin: "0 0 4px" }}>{statement.feeCentavos === 0 ? "There is nothing to pay. The notary completes the notarization after you approve." : "You pay the notary directly, by their QR. The notary can complete the notarization before the payment arrives."}</p>
+        <p style={{ ...hintStyle, margin: "0 0 4px" }}>{statement.feeCentavos === 0 ? "There is nothing to pay on LAGDA. The notary completes the notarization after you approve." : "You pay the notary directly, by their QR. The notary can complete the notarization before the payment arrives."}</p>
         <ActionRow align="end">
           <ActionButton icon={BadgeCheck} disabled={busy !== null} onClick={() => { void act("approve", () => realEnotarySessionsService.approve(s.id)); }}>
             {busy === "approve" ? "Approving…" : statement.feeCentavos === 0 ? "Approve" : `Approve and pay ${pesos(statement.feeCentavos)}`}
@@ -172,7 +186,7 @@ export function ClientFlow({ s, busy, act, onChanged }: { s: Session; busy: stri
     <Panel testId="approved-panel" tone="sky">
       <PanelTitle>{payment !== null && payment.status === "confirmed" ? "Payment received" : "Approved"}</PanelTitle>
       <p style={{ ...bodyText, margin: 0 }} data-testid="approved-note">
-        {statement.feeCentavos === 0 ? "No fee for this request. " : `The notary confirmed your payment of ${pesos(statement.feeCentavos)}. `}
+        {statement.feeCentavos === 0 ? "No fee on LAGDA for this request. " : `The notary confirmed your payment of ${pesos(statement.feeCentavos)}. `}
         The notary completes the notarization next. You are told here as soon as it is done.
       </p>
     </Panel>
@@ -186,8 +200,9 @@ export function NotaryFlow({ s, busy, act, onChanged, notarizePanel, look }: {
   /** "v4": the step-6 console's card for stating the act and the fee. */
   look?: "v4";
 }) {
-  const [actType, setActType] = useState<ActType>("acknowledgment");
-  const [note, setNote] = useState("");
+  const [actType, setActType] = useState<ActType>(() => askedAct(s));
+  const [note, setNote] = useState(() => askedNote(s));
+  const [idChecked, setIdChecked] = useState(false);
   const [fee, setFee] = useState("");
   const [noFee, setNoFee] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -227,7 +242,20 @@ export function NotaryFlow({ s, busy, act, onChanged, notarizePanel, look }: {
 
   const feeCentavos = noFee ? 0 : parsePesos(fee);
   const feeProblem = !noFee && fee.trim() !== "" && feeCentavos === null ? `Enter a fee between 1 and ${FEE_MAX_PESOS.toLocaleString("en-US")} pesos.` : null;
-  const ready = note.trim() !== "" && feeCentavos !== null;
+  // 132. Before the identity is confirmed, the act's form confirms it too: ticked, with the client on the call.
+  const needsIdentity = !identity;
+  const ready = note.trim() !== "" && feeCentavos !== null && (!needsIdentity || (idChecked && s.presence.client));
+  const sending = busy === "act" || busy === "identity-act";
+  const sendAct = () => {
+    void act(needsIdentity ? "identity-act" : "act", async () => {
+      try {
+        if (needsIdentity) await realEnotarySessionsService.confirmIdentity(s.id);
+        const next = await realEnotarySessionsService.stateAct(s.id, { actType, feeCentavos: feeCentavos ?? 0, note });
+        setEditing(false);
+        return next;
+      } catch (error) { setProblem(error instanceof Error ? describePaymentError(error) : "That could not be sent."); throw error; }
+    });
+  };
 
   const settle = async (work: () => Promise<unknown>, message: string) => {
     setWorking(true); setProblem(null); setSaid(null);
@@ -236,13 +264,14 @@ export function NotaryFlow({ s, busy, act, onChanged, notarizePanel, look }: {
     finally { setWorking(false); }
   };
 
-  // 1. who the client is
-  if (!identity) {
+  // 1. who the client is: on its own while the document is not final, or with the act once it is (132)
+  if (!identity && !finalized) {
     return (
       <Panel testId="identity-panel" tone="maroon">
         <PanelTitle>Confirm who the client is</PanelTitle>
         <p style={bodyText}>LAGDA checked {s.clientName}&rsquo;s ID and face. Check it yourself on the call too: ask for a valid government ID and compare it with the person you see. Confirm only when you are satisfied.</p>
         {!s.presence.client && <p data-testid="client-not-here" style={{ ...hintStyle, color: "#8A5A00" }}>{s.clientName} is not in the room yet.</p>}
+        <p data-testid="identity-later" style={hintStyle}>Or confirm it together with the act and the fee, in one step, once {s.clientName} finalizes the document.</p>
         <ActionRow align="end">
           <ActionButton icon={CheckCircle2} disabled={busy !== null || !s.presence.client} onClick={() => { void act("identity", () => realEnotarySessionsService.confirmIdentity(s.id)); }}>
             {busy === "identity" ? "Confirming…" : "I confirmed their identity on the call"}
@@ -265,16 +294,11 @@ export function NotaryFlow({ s, busy, act, onChanged, notarizePanel, look }: {
 
   // 3. state the act and the fee (until the client approves)
   if ((statement === null || (editing && statement.approvedAt === null)) && look === "v4") {
-    const send = () => {
-      void act("act", async () => {
-        try { const next = await realEnotarySessionsService.stateAct(s.id, { actType, feeCentavos: feeCentavos ?? 0, note }); setEditing(false); return next; }
-        catch (error) { setProblem(error instanceof Error ? describePaymentError(error) : "That could not be sent."); throw error; }
-      });
-    };
     return (
       <StateActCard
         s={s} actType={actType} setActType={setActType} note={note} setNote={setNote} fee={fee} setFee={setFee} noFee={noFee} setNoFee={setNoFee}
-        feeCentavos={feeCentavos} feeProblem={feeProblem} ready={ready} problem={problem} busy={busy} payee={payee} onSend={send}
+        feeCentavos={feeCentavos} feeProblem={feeProblem} ready={ready} problem={problem} busy={sending ? "act" : busy} payee={payee} onSend={sendAct}
+        {...(needsIdentity ? { identity: { checked: idChecked, setChecked: setIdChecked, clientHere: s.presence.client } } : {})}
         {...(statement !== null ? { onKeep: () => { setEditing(false); } } : {})}
       />
     );
@@ -294,6 +318,12 @@ export function NotaryFlow({ s, busy, act, onChanged, notarizePanel, look }: {
           ))}
         </fieldset>
         <TextField label="What the document is (the note to the client)" value={note} onChange={setNote} maxLength={300} required hint="For example: Acknowledgment of a deed of absolute sale." />
+        {needsIdentity && (
+          <label data-testid="express-identity" style={{ ...GF, display: "flex", gap: 10, alignItems: "flex-start", margin: "0 0 14px", fontSize: 14.5, color: E.ink }}>
+            <input type="checkbox" checked={idChecked} disabled={!s.presence.client} onChange={event => { setIdChecked(event.target.checked); }} style={{ width: 18, height: 18, marginTop: 2, accentColor: E.maroon }} />
+            <span>I confirmed {s.clientName}&rsquo;s identity on the call: I compared a valid government ID with the person I see.</span>
+          </label>
+        )}
         <FeeChoice clientName={s.clientName} noFee={noFee} setNoFee={setNoFee} fee={fee} setFee={setFee} problem={feeProblem} />
         <p data-testid="fee-summary" style={{ ...GF, margin: "12px 0 0", fontSize: 14, fontWeight: 700, color: E.ink }}>
           {noFee ? `You will notarize this for ${s.clientName} without a fee.`
@@ -303,16 +333,8 @@ export function NotaryFlow({ s, busy, act, onChanged, notarizePanel, look }: {
         {problem !== null && <Notice icon={X} tone="danger">{problem}</Notice>}
         <ActionRow align="end">
           {statement !== null && <ActionButton kind="secondary" onClick={() => { setEditing(false); }}>Keep what I stated</ActionButton>}
-          <ActionButton
-            icon={Send} disabled={busy !== null || !ready}
-            onClick={() => {
-              void act("act", async () => {
-                try { const next = await realEnotarySessionsService.stateAct(s.id, { actType, feeCentavos: feeCentavos ?? 0, note }); setEditing(false); return next; }
-                catch (error) { setProblem(error instanceof Error ? describePaymentError(error) : "That could not be sent."); throw error; }
-              });
-            }}
-          >
-            {busy === "act" ? "Sending…" : "Send the act and fee to the client"}
+          <ActionButton icon={Send} disabled={busy !== null || !ready} onClick={sendAct}>
+            {sending ? "Sending…" : needsIdentity ? "Confirm and send to the client" : "Send the act and fee to the client"}
           </ActionButton>
         </ActionRow>
       </Panel>
@@ -327,7 +349,7 @@ export function NotaryFlow({ s, busy, act, onChanged, notarizePanel, look }: {
         <dl style={{ margin: 0 }}>
           {row("Notarial act", statement.actTypeLabel, true)}
           {row("Note", statement.note)}
-          {row("Fee", statement.feeCentavos === 0 ? "No fee" : pesos(statement.feeCentavos))}
+          {row("Fee", statement.feeCentavos === 0 ? NO_FEE : pesos(statement.feeCentavos))}
         </dl>
         <ActionRow align="end">
           <ActionButton kind="secondary" onClick={() => { setNote(statement.note); setActType(statement.actType); setNoFee(statement.feeCentavos === 0); setFee(statement.feeCentavos === 0 ? "" : String(statement.feeCentavos / 100)); setEditing(true); }}>
@@ -384,7 +406,7 @@ export function NotaryFlow({ s, busy, act, onChanged, notarizePanel, look }: {
         <dl style={{ margin: 0 }}>
           {row("Document", s.document?.name ?? "", true)}
           {row("Notarial act", statement.actTypeLabel)}
-          {row("Fee", statement.feeCentavos === 0 ? "No fee" : pesos(statement.feeCentavos))}
+          {row("Fee", statement.feeCentavos === 0 ? NO_FEE : pesos(statement.feeCentavos))}
           {row("Client's identity", <span style={{ color: E.ok, fontWeight: 700 }}>Confirmed by you on the call</span>)}
           {row("Client's address", (s.clientAddress ?? null) === null
             ? <span data-testid="seal-address-missing" style={{ color: "#8A5A00", fontWeight: 700 }}>Not given yet: the client types it in the room</span>

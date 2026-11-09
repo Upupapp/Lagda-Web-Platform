@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, Route, Routes } from "react-router";
 
 vi.mock("../../../../../services/backend-flag", () => ({ USE_REAL_BACKEND: true, API_BASE_URL: "http://api.test" }));
 
@@ -23,6 +23,16 @@ vi.mock("../../../../../services/real/enotary-invitations.service", async (origi
     confirmPayment: (...a: unknown[]) => confirmPayment(...a) as unknown,
     paymentNotReceived: (...a: unknown[]) => paymentNotReceived(...a) as unknown,
     paymentScreenshot: (...a: unknown[]) => paymentScreenshot(...a) as unknown,
+  },
+}));
+
+const startSession = vi.fn();
+const openRoom = vi.fn();
+vi.mock("../../../../../services/real/enotary-sessions.service", async (original) => ({
+  ...(await original<typeof import("../../../../../services/real/enotary-sessions.service")>()),
+  realEnotarySessionsService: {
+    lookup: () => Promise.resolve(null),
+    start: (...a: unknown[]) => startSession(...a) as unknown, open: (...a: unknown[]) => openRoom(...a) as unknown,
   },
 }));
 
@@ -217,6 +227,30 @@ describe("accepting and declining", () => {
     expect(screen.getByRole("status")).toHaveTextContent(/accepted the request from Ben Lim. Once they start the session, you open the room from here/);
     expect(screen.getByTestId("tally-progress")).toHaveTextContent("1");
     expect(screen.queryByRole("button", { name: "Accept" })).toBeNull();
+  });
+
+  it("accepts a right-now request and opens the room in the same step (132)", async () => {
+    accept.mockResolvedValue(undefined);
+    startSession.mockResolvedValue({ id: "ens_1", status: "preparing" });
+    openRoom.mockResolvedValue({ id: "ens_1", status: "live" });
+    desk.mockResolvedValue(deskOf({ requests: [request({ booking: { kind: "now", at: null, answerBy: "2026-10-17T01:30:00.000Z" } })] }));
+    render(
+      <MemoryRouter initialEntries={["/app/enotary/desk"]}>
+        <Routes>
+          <Route path="/app/enotary/desk" element={<NotaryDeskPage />} />
+          <Route path="/app/enotary/room/:id" element={<p data-testid="the-room">room</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await settle();
+    press(screen.getByRole("button", { name: "Accept" }));
+    expect(screen.getByTestId("accept-now")).toHaveTextContent(/accepting opens the room at once/);
+    press(within(screen.getByTestId("accept-panel")).getByRole("button", { name: "Accept and open the room" }));
+    await settle(5_000);
+    expect(accept).toHaveBeenCalledWith("eni_1");
+    expect(startSession).toHaveBeenCalledWith("eni_1");
+    expect(openRoom).toHaveBeenCalledWith("ens_1");
+    expect(screen.getByTestId("the-room")).toBeInTheDocument();
   });
 
   it("does not need a saved payment QR to accept, and still points to where to save one for a fee", async () => {

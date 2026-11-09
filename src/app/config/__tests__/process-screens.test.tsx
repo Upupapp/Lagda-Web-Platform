@@ -103,18 +103,18 @@ const WIRED: Record<string, ProcessKind[]> = {
   // LAGDA eNotary: every action that takes a moment runs behind its own loading screen.
   "pages/platform/enotary/EnotaryAccessPage.tsx": ["enotary-access"],
   "pages/public/enotary/NotaryInvitePage.tsx": ["enotary-claim"],
-  "pages/platform/enotary/notary/NotaryDeskPage.tsx": ["enotary-take", "enotary-accept", "enotary-decline", "enotary-payment-confirm", "enotary-payment-missing"],
+  "pages/platform/enotary/notary/NotaryDeskPage.tsx": ["enotary-take", "enotary-accept", "enotary-accept-now", "enotary-decline", "enotary-payment-confirm", "enotary-payment-missing"],
   "pages/platform/enotary/payments/ClientPaymentPanel.tsx": ["enotary-payment-proof"],
   "pages/platform/enotary/payments/NotaryPaymentPage.tsx": ["enotary-qr-save", "enotary-qr-remove"],
   "pages/platform/enotary/requests/ClientRequestPage.tsx": ["enotary-request-revoke", "enotary-request-renew", "enotary-request-email"],
   "pages/platform/enotary/room/RoomPage.tsx": [
     "enotary-document-add", "enotary-document-replace", "enotary-room-open", "enotary-consent", "enotary-notarize", "enotary-session-cancel",
-    "enotary-finalize", "enotary-identity", "enotary-act", "enotary-approve",
+    "enotary-finalize", "enotary-identity", "enotary-act", "enotary-identity-act", "enotary-approve",
   ],
   "pages/platform/enotary/room/RoomFlow.tsx": ["enotary-payment-confirm", "enotary-payment-missing"],
   "pages/platform/enotary/notary/NotarySealPage.tsx": ["enotary-seal-save", "enotary-signature-save", "enotary-signature-remove"],
   "pages/platform/enotary/notary/NotaryRegisterPage.tsx": ["enotary-register-export", "enotary-register-report"],
-  "pages/platform/enotary/room/SessionPanel.tsx": ["enotary-session-start", "enotary-session-reopen-request", "enotary-session-reopen"],
+  "pages/platform/enotary/room/SessionPanel.tsx": ["enotary-session-start", "enotary-session-start-open", "enotary-session-reopen-request", "enotary-session-reopen"],
   "pages/platform/enotary/room/CopyRequestDialog.tsx": ["enotary-copy-request"],
   "pages/platform/enotary/room/CopiesPanel.tsx": [
     "enotary-copy-stage", "enotary-copy-quote", "enotary-copy-decline", "enotary-copy-cancel", "enotary-copy-proof",

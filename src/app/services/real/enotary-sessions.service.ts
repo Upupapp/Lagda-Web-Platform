@@ -104,6 +104,8 @@ export interface Session {
   clientAddress?: ClientAddress | null;
   /** LAGDA verified the client's ID and face when they made the request. Absent from an older server. */
   clientIdentity?: { verified: boolean; idType: string | null };
+  /** 132. What the client asked for: the act ("not_sure" lets the notary decide), the kind of document, and the place. Absent from an older server. */
+  request?: { actWanted: string; documentLabel: string; city: string; province: string } | null;
   /**
    * The notary's own: where the seal and the signature go, as saved with the session; null for the client. `block`, the
    * notarial block's place, and `blockOwnPage` (a page of its own at the end) are absent from an older server.

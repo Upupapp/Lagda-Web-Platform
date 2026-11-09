@@ -35,6 +35,7 @@ import { useRoomConnection } from "./useRoomConnection";
 import { WaitingRoom } from "./WaitingRoom";
 import { ClientAddressPanel, ClientAddressView } from "./ClientAddressPanel";
 import { ClientStepSix } from "./ClientStepSix";
+import { WhatsLeft } from "./WhatsLeft";
 import { NotaryStepSix } from "./NotaryStepSix";
 import { LocationLocator } from "./LocationLocator";
 import { CopyPromptCallout, CopyPromptFab, useCopyPrompt } from "./CopyPrompt";
@@ -49,6 +50,7 @@ const ROOM_PROCESS: Record<string, ProcessKind | undefined> = {
   upload: "enotary-document-add", replace: "enotary-document-replace", open: "enotary-room-open",
   consent: "enotary-consent", notarize: "enotary-notarize", cancel: "enotary-session-cancel",
   finalize: "enotary-finalize", identity: "enotary-identity", act: "enotary-act", approve: "enotary-approve",
+  "identity-act": "enotary-identity-act",
 };
 
 /** A room action's failure, as the page and its result say it. */
@@ -277,6 +279,8 @@ export function RoomPage() {
           ? <div className="eno-split"><div style={{ minWidth: 0 }}>{documentPanel}</div><div style={{ minWidth: 0 }}>{whereabouts}</div></div>
           : documentPanel
       )}
+
+      {s.status === "live" && <WhatsLeft s={s} partner={isClient ? partnerTitle(partner, true) : partner} />}
 
       {stepSix && (
         <ClientStepSix

@@ -38,8 +38,10 @@ export function ClientAddressPanel({ session, onSave, onSaved }: {
   const given = session.clientAddress ?? null;
   const [editing, setEditing] = useState(given === null);
   const [street, setStreet] = useState(given?.street ?? "");
-  const [city, setCity] = useState(given?.city ?? "");
-  const [province, setProvince] = useState(given?.province ?? "");
+  // 132. Before it is given, the city and province start from what the client said in the request.
+  const asked = session.request ?? null;
+  const [city, setCity] = useState(given?.city ?? asked?.city ?? "");
+  const [province, setProvince] = useState(given?.province ?? asked?.province ?? "");
   const [tried, setTried] = useState(false);
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -105,6 +107,7 @@ export function ClientAddressPanel({ session, onSave, onSaved }: {
         <TextField label="Province" value={province} onChange={setProvince} maxLength={PROVINCE_MAX} required autoComplete="address-level1"
           placeholder="e.g. Camarines Sur" error={tried ? problems.province : null} />
       </div>
+      {given === null && asked !== null && <p data-testid="address-from-request" style={{ ...hintStyle, margin: "0 0 4px" }}>The city and province are filled in from your request. Change them if you are somewhere else.</p>}
       <p style={{ ...hintStyle, margin: 0 }}>The notary cannot record the act until you give it. You can correct it until then.</p>
       {problem !== null && <Notice icon={XCircle} tone="danger">{problem}</Notice>}
       <ActionRow align="end">

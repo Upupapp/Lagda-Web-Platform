@@ -101,11 +101,24 @@ describe("the session panel on a request", () => {
     expect(screen.getByTestId("session-state")).toHaveTextContent(/Add your document/);
   });
 
-  it("tells the notary the client has not started, and offers no button", async () => {
+  it("lets the notary start the session too, opening the room at once (132)", async () => {
+    const user = userEvent.setup();
     svc.lookup.mockResolvedValue({ session: null, canStart: true, reason: null });
-    render(<MemoryRouter><SessionPanel invitationId="eni_1" role="notary" /></MemoryRouter>);
-    expect(await screen.findByTestId("session-wait-client")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Start the session" })).toBeNull();
+    svc.start.mockResolvedValue(session({ role: "notary", status: "preparing" }));
+    svc.open.mockResolvedValue(session({ role: "notary", status: "live" }));
+    render(
+      <MemoryRouter initialEntries={["/app/enotary/desk"]}>
+        <Routes>
+          <Route path="/app/enotary/desk" element={<SessionPanel invitationId="eni_1" role="notary" />} />
+          <Route path="/app/enotary/room/:id" element={<p data-testid="the-room">room</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByTestId("session-wait-client")).toHaveTextContent(/You can start it yourself/);
+    await user.click(screen.getByRole("button", { name: "Start the session and open the room" }));
+    expect(svc.start).toHaveBeenCalledWith("eni_1");
+    expect(svc.open).toHaveBeenCalledWith("ens_1");
+    expect(await screen.findByTestId("the-room")).toBeInTheDocument();
   });
 
   it("lets the client email the notary to continue a called-off session, from the session panel, and shows what the server says", async () => {
@@ -371,14 +384,14 @@ describe("the room", () => {
     svc.get.mockResolvedValue(stated); svc.ping.mockResolvedValue(stated);
     svc.approve.mockImplementation(() => { svc.get.mockResolvedValue(approved); svc.ping.mockResolvedValue(approved); return Promise.resolve(approved); });
     room();
-    expect(await screen.findByTestId("stated-fee")).toHaveTextContent("No fee");
+    expect(await screen.findByTestId("stated-fee")).toHaveTextContent("No fee on LAGDA");
     expect(screen.getByTestId("consent-text")).toHaveTextContent(/signing freely/);
     await user.click(screen.getByRole("button", { name: "Approve" }));
     expect(svc.approve).toHaveBeenCalledWith("ens_1");
-    expect(await screen.findByTestId("approved-note")).toHaveTextContent(/No fee for this request/);
+    expect(await screen.findByTestId("approved-note")).toHaveTextContent(/No fee on LAGDA for this request/);
   });
 
-  it("makes the notary confirm identity first, then state the act and a fee, and says what no fee means", async () => {
+  it("has the notary confirm identity together with the act and fee, in one step, and says what no fee means", async () => {
     const user = userEvent.setup();
     const base = { role: "notary" as const, status: "live" as const, document: DOC, finalizedAt: "2026-10-18T02:15:00.000Z", presence: { client: true, notary: true } };
     const first = session({ ...base, notarizeBlock: "no_identity" });
@@ -388,16 +401,39 @@ describe("the room", () => {
     svc.confirmIdentity.mockImplementation(() => { svc.get.mockResolvedValue(next); svc.ping.mockResolvedValue(next); return Promise.resolve(next); });
     svc.stateAct.mockResolvedValue({ ...next, statement: { actType: "jurat", actTypeLabel: "Jurat", feeCentavos: 0, note: "Affidavit", statedAt: "2026-10-18T02:19:00.000Z", approvedAt: null } });
     room();
-    await user.click(await screen.findByRole("button", { name: "I confirmed their identity on the call" }));
-    expect(svc.confirmIdentity).toHaveBeenCalledWith("ens_1");
-    const send = await screen.findByRole("button", { name: "Send to the client for approval" });
+    // 132. The document is final and the identity is not yet confirmed: one form does both.
+    const send = await screen.findByRole("button", { name: "Confirm and send to the client" });
     expect(send).toBeDisabled();
     await user.click(screen.getByLabelText(/Jurat/));
-    await user.type(screen.getByLabelText(/What it is about/), "Affidavit");
+    const about = screen.getByLabelText(/What it is about/);
+    await user.clear(about);
+    await user.type(about, "Affidavit");
     await user.click(screen.getByTestId("no-fee"));
-    expect(screen.getByTestId("no-fee-notice")).toHaveTextContent(/cannot be changed/);
+    expect(screen.getByTestId("no-fee-notice")).toHaveTextContent(/No fee on LAGDA.*settle it with them directly.*cannot be changed/);
+    expect(send).toBeDisabled();
+    await user.click(screen.getByLabelText(/identity on the call/));
+    expect(send).toBeEnabled();
     await user.click(send);
+    expect(svc.confirmIdentity).toHaveBeenCalledWith("ens_1");
     expect(svc.stateAct).toHaveBeenCalledWith("ens_1", { actType: "jurat", feeCentavos: 0, note: "Affidavit" });
+    expect(svc.confirmIdentity.mock.invocationCallOrder[0]).toBeLessThan(svc.stateAct.mock.invocationCallOrder[0] ?? 0);
+  });
+
+  it("starts the act's form from what the client asked for, and lists what is left before the seal", async () => {
+    const live = session({
+      role: "notary", status: "live", document: DOC, finalizedAt: "2026-10-18T02:15:00.000Z", presence: { client: false, notary: true },
+      notarizeBlock: "no_identity", request: { actWanted: "jurat", documentLabel: "Affidavit of Loss", city: "Pili", province: "Camarines Sur" },
+    });
+    svc.lookup.mockResolvedValue({ session: live, canStart: false, reason: null });
+    svc.get.mockResolvedValue(live); svc.ping.mockResolvedValue(live);
+    room();
+    await screen.findByRole("button", { name: "Confirm and send to the client" });
+    expect(screen.getByLabelText(/Jurat/)).toBeChecked();
+    expect(screen.getByLabelText(/What it is about/)).toHaveValue("Affidavit of Loss");
+    // The client is not on the call: the identity cannot be ticked yet.
+    expect(screen.getByLabelText(/identity on the call/)).toBeDisabled();
+    expect(screen.getByTestId("whats-left-count")).toHaveTextContent("1 of 6 done");
+    expect(screen.getByTestId("whats-left-next")).toHaveTextContent(/Your part: identity confirmed, act and fee stated, seal applied/);
   });
 
   it("lets the notary record the act only with every attestation and the place, using what was approved", async () => {

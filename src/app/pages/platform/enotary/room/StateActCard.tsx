@@ -57,11 +57,13 @@ const CSS = `
 `;
 
 export function StateActCard({
-  s, actType, setActType, note, setNote, fee, setFee, noFee, setNoFee, feeCentavos, feeProblem, ready, problem, busy, payee, onSend, onKeep,
+  s, actType, setActType, note, setNote, fee, setFee, noFee, setNoFee, feeCentavos, feeProblem, ready, problem, busy, payee, onSend, onKeep, identity,
 }: {
   s: Session; actType: ActType; setActType: (value: ActType) => void; note: string; setNote: (value: string) => void;
   fee: string; setFee: (value: string) => void; noFee: boolean; setNoFee: (value: boolean) => void; feeCentavos: number | null;
   feeProblem: string | null; ready: boolean; problem: string | null; busy: string | null; payee: string | null; onSend: () => void; onKeep?: () => void;
+  /** 132. Before the identity is confirmed, this card confirms it too, in the same step. */
+  identity?: { checked: boolean; setChecked: (value: boolean) => void; clientHere: boolean };
 }) {
   const ids = useId();
   const charged = !noFee && feeCentavos !== null && feeCentavos > 0;
@@ -70,6 +72,13 @@ export function StateActCard({
       <style>{CSS}</style>
       <span className="s6-eyebrow"><Stamp size={14} aria-hidden /> Step 6 · Act and fee</span>
       <h3 id={`${ids}-h`}>State the notarial act and your fee</h3>
+      {identity !== undefined && (
+        <label className={`sa-act${identity.checked ? " on" : ""}`} data-testid="express-identity">
+          <input type="checkbox" checked={identity.checked} disabled={!identity.clientHere} onChange={event => { identity.setChecked(event.target.checked); }} />
+          <span><b>I confirmed {s.clientName}&rsquo;s identity on the call</b>
+            <small>{identity.clientHere ? "LAGDA verified their ID and face. Compare a valid government ID with the person you see before you tick this." : `${s.clientName} is not in the room yet. You confirm their identity with them on the call.`}</small></span>
+        </label>
+      )}
       {s.identityConfirmedAt != null && (
         <p className="sa-ok" data-testid="sa-identity"><CheckCircle2 size={16} aria-hidden /> You confirmed the client&rsquo;s identity on the call · {stampLabel(s.identityConfirmedAt)}</p>
       )}
@@ -96,13 +105,13 @@ export function StateActCard({
               value={noFee ? "0.00" : fee} readOnly={noFee} aria-readonly={noFee || undefined} aria-invalid={feeProblem !== null ? true : undefined}
               onChange={event => { if (!noFee) setFee(event.target.value); }} />
           </div>
-          <label className="sa-nofee"><input type="checkbox" data-testid="no-fee" checked={noFee} onChange={event => { setNoFee(event.target.checked); }} /> No fee</label>
+          <label className="sa-nofee"><input type="checkbox" data-testid="no-fee" checked={noFee} onChange={event => { setNoFee(event.target.checked); }} /> No fee on LAGDA</label>
         </div>
         {feeProblem !== null && <p role="alert" style={{ ...hintStyle, color: "#B0182B" }}>{feeProblem}</p>}
       </div>
       {noFee ? (
         <p data-testid="no-fee-notice" role="status" className="sa-paid" style={{ color: E.ok, fontWeight: 600 }}>
-          No fee: {s.clientName} is not asked to pay, and the fee cannot be changed once they approve.
+          No fee on LAGDA: {s.clientName} is not asked to pay here. If you charge them, you settle it with them directly. This cannot be changed once they approve.
         </p>
       ) : (
         <p className="sa-paid" data-testid="sa-payee">
@@ -114,7 +123,7 @@ export function StateActCard({
       )}
       {problem !== null && <Notice icon={X} tone="danger">{problem}</Notice>}
       <button type="button" className="sa-send" disabled={busy !== null || !ready} onClick={onSend}>
-        <Send size={17} aria-hidden /> {busy === "act" ? "Sending…" : "Send to the client for approval"}
+        <Send size={17} aria-hidden /> {busy === "act" ? "Sending…" : identity !== undefined ? "Confirm and send to the client" : "Send to the client for approval"}
       </button>
       {onKeep !== undefined && <button type="button" className="sa-keep" onClick={onKeep}>Keep what I stated</button>}
       <div className="sa-next" data-testid="sa-next">

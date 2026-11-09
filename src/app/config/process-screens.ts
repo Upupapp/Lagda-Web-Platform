@@ -150,6 +150,12 @@ const SCREENS = {
     done: () => ({ title: "New request made", detail: "It has a new link and QR card, good for a limited time." }) },
   "enotary-request-email": { tag: "Notary request", icon: Mail, message: () => "Saving the notary's email…", detail: "It is kept with your request.",
     done: () => ({ title: "Notary's email saved", detail: "It is kept with your request." }) },
+  "enotary-session-start-open": { tag: "Notary session", icon: Video, message: () => "Starting the session and opening the room…", detail: "A private room is made, and the client is told they can join.",
+    done: () => ({ title: "Room open", detail: "The client is told and can join you now." }) },
+  "enotary-accept-now": { tag: "Notary request", icon: BadgeCheck, message: w => w ? `Accepting the request from ${w} and opening the room…` : "Accepting the request and opening the room…", detail: "A right-now request: the room opens at once, and the client is told to join.",
+    done: w => ({ title: "Accepted: the room is open", detail: w ? `${w} is told to join you now.` : "The client is told to join you now." }) },
+  "enotary-identity-act": { tag: "Notary session", icon: Stamp, message: () => "Confirming their identity and sending the act and fee…", detail: "Both go into the audit trail. The client approves next.",
+    done: () => ({ title: "Sent to the client", detail: "Their identity is confirmed. The client approves the act and the fee." }) },
   "enotary-session-start": { tag: "Notary session", icon: Video, message: () => "Starting the session…", detail: "A private room is made for you and the notary.",
     done: () => ({ title: "Session started", detail: "A private room is ready for you and the notary." }) },
   // 131. The document attached to a request, before its session begins.

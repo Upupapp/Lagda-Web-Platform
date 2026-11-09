@@ -315,7 +315,17 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
     setProblem(null);
     setSaid(null);
     try {
-      if (kind === "accept") {
+      if (kind === "accept" && request.booking?.kind === "now") {
+        // 132. The client asked for right now: accepting starts the session and opens the room in the same step.
+        await withProcess("enotary-accept-now", request.client.name, async () => {
+          await realEnotaryInvitationsService.accept(request.id);
+          const started = await realEnotarySessionsService.start(request.id);
+          return started.status === "preparing" ? realEnotarySessionsService.open(started.id) : started;
+        }, refused);
+        if (!alive.current) return;
+        setAccepting(null);
+        void navigate(`/app/enotary/room/${encodeURIComponent(request.id)}`);
+      } else if (kind === "accept") {
         await withProcess("enotary-accept", request.client.name, () => realEnotaryInvitationsService.accept(request.id), refused);
         if (!alive.current) return;
         setSaid(`You accepted the request from ${request.client.name}. Once they start the session, you open the room from here.`);
@@ -519,9 +529,14 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
                     You do not name a fee now. After you confirm who they are and read the document, you state the notarial act and your fee, or no fee,
                     and {request.client.name} approves it before paying.
                   </p>
+                  {request.booking?.kind === "now" && (
+                    <p data-testid="accept-now" style={{ ...hintStyle, color: E.ink, fontWeight: 600 }}>
+                      {request.client.name} asked for right now: accepting opens the room at once, and they are told to join you.
+                    </p>
+                  )}
                   <div style={buttonRow()}>
                     <ActionButton icon={Check} disabled={busy} onClick={() => { void answer(request, "accept"); }}>
-                      {busy ? "Accepting…" : "Accept the request"}
+                      {busy ? "Accepting…" : request.booking?.kind === "now" ? "Accept and open the room" : "Accept the request"}
                     </ActionButton>
                     <ActionButton kind="secondary" disabled={busy} onClick={() => { setAccepting(null); }}>Not now</ActionButton>
                   </div>

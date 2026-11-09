@@ -304,9 +304,9 @@ export function StepSixCard({ s, busy, act, onChanged, partner }: { s: Session; 
           <div><dt>Notarial act</dt><dd>{statement.actTypeLabel}</dd></div>
           <div><dt>Note from the notary</dt><dd>{statement.note}</dd></div>
         </dl>
-        <div className="s6-fee"><span>Fee</span><b data-testid="stated-fee">{free ? "No fee" : pesos(statement.feeCentavos)}</b></div>
+        <div className="s6-fee"><span>Fee</span><b data-testid="stated-fee">{free ? "No fee on LAGDA" : pesos(statement.feeCentavos)}</b></div>
         <div className="s6-consent" data-testid="consent-text"><ShieldCheck size={18} aria-hidden style={{ flex: "0 0 auto", color: E.skyDeep, marginTop: 1 }} /><span>{s.consent.text}</span></div>
-        <p className="s6-hint"><Info size={14} aria-hidden /> {free ? "There is nothing to pay. The notary completes the notarization after you approve." : "You pay the notary directly, by their QR. The notary can complete the notarization before the payment arrives."}</p>
+        <p className="s6-hint"><Info size={14} aria-hidden /> {free ? "There is nothing to pay on LAGDA. The notary completes the notarization after you approve." : "You pay the notary directly, by their QR. The notary can complete the notarization before the payment arrives."}</p>
         <button type="button" className="s6-approve" disabled={busy !== null} onClick={() => { void act("approve", () => realEnotarySessionsService.approve(s.id)); }}>
           <ShieldCheck size={17} aria-hidden />{busy === "approve" ? "Approving…" : free ? "Approve" : `Approve and pay ${pesos(statement.feeCentavos)}`}
         </button>
@@ -340,7 +340,7 @@ export function StepSixCard({ s, busy, act, onChanged, partner }: { s: Session; 
       {top(<span className="s6-badge-ok"><CheckCircle2 size={12} aria-hidden /> {payment !== null && payment.status === "confirmed" ? "Payment received" : "Approved"}</span>)}
       <h3 id="s6-act-h">{payment !== null && payment.status === "confirmed" ? "Payment received" : "Approved"}</h3>
       <p data-testid="approved-note">
-        {statement.feeCentavos === 0 ? "No fee for this request. " : `The notary confirmed your payment of ${pesos(statement.feeCentavos)}. `}
+        {statement.feeCentavos === 0 ? "No fee on LAGDA for this request. " : `The notary confirmed your payment of ${pesos(statement.feeCentavos)}. `}
         The notary completes the notarization next. You are told here as soon as it is done.
       </p>
     </section>

@@ -89,6 +89,23 @@ export function SessionPanel({ invitationId, role, variant = "panel" }: { invita
     }
   };
 
+  // 132. The notary need not wait for the client: starting opens the room at once, and the client is told to join.
+  const startAndOpen = async () => {
+    setBusy(true);
+    setProblem(null);
+    try {
+      await withProcess("enotary-session-start-open", "", async () => {
+        const started = await realEnotarySessionsService.start(invitationId);
+        return started.status === "preparing" ? realEnotarySessionsService.open(started.id) : started;
+      }, describeSessionError);
+      if (alive.current) void navigate(roomPath);
+    } catch (error) {
+      if (alive.current) { setProblem(describeSessionError(error)); void load(); }
+    } finally {
+      if (alive.current) setBusy(false);
+    }
+  };
+
   // 122. A called-off session: the client asks the notary by email to open it again; the notary opens it.
   const whyNot = (error: unknown): string =>
     error instanceof ApiError && error.body?.code === "session_state" && error.body.message !== "" ? error.body.message : describeSessionError(error);
@@ -142,7 +159,12 @@ export function SessionPanel({ invitationId, role, variant = "panel" }: { invita
             <p style={bodyText}>Start the session to meet your notary online. A document you attached to this request is already in it; if you attached none, you add it in the room. The video runs between your browsers and is not recorded.</p>
             <ActionEnd><ActionButton icon={Video} disabled={busy} onClick={() => { void start(); }}>{busy ? "Starting…" : "Start the session"}</ActionButton></ActionEnd>
           </>
-        ) : <p style={{ ...bodyText, margin: 0 }} data-testid="session-wait-client">The client has not started the session yet. You will be told when they do.</p>}
+        ) : (
+          <>
+            <p style={bodyText} data-testid="session-wait-client">The client has not started the session yet. You can start it yourself: the room opens at once, and the client is told to join you.</p>
+            <ActionEnd><ActionButton icon={Video} disabled={busy} onClick={() => { void startAndOpen(); }}>{busy ? "Opening…" : "Start the session and open the room"}</ActionButton></ActionEnd>
+          </>
+        )}
       </Frame>
     );
   }
