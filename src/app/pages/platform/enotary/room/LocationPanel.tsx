@@ -12,6 +12,7 @@ import { useState } from "react";
 import { CheckCircle2, FileSignature, Loader2, LocateFixed, MapPin, ShieldAlert, XCircle } from "lucide-react";
 import { ActionButton, GF } from "../../../../components/system/design-system";
 import { describeSessionError, realEnotarySessionsService, type PartyLocation, type Session } from "../../../../services/real/enotary-sessions.service";
+import { withProcess } from "../../../../config/process-screens";
 import { E } from "../EnotaryChrome";
 import { hintStyle } from "../onramp-ui";
 import { stampLabel } from "../requests/expiry";
@@ -92,7 +93,7 @@ export function LocationPanel({ session: s, onChanged }: { session: Session; onC
             {declareProblem !== null && <p role="alert" style={{ margin: "0 0 8px", fontSize: 13.5, color: "#B0182B" }}>{declareProblem}</p>}
             <ActionButton icon={declaring ? Loader2 : FileSignature} disabled={declaring} onClick={() => {
               setDeclaring(true); setDeclareProblem(null);
-              void realEnotarySessionsService.declareLocation(s.id).then(onChanged, (error: unknown) => { setDeclareProblem(describeSessionError(error)); })
+              void withProcess("enotary-location-declare", "", () => realEnotarySessionsService.declareLocation(s.id), describeSessionError).then(onChanged, (error: unknown) => { setDeclareProblem(describeSessionError(error)); })
                 .finally(() => { setDeclaring(false); });
             }}>
               {declaring ? "Recording your declaration…" : "I confirm this statement"}
@@ -107,7 +108,7 @@ export function LocationPanel({ session: s, onChanged }: { session: Session; onC
         {problem !== null && <p role="alert" style={{ margin: 0, fontSize: 13.5, color: "#B0182B" }}>{problem}</p>}
 
         <div>
-          <ActionButton icon={checking ? Loader2 : LocateFixed} kind={passed ? "secondary" : "primary"} disabled={checking} onClick={() => { void check(); }}>
+          <ActionButton icon={checking ? Loader2 : LocateFixed} kind={passed ? "secondary" : "primary"} disabled={checking} onClick={() => { void withProcess("enotary-location-check", "", () => check()); }}>
             {checking ? "Checking your location…" : mine === null ? "Share my location" : "Check again"}
           </ActionButton>
         </div>

@@ -7,6 +7,7 @@ import { ENOTARY_DISCLAIMER } from "./content";
 import { ENOTARY_DIRECTORY_PATH } from "../../../config/enotary-directory";
 import { Link } from "react-router";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { withProcess } from "../../../config/process-screens";
 import { publicInquiriesService, inquiryErrorMessage } from "../../../services/real/public-inquiries.service";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -85,7 +86,7 @@ export function EnotaryWaitlist() {
 
     // With a backend the sign-up is stored and the LAGDA owner is told.
     if (USE_REAL_BACKEND) {
-      publicInquiriesService.submit({
+      withProcess("enotary-waitlist", fields.name, () => publicInquiriesService.submit({
         kind: "waitlist",
         name: fields.name,
         email: fields.email,
@@ -93,7 +94,7 @@ export function EnotaryWaitlist() {
         topic: AUDIENCE_OPTIONS.find(option => option.value === fields.audience)?.label ?? fields.audience,
         message: fields.interest,
         consent: true,
-      }).then(() => {
+      }), inquiryErrorMessage).then(() => {
         setFormState("success");
       }).catch((error: unknown) => {
         setErrorText(inquiryErrorMessage(error));

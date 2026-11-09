@@ -103,7 +103,10 @@ function noticeFor(invitation: Invitation): { tone: "info" | "success" | "warn";
       return { tone: "success", text: `${who} accepted your request. You will be told when the session can begin.` };
     }
     case "declined":
-      return { tone: "warn", text: `${who} declined this request. You can ask another notary from the Notary Directory.` };
+      // 131. With the reason the notary gave.
+      return { tone: "warn", text: (invitation.declineReason ?? null) !== null
+        ? `${who} declined this request. Their reason: “${invitation.declineReason}” You can ask another notary from the Notary Directory.`
+        : `${who} declined this request. You can ask another notary from the Notary Directory.` };
     case "expired":
       // 130. A request for right now ends after 15 minutes: the way on is a booked time, or asking again.
       if (invitation.booking?.kind === "now") return { tone: "warn", text: `${who} did not answer within 15 minutes, so this request ended. Book a time with this notary, or ask again for right now.` };

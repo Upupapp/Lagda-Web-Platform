@@ -115,6 +115,8 @@ export interface Invitation {
   id: string;
   /** 131. The PDF attached to the request; null: none. Absent from an older server. */
   document?: RequestDocument | null;
+  /** 131. Why the notary declined, as they gave it. Absent from an older server. */
+  declineReason?: string | null;
   /** When the client wants the notary. Absent from an older server. */
   booking?: RequestBooking | null;
   /** The request's number, EN-2026-000004. Absent from an older server. */

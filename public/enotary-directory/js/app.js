@@ -703,8 +703,10 @@
     var sel = SEL, tab = null;
     if (!touchDevice()) { try { tab = window.open("", "_blank"); } catch (err) { tab = null; } if (tab) { try { tab.opener = null; } catch (err) { /* already cut */ } } }
     sel.idv = "opening"; sel.error = ""; redraw(false);
+    busyShow("Opening the identity check…", "It opens in a new tab. Come back here when it is done.");
     api("POST", "/me/identity/session", { consent: true }).then(function (r) {
       var shut = function () { if (tab) { try { tab.close(); } catch (err) { /* gone */ } } };
+      busyHide();
       if (SEL !== sel) { shut(); return; }
       if (!r.ok || !r.data || !webAddress(r.data.url)) {
         shut();
@@ -719,11 +721,12 @@
       else location.assign(r.data.url); // a phone, or a browser that would not open a tab: this tab goes, and comes back
     });
   }
-  function ask() {
+  function ask(pressed) {
     var sel = SEL; if (!sel || sel.step !== "identity" || asking) return;
     asking = true;
+    if (pressed) busyShow("Checking your identity result…", "This takes a moment.");
     api("POST", "/me/identity/session/refresh").then(function (r) {
-      asking = false;
+      asking = false; if (pressed) busyHide();
       if (SEL !== sel || sel.step !== "identity") return;
       var was = sel.idv;
       if (r.status === 401) { ME = null; sel.idv = "ended"; store(CHECK, null); }
@@ -836,6 +839,30 @@
     }
     return html + "</fieldset>";
   }
+
+  // ── the processing panel: while LAGDA works on an action, the page shows it and takes no other press ──
+  var WORKING = null;
+  /** Shows (or updates) the panel: what is happening, and what happens next. */
+  function busyShow(message, detail) {
+    if (!WORKING) {
+      var el = document.createElement("div");
+      el.className = "dir-busy"; el.setAttribute("role", "alertdialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-busy", "true");
+      el.setAttribute("aria-labelledby", "dir-busy-msg"); el.setAttribute("aria-describedby", "dir-busy-detail");
+      el.innerHTML = '<div class="db-card" tabindex="-1"><span class="db-spin" aria-hidden="true"></span><p class="db-msg" id="dir-busy-msg"></p><p class="db-detail" id="dir-busy-detail"></p></div>';
+      document.documentElement.appendChild(el); document.body.classList.add("dir-busy-open");
+      WORKING = { el: el, back: document.activeElement };
+      el.querySelector(".db-card").focus();
+    }
+    WORKING.el.querySelector(".db-msg").textContent = message;
+    WORKING.el.querySelector(".db-detail").textContent = detail || "";
+  }
+  function busyHide() {
+    if (!WORKING) return;
+    WORKING.el.remove(); document.body.classList.remove("dir-busy-open");
+    WORKING = null;
+  }
+  // Nothing on the page answers a key while the panel is up.
+  document.addEventListener("keydown", function (e) { if (WORKING) { e.preventDefault(); e.stopPropagation(); } }, true);
 
   // ── where the client will be: a city or municipality from the official list, and its province filled in ──
   var PLACE_LIST = (window.PH_PLACES || []).map(function (r) { return { name: r[0], province: r[1], alias: r[2] || "" }; });
@@ -971,7 +998,7 @@
       '<p class="err-box dv-err" role="alert" hidden></p>' +
       '<div class="dv-foot"><button type="button" class="btn outline" data-dv-change>Change file</button><input id="rf-doc-change" type="file" accept="application/pdf,.pdf" class="dv-input" tabindex="-1" aria-hidden="true">' +
       '<button type="button" class="btn" data-dv-close>Done</button></div></div>';
-    document.body.appendChild(el); document.body.classList.add("doc-view-open");
+    document.documentElement.appendChild(el); document.body.classList.add("doc-view-open");
     VIEW = { el: el, url: "", back: from };
     fillDocView();
     el.addEventListener("click", function (e) {
@@ -1011,17 +1038,19 @@
     body.booking = b.kind === "now" ? { kind: "now" } : { kind: "scheduled", at: b.at };
     // Offline: nothing is sent, even if the button was forced on (the server refuses a request to an offline notary too).
     if (!online(l)) { sel.busy = false; redraw(false); var note = document.getElementById("req-offline"); if (note) note.focus(); return; }
+    busyShow("Sending your request to " + title(l) + "…", b.kind === "now" ? "The notary is told at once and has 15 minutes to answer." : "The notary is told and accepts or declines your booking.");
     api("POST", "/me/enotary/invitations", body).then(function (r) {
-      if (SEL !== sel) return;
+      if (SEL !== sel) { busyHide(); return; }
       var inv = r.ok && r.data ? r.data.invitation || r.data : null;
       if (inv && inv.id) {
         store(PENDING, null);
-        if (!sel.file) { location.assign(requestPath(inv.id)); return; }
+        if (!sel.file) { busyShow("Request sent. Opening it…", "Its page has the link and the QR code for the notary."); location.assign(requestPath(inv.id)); return; }
         // The request is made; the document follows it. If it could not be kept, the request's page says so and offers it again.
-        sendDocument(inv.id, sel.file).then(function (kept) { location.assign(requestPath(inv.id) + (kept ? "" : "?document=failed")); });
+        busyShow("Attaching your document…", "Checking the file, then keeping it with your request for the notary to read.");
+        sendDocument(inv.id, sel.file).then(function (kept) { busyShow(kept ? "Request sent. Opening it…" : "Request sent. Opening it…", kept ? "The notary can read your document before they accept." : "The document could not be attached: you can attach it on the request's page."); location.assign(requestPath(inv.id) + (kept ? "" : "?document=failed")); });
         return;
       }
-      sel.busy = false;
+      sel.busy = false; busyHide();
       if (r.status === 422 && r.code === "notary_email_not_allowed") { request(false); return; } // LAGDA already has a way to reach this notary
       if (r.status === 409 && r.code === "enotary_invitation_open") {
         // Already asked: go to that request (the answer may carry its id; otherwise find it in the list).
@@ -1054,7 +1083,9 @@
       topic: "Individual / Personal", // the waitlist needs who is asking: a person choosing a notary for themselves
       subject: ("eNotary interest: " + who).slice(0, 200),
       message: (who + ", " + (l.kind === "office" ? l.position || "Law office" : l.firm) + ", " + l.city + ". Identity verified in LAGDA: " + (sel.outcome === "yes" ? "yes" : sel.outcome === "no" ? "no" : "not offered")).slice(0, 4000) };
+    busyShow("Saving your interest…", "LAGDA emails you when you can book with " + who + ".");
     api("POST", "/public/inquiries", body).then(function (r) {
+      busyHide();
       if (SEL !== sel) return;
       sel.busy = false;
       if (r.ok) { var list = done(); if (list.indexOf(l.id) < 0) list.push(l.id); store(DONE, list); store(PENDING, null); sel.step = "done"; redraw(true); toast("Your interest is saved"); return; }
@@ -1125,7 +1156,7 @@
     else if (t.hasAttribute("data-doc-view")) openDocView(t);
     else if (t.hasAttribute("data-doc-remove")) { SEL.file = null; SEL.fileError = ""; redraw(false); var fi = document.getElementById("rf-doc"); if (fi) fi.focus(); }
     else if (t.hasAttribute("data-idv-start")) { if (SEL.agree) startCheck(); }
-    else if (t.hasAttribute("data-idv-ask")) ask();
+    else if (t.hasAttribute("data-idv-ask")) ask(true);
     else if (t.hasAttribute("data-idv-retry")) { if (t.hasAttribute("data-back-to-identity")) { SEL.step = "identity"; INV = undefined; } SEL.idv = "consent"; SEL.error = ""; store(CHECK, null); redraw(true); }
     else if (t.hasAttribute("data-idv-reload")) readIdentity();
     else if (t.hasAttribute("data-register")) register();

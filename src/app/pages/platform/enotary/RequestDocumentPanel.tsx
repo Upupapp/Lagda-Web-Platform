@@ -8,6 +8,7 @@ import { ActionButton, GF, Notice } from "../../../components/system/design-syst
 import {
   realEnotaryInvitationsService, type RequestDocument,
 } from "../../../services/real/enotary-invitations.service";
+import { withProcess } from "../../../config/process-screens";
 import { E } from "./EnotaryChrome";
 import { Panel, PanelTitle, bodyText, linkButton } from "./onramp-ui";
 import { stampLabel } from "./requests/expiry";
@@ -54,7 +55,7 @@ export function RequestDocumentPanel({ invitationId, document, role, editable, f
     if (file.size === 0) { setProblem("The file is empty."); return; }
     if (file.size > MAX_BYTES) { setProblem("The file is larger than 20 MB."); return; }
     setBusy("attach"); setProblem(null);
-    realEnotaryInvitationsService.attachDocument(invitationId, file).then(
+    withProcess("enotary-request-document-add", "", () => realEnotaryInvitationsService.attachDocument(invitationId, file), problemOf).then(
       saved => { setBusy(null); onChanged?.(saved); },
       (error: unknown) => { setBusy(null); setProblem(problemOf(error)); },
     );
@@ -62,7 +63,7 @@ export function RequestDocumentPanel({ invitationId, document, role, editable, f
 
   const remove = () => {
     setBusy("remove"); setProblem(null);
-    realEnotaryInvitationsService.removeDocument(invitationId).then(
+    withProcess("enotary-request-document-remove", "", () => realEnotaryInvitationsService.removeDocument(invitationId), problemOf).then(
       () => { setBusy(null); onChanged?.(null); },
       (error: unknown) => { setBusy(null); setProblem(problemOf(error)); },
     );

@@ -642,7 +642,7 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
       {shownIncoming.length > 0 && (
         <section aria-labelledby="desk-new-heading" data-testid="desk-new" style={{ margin: "0 0 18px" }}>
           <h2 id="desk-new-heading" style={{ ...GF, fontSize: 17, color: E.ink, margin: "0 0 4px" }}>New requests for you</h2>
-          <p style={{ ...bodyText, margin: "0 0 10px" }}>Clients sent these to your listing. Take one to see it among your requests, then accept or decline it.</p>
+          <p style={{ ...bodyText, margin: "0 0 10px" }}>Clients sent these to your listing. Take one to answer it, or decline it straight away with a reason the client is shown.</p>
           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 14 }}>
             {shownIncoming.map(item => {
               const clock = new ExpiryClock();

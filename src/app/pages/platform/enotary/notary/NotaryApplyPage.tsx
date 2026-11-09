@@ -219,7 +219,7 @@ function ApplicationForm({ view, onView, onSubmitted }: {
     setBusy(true);
     setSaveProblem(null);
     try {
-      const next = await realNotaryApplicationsService.save(patch);
+      const next = await withProcess("enotary-application-save", "", () => realNotaryApplicationsService.save(patch));
       if (!alive.current) return false;
       onView({ ...next, files: files });
       return true;

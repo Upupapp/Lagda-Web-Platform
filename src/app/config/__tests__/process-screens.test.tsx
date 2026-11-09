@@ -122,8 +122,14 @@ const WIRED: Record<string, ProcessKind[]> = {
   ],
   "pages/platform/enotary/notary/NotaryApplyPage.tsx": [
     "enotary-application-submit", "enotary-application-withdraw", "enotary-application-file", "enotary-application-file-remove",
+    "enotary-application-save",
   ],
   "pages/platform/enotary/admin/AdminNotaryApplicationPage.tsx": ["enotary-review-approve", "enotary-review-reject"],
+  // 131. Every action that changes something shows the panel while it runs.
+  "pages/platform/enotary/RequestDocumentPanel.tsx": ["enotary-request-document-add", "enotary-request-document-remove"],
+  "pages/platform/enotary/room/ClientAddressPanel.tsx": ["enotary-address"],
+  "pages/platform/enotary/room/LocationPanel.tsx": ["enotary-location-check", "enotary-location-declare"],
+  "pages/public/enotary/EnotaryWaitlist.tsx": ["enotary-waitlist"],
 };
 
 describe("wiring", () => {
@@ -146,7 +152,7 @@ describe("the result", () => {
   afterEach(() => { vi.useRealTimers(); });
 
   it("every eNotary action has its result, except opening eNotary and a request (the page that opens says it)", () => {
-    const missing = PROCESS_KINDS.filter(k => k.startsWith("enotary-") && k !== "enotary-access" && k !== "enotary-claim" && processScreen(k).result === undefined);
+    const missing = PROCESS_KINDS.filter(k => k.startsWith("enotary-") && !["enotary-access", "enotary-claim", "enotary-application-save", "enotary-location-check"].includes(k) && processScreen(k).result === undefined);
     expect(missing).toEqual([]);
     expect(processScreen("enotary-access").result).toBeUndefined();
     expect(processScreen("contact-create").result).toBeUndefined();

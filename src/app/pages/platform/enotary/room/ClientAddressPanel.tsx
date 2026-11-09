@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { CheckCircle2, MapPin, Pencil, XCircle } from "lucide-react";
 import { ActionButton, ActionRow, GF, Notice } from "../../../../components/system/design-system";
+import { withProcess } from "../../../../config/process-screens";
 import { formatClientAddress, type ClientAddressInput, type Session } from "../../../../services/real/enotary-sessions.service";
 import { E } from "../EnotaryChrome";
 import { Panel, PanelTitle, TextField, bodyText, hintStyle } from "../onramp-ui";
@@ -58,7 +59,8 @@ export function ClientAddressPanel({ session, onSave, onSaved }: {
     setSaving(true);
     setProblem(null);
     try {
-      const next = await onSave({ street: tidy(street), city: tidy(city), province: tidy(province) });
+      const next = await withProcess("enotary-address", "", () => onSave({ street: tidy(street), city: tidy(city), province: tidy(province) }),
+        () => "The address could not be saved. Check each part, then try again.");
       onSaved(next);
       setEditing(false);
       setSaid("Your address is saved. The notary sees it in the room.");

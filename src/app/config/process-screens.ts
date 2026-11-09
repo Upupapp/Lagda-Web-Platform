@@ -26,7 +26,7 @@ import {
   Fingerprint, KeyRound, UserPlus, UserCheck, UserX, Archive, ArchiveRestore, Search,
   Crown, FilePen, LayoutTemplate, Rocket, Link2, Users, UserCog, FileX, Save, Inbox,
   Network, ArrowLeftRight, Ban, RotateCcw, Stamp, FileUp, Video, QrCode, Banknote, BadgeCheck, ClipboardCheck,
-  PhoneOff, FileCheck, ScrollText, Mail, Package, PenLine,
+  PhoneOff, FileCheck, ScrollText, Mail, Package, PenLine, MapPin,
 } from "lucide-react";
 import { runProcess, type ProcessingOptions } from "../services/processing.service";
 
@@ -152,6 +152,21 @@ const SCREENS = {
     done: () => ({ title: "Notary's email saved", detail: "It is kept with your request." }) },
   "enotary-session-start": { tag: "Notary session", icon: Video, message: () => "Starting the session…", detail: "A private room is made for you and the notary.",
     done: () => ({ title: "Session started", detail: "A private room is ready for you and the notary." }) },
+  // 131. The document attached to a request, before its session begins.
+  "enotary-request-document-add": { tag: "Notary request", icon: FileUp, message: () => "Attaching your document…", detail: "Checking the file, then keeping it with your request for the notary to read.",
+    done: () => ({ title: "Document attached", detail: "The notary can read it before they accept and before the call." }) },
+  "enotary-request-document-remove": { tag: "Notary request", icon: Trash2, message: () => "Removing your document…", detail: "You can attach another one, or bring it to the session.",
+    done: () => ({ title: "Document removed", detail: "You can attach another one, or bring it to the session." }) },
+  "enotary-address": { tag: "Notary session", icon: MapPin, message: () => "Saving where you are…", detail: "The notary sees it in the room. It goes into the notarial record.",
+    done: () => ({ title: "Address saved", detail: "The notary sees it in the room." }) },
+  // The panel while it runs, and no "done" screen after: the result is on the page itself.
+  "enotary-location-check": { tag: "Notary session", icon: MapPin, message: () => "Checking your location…", detail: "The notarial act needs both of you in the Philippines. Allow the location if your browser asks." },
+  "enotary-location-declare": { tag: "Notary session", icon: MapPin, message: () => "Recording your declaration…", detail: "It goes into the notarial record with the time.",
+    done: () => ({ title: "Declaration recorded", detail: "It is kept with the notarial record." }) },
+  // Each "Next" of the application: the panel while it saves, and straight on to the next step.
+  "enotary-application-save": { tag: "Notary application", icon: Save, message: () => "Saving your answers…", detail: "Your application stays a draft until you send it." },
+  "enotary-waitlist": { tag: "LAGDA eNotary", icon: Mail, message: () => "Saving your interest…", detail: "LAGDA emails you when you can book.",
+    done: () => ({ title: "You are on the list", detail: "LAGDA emails you when you can book." }) },
   "enotary-document-add": { tag: "Notary session", icon: FileUp, message: () => "Adding your document…", detail: "Checking the file, then sharing it with the notary only.",
     done: () => ({ title: "Document added", detail: "It is shared with the notary only." }) },
   "enotary-document-replace": { tag: "Notary session", icon: FileUp, message: () => "Replacing your document…", detail: "The notary sees the new file once it is in.",
