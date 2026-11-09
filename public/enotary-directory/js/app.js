@@ -595,7 +595,7 @@
         var on = online(l), off = offlineWords(l);
         body = '<h3 id="step-h" tabindex="-1">' + CI.mail + "Request this notary</h3>" +
           '<div class="idv-res note req-off" id="req-offline" role="status" tabindex="-1"' + (on ? " hidden" : "") + '><span aria-hidden="true">i</span><div><b>' + esc(off[0]) + "</b><p>" + keepTogether(off[1]) + "</p></div></div>" +
-          '<p class="lead">LAGDA gives you a private link and a QR code, good for a limited time, to give to the notary. The notary signs in to LAGDA and passes an ID and face check before they can answer your request.</p>' +
+          '<p class="lead">LAGDA sends your request to the notary. A notary who is on LAGDA finds it on their desk; for one who is not yet, you can give them a private link or QR code yourself. The notary passes an ID and face check before they can answer your request.</p>' +
           '<dl class="summary"><div><dt>Notary</dt><dd>' + name + (l.kind === "office" ? "" : ", " + esc(l.firm)) + "<br>" + esc(l.city + ", " + l.province) + "</dd></div>" +
             "<div><dt>Your name</dt><dd>" + esc(ME.name) + "</dd></div><div><dt>Identity verified in LAGDA</dt><dd>Yes</dd></div></dl>" +
           detailsForm(SEL) +

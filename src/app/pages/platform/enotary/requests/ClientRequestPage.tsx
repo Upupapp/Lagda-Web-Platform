@@ -90,7 +90,10 @@ function noticeFor(invitation: Invitation): { tone: "info" | "success" | "warn";
   const who = notaryNameOf(invitation);
   switch (invitation.status) {
     case "awaiting":
-      return { tone: "info", text: `Give the link or the card to ${who}. They sign in to LAGDA and pass an ID and face check before they can take the request.` };
+      // A notary on LAGDA already has it on their desk; one who is not learns of it only from the client.
+      return { tone: "info", text: invitation.notary.accountKnown
+        ? `${who} is on LAGDA and was told about your request. Now it waits for their answer.`
+        : `${who} has no LAGDA account yet: give them the link or the QR card below. They sign in to LAGDA and pass an ID and face check before they can take the request.` };
     case "claimed":
       return { tone: "info", text: `${who} passed the identity check and has the request. Now it waits for their answer.` };
     case "accepted": {
@@ -192,6 +195,8 @@ export function ClientRequestPage() {
   const [problem, setProblem] = useState<string | null>(null);
   const [said, setSaid] = useState<string | null>(null);
   const [email, setEmail] = useState("");
+  // The link, the QR card and the notary's email are shown only when asked for: LAGDA already tells a notary on LAGDA.
+  const [showShare, setShowShare] = useState(false);
   const clock = useRef(new ExpiryClock());
   const alive = useRef(true);
   const { confirm, confirmDialog } = useConfirm();
@@ -375,36 +380,68 @@ export function ClientRequestPage() {
       {said !== null && <div role="status" style={{ ...GF, margin: "0 0 12px", fontSize: 13.5, color: E.ok, fontWeight: 600 }}>{said}</div>}
       {problem !== null && <Notice icon={XCircle} tone="danger">{problem}</Notice>}
 
+      {/* The link, the QR card and the notary's email: only for a client who will reach the notary themselves. A notary
+          active on LAGDA already has the request on their desk and was told by LAGDA, so none of these is needed. */}
       {invitation.status === "awaiting" && link !== null && (
-        <>
-          <Panel tone="sky" testId="link-panel">
-            <PanelTitle>The link for the notary</PanelTitle>
-            <input
-              id="request-link" readOnly value={link} aria-label="Link for the notary"
-              onFocus={event => { event.currentTarget.select(); }}
-              style={{ ...fieldStyle(), fontFamily: "ui-monospace, Menlo, Consolas, monospace", fontSize: 13 }}
-            />
-            <ActionRow align="end">
-              <ActionButton icon={Copy} onClick={() => { void copy(); }} full>Copy link</ActionButton>
-              <ActionButton icon={Share2} kind="secondary" onClick={() => { void share(); }} full>Share</ActionButton>
-            </ActionRow>
-            {invitation.notary.accountKnown && (
-              <p style={{ ...bodyText, margin: "12px 0 0", fontSize: 13.5 }}>
-                {notaryNameOf(invitation)} already has a LAGDA account and was told about this request there.
-              </p>
-            )}
-          </Panel>
+        <Panel testId="share-panel">
+          <PanelTitle>Share the request yourself <span style={{ fontSize: 13, fontWeight: 600, color: E.quiet }}>(optional)</span></PanelTitle>
+          <p data-testid="share-optional" style={{ ...bodyText, fontSize: 13.5, margin: showShare ? "0 0 14px" : "0 0 12px" }}>
+            {invitation.notary.accountKnown
+              ? `You do not need to do anything: Atty. ${notaryNameOf(invitation)} is on LAGDA, was told about your request, and has it on their notary desk. `
+              : `Atty. ${notaryNameOf(invitation)} has no LAGDA account yet, so they learn of your request only from you. `}
+            Use a link, a QR card or an email only to reach Atty. {notaryNameOf(invitation)} yourself, the lawyer who will notarize your document.
+            Give them to no one else: only that notary can open the request, after an identity check.
+          </p>
+          {showShare ? (
+            <>
+              <Panel tone="sky" testId="link-panel">
+                <PanelTitle>The link for the notary</PanelTitle>
+                <input
+                  id="request-link" readOnly value={link} aria-label="Link for the notary"
+                  onFocus={event => { event.currentTarget.select(); }}
+                  style={{ ...fieldStyle(), fontFamily: "ui-monospace, Menlo, Consolas, monospace", fontSize: 13 }}
+                />
+                <ActionRow align="end">
+                  <ActionButton icon={Copy} onClick={() => { void copy(); }} full>Copy link</ActionButton>
+                  <ActionButton icon={Share2} kind="secondary" onClick={() => { void share(); }} full>Share</ActionButton>
+                </ActionRow>
+              </Panel>
 
-          <Panel testId="card-panel">
-            <PanelTitle>The QR card</PanelTitle>
-            <p style={{ ...bodyText, fontSize: 13.5 }}>Show it on your screen or save it as a picture. It opens the same request as the link.</p>
-            <QrCard
-              link={link} notaryName={notaryNameOf(invitation)} listing={listingOf(invitation)} office={invitation.notary.firm}
-              reference={invitation.reference !== undefined && invitation.reference !== null && invitation.reference.trim() !== "" ? invitation.reference : shortRequestId(invitation.id)}
-              issuedAt={invitation.createdAt} expiresAt={invitation.expiresAt}
-            />
-          </Panel>
-        </>
+              <Panel testId="card-panel">
+                <PanelTitle>The QR card</PanelTitle>
+                <p style={{ ...bodyText, fontSize: 13.5 }}>Show it on your screen or save it as a picture. It opens the same request as the link.</p>
+                <QrCard
+                  link={link} notaryName={notaryNameOf(invitation)} listing={listingOf(invitation)} office={invitation.notary.firm}
+                  reference={invitation.reference !== undefined && invitation.reference !== null && invitation.reference.trim() !== "" ? invitation.reference : shortRequestId(invitation.id)}
+                  issuedAt={invitation.createdAt} expiresAt={invitation.expiresAt}
+                />
+              </Panel>
+
+              {canSetEmail && (
+                <Panel testId="email-panel">
+                  <PanelTitle>The notary&rsquo;s email</PanelTitle>
+                  {invitation.notaryEmail !== null && (
+                    <p data-testid="notary-email-saved" style={{ ...bodyText, fontSize: 13.5 }}>Saved: <strong>{invitation.notaryEmail}</strong></p>
+                  )}
+                  <TextField
+                    label={invitation.notaryEmail === null ? "Email address (optional)" : "Change the email address"}
+                    value={email} onChange={setEmail} type="email" inputMode="email" autoComplete="off"
+                    hint="LAGDA has no email on record for this notary. If you know it, add it here; it is kept with this request."
+                  />
+                  <ActionButton icon={Mail} kind="secondary" disabled={busy !== null || email.trim() === ""} onClick={() => { void act("email", () => withProcess("enotary-request-email", "", () => realEnotaryInvitationsService.setNotaryEmail(invitation.id, email), describeInvitationError)); }}>
+                    {busy === "email" ? "Saving…" : "Save the email"}
+                  </ActionButton>
+                </Panel>
+              )}
+
+              <button type="button" data-testid="share-hide" onClick={() => { setShowShare(false); }} style={{ ...linkButton("secondary"), cursor: "pointer" }}>{canSetEmail ? "Hide the link, QR card and email" : "Hide the link and QR card"}</button>
+            </>
+          ) : (
+            <button type="button" data-testid="share-show" onClick={() => { setShowShare(true); }} style={{ ...linkButton(invitation.notary.accountKnown ? "secondary" : "primary"), cursor: "pointer" }}>
+              {canSetEmail ? "Show the link, QR card and email" : "Show the link and QR card"}
+            </button>
+          )}
+        </Panel>
       )}
 
       {invitation.status === "accepted" && invitation.payment !== null && invitation.payment !== undefined && (
@@ -412,23 +449,6 @@ export function ClientRequestPage() {
       )}
 
       {invitation.status === "accepted" && <SessionPanel invitationId={invitation.id} role="client" />}
-
-      {canSetEmail && (
-        <Panel testId="email-panel">
-          <PanelTitle>The notary&rsquo;s email</PanelTitle>
-          {invitation.notaryEmail !== null && (
-            <p data-testid="notary-email-saved" style={{ ...bodyText, fontSize: 13.5 }}>Saved: <strong>{invitation.notaryEmail}</strong></p>
-          )}
-          <TextField
-            label={invitation.notaryEmail === null ? "Email address (optional)" : "Change the email address"}
-            value={email} onChange={setEmail} type="email" inputMode="email" autoComplete="off"
-            hint="LAGDA has no email on record for this notary. If you know it, add it here; it is kept with this request."
-          />
-          <ActionButton icon={Mail} kind="secondary" disabled={busy !== null || email.trim() === ""} onClick={() => { void act("email", () => withProcess("enotary-request-email", "", () => realEnotaryInvitationsService.setNotaryEmail(invitation.id, email), describeInvitationError)); }}>
-            {busy === "email" ? "Saving…" : "Save the email"}
-          </ActionButton>
-        </Panel>
-      )}
 
       {open && (
         <ActionRow align="end">

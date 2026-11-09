@@ -115,6 +115,10 @@ describe("one request, waiting for the notary", () => {
     expect(screen.getByTestId("expiry-countdown")).toHaveTextContent("3 d 0 h 0 m");
     expect(screen.getByTestId("expiry-label")).toHaveTextContent(/^Expires \w{3} \d+ \w{3}, \d+:\d{2} (AM|PM)$/);
     expect(screen.getByTestId("expiry-panel")).toHaveAttribute("data-tone", "calm");
+    // The link, the card and the email are an option: shown only when asked for.
+    expect(screen.queryByLabelText("Link for the notary")).toBeNull();
+    expect(screen.getByTestId("share-optional")).toHaveTextContent("has no LAGDA account yet");
+    press(screen.getByTestId("share-show"));
     expect(screen.getByLabelText("Link for the notary")).toHaveValue(LINK);
     const card = screen.getByTestId("qr-card-image");
     expect(card.tagName).toBe("IMG");
@@ -149,6 +153,7 @@ describe("one request, waiting for the notary", () => {
     }));
     renderRequest();
     await settle();
+    press(screen.getByTestId("share-show"));
     const card = screen.getByTestId("qr-card-image");
     const drawn = decodeURIComponent(card.getAttribute("src") ?? "");
     expect(drawn).toContain("EN-2026-000004");
@@ -224,6 +229,7 @@ describe("one request, waiting for the notary", () => {
     get.mockResolvedValue(invitation());
     renderRequest();
     await settle();
+    press(screen.getByTestId("share-show"));
     press(screen.getByRole("button", { name: "Copy link" }));
     await settle();
     expect(writeText).toHaveBeenCalledWith(LINK);
@@ -238,6 +244,7 @@ describe("one request, waiting for the notary", () => {
     get.mockResolvedValue(invitation());
     const view = renderRequest();
     await settle();
+    press(screen.getByTestId("share-show"));
     press(screen.getByRole("button", { name: "Share" }));
     await settle();
     expect(share).toHaveBeenCalledWith(expect.objectContaining({ url: LINK }));
@@ -246,6 +253,7 @@ describe("one request, waiting for the notary", () => {
     Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
     renderRequest();
     await settle();
+    press(screen.getByTestId("share-show"));
     press(screen.getByRole("button", { name: "Share" }));
     await settle();
     expect(writeText).toHaveBeenCalledWith(LINK);
@@ -256,6 +264,7 @@ describe("one request, waiting for the notary", () => {
     setNotaryEmail.mockResolvedValue(invitation({ notaryEmail: "atty@example.ph" }));
     const view = renderRequest();
     await settle();
+    press(screen.getByTestId("share-show"));
     fireEvent.change(screen.getByLabelText("Email address (optional)"), { target: { value: "atty@example.ph" } });
     press(screen.getByRole("button", { name: "Save the email" }));
     await settle();
@@ -285,11 +294,17 @@ describe("one request, waiting for the notary", () => {
     expect(screen.getByTestId("case-title")).toHaveTextContent("Atty. ANA MARIA SANTOS CRUZ has your request");
   });
 
-  it("says when the notary already has a LAGDA account", async () => {
+  it("says when the notary already has a LAGDA account, and that nothing need be shared", async () => {
     get.mockResolvedValue(invitation({ notary: { ...invitation().notary, accountKnown: true } }));
     renderRequest();
     await settle();
-    expect(screen.getByTestId("link-panel")).toHaveTextContent(/already has a LAGDA account/);
+    expect(screen.getByTestId("share-optional")).toHaveTextContent(/You do not need to do anything: Atty\. Ana Maria Cruz is on LAGDA/);
+    expect(screen.getByTestId("request-notice")).toHaveTextContent("is on LAGDA and was told about your request");
+    expect(screen.queryByTestId("link-panel")).toBeNull();
+    press(screen.getByTestId("share-show"));
+    expect(screen.getByTestId("link-panel")).toBeInTheDocument();
+    press(screen.getByTestId("share-hide"));
+    expect(screen.queryByTestId("link-panel")).toBeNull();
   });
 
   it("cancels only after a confirmation, then shows Renew", async () => {
