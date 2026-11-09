@@ -146,6 +146,23 @@ describe("one request, waiting for the notary", () => {
     expect(screen.getByTestId("party-status")).toHaveTextContent("Waiting for the notary");
   });
 
+  it("says a request for right now waits for the notary's answer, calm until its last 3 minutes", async () => {
+    const now = { kind: "now" as const, at: null, answerBy: "2026-11-09T06:41:00.000Z" };
+    get.mockResolvedValue(invitation({ booking: now, secondsLeft: 14 * 60, expiresAt: now.answerBy }));
+    const view = renderRequest();
+    await settle();
+    expect(screen.getByTestId("expiry-panel")).toHaveAttribute("data-tone", "calm");
+    expect(screen.getByTestId("expiry-panel")).toHaveTextContent("Waiting for the notary's answer");
+    expect(screen.getByTestId("expiry-label")).toHaveTextContent(/^The notary is asked to answer by /);
+    expect(screen.getByTestId("expiry-panel")).not.toHaveTextContent(/hours left|a day left/i);
+    view.unmount();
+    get.mockResolvedValue(invitation({ booking: now, secondsLeft: 2 * 60, expiresAt: now.answerBy }));
+    renderRequest();
+    await settle();
+    expect(screen.getByTestId("expiry-panel")).toHaveAttribute("data-tone", "amber");
+    expect(screen.getByTestId("expiry-panel")).toHaveTextContent("Waiting for the notary's answer");
+  });
+
   it("puts the request's number on the card once it has one, and an office's notaries for an office's listing", async () => {
     get.mockResolvedValue(invitation({
       reference: "EN-2026-000004",

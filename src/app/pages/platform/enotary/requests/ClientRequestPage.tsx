@@ -46,10 +46,26 @@ const TONE_STYLE: Record<ExpiryTone, { fg: string; bg: string; edge: string; wor
   ended: { fg: E.quiet, bg: E.wash, edge: E.line, word: "Ended" },
 };
 
+/**
+ * 130. A request for right now waits 15 minutes for the notary's answer, and a booking until its time: the 3-day
+ * words ("Less than a day left") do not fit them. Right now stays calm until its last 3 minutes.
+ */
+const URGENT_LAST_MS = 3 * 60_000;
+function bookingTone(kind: "now" | "scheduled", msLeft: number): ExpiryTone {
+  if (msLeft <= 0) return "ended";
+  if (kind === "now") return msLeft < URGENT_LAST_MS ? "amber" : "calm";
+  return expiryTone(msLeft);
+}
+
 /** The big expiry panel: the date it ends and a live countdown. */
-export function ExpiryPanel({ expiresAt, msLeft }: { expiresAt: string; msLeft: number }) {
-  const tone = expiryTone(msLeft);
-  const style = TONE_STYLE[tone];
+export function ExpiryPanel({ expiresAt, msLeft, kind = "standard" }: { expiresAt: string; msLeft: number; kind?: "standard" | "now" | "scheduled" }) {
+  const tone = kind === "standard" ? expiryTone(msLeft) : bookingTone(kind, msLeft);
+  const style = kind === "standard" || tone === "ended" ? TONE_STYLE[tone]
+    : { ...TONE_STYLE[tone], word: kind === "now" ? "Waiting for the notary's answer" : "Time left for the notary to answer" };
+  const until = tone === "ended" ? "This request has ended."
+    : kind === "now" ? `The notary is asked to answer by ${expiryLabel(expiresAt)}`
+      : kind === "scheduled" ? `The notary answers before your booked time, ${expiryLabel(expiresAt)}`
+        : `Expires ${expiryLabel(expiresAt)}`;
   return (
     <div
       data-testid="expiry-panel" data-tone={tone}
@@ -60,7 +76,7 @@ export function ExpiryPanel({ expiresAt, msLeft }: { expiresAt: string; msLeft: 
         {countdownText(msLeft)}
       </p>
       <p data-testid="expiry-label" style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>
-        {tone === "ended" ? "This request has ended." : `Expires ${expiryLabel(expiresAt)}`}
+        {until}
       </p>
     </div>
   );
@@ -375,7 +391,7 @@ export function ClientRequestPage() {
         </StatusBanner>
       )}
 
-      {open && <ExpiryPanel expiresAt={invitation.expiresAt} msLeft={msLeft} />}
+      {open && <ExpiryPanel expiresAt={invitation.expiresAt} msLeft={msLeft} kind={invitation.booking?.kind ?? "standard"} />}
 
       {said !== null && <div role="status" style={{ ...GF, margin: "0 0 12px", fontSize: 13.5, color: E.ok, fontWeight: 600 }}>{said}</div>}
       {problem !== null && <Notice icon={XCircle} tone="danger">{problem}</Notice>}
