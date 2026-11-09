@@ -672,7 +672,7 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
                   )}
                   <div style={buttonRow()}>
                     {(item.document ?? null) !== null && (
-                      <Link to={`/app/enotary/desk/${encodeURIComponent(item.id)}`} className="dk-link" data-testid="desk-new-read"><FileText size={16} aria-hidden /> Read the document</Link>
+                      <Link to={`/app/enotary/desk/${encodeURIComponent(item.id)}?read=document`} className="dk-link" data-testid="desk-new-read"><FileText size={16} aria-hidden /> Read the document</Link>
                     )}
                     <ActionButton icon={Check} disabled={busy || msLeft <= 0} onClick={() => { void take(item); }}>{busy ? "Taking…" : "Take this request"}</ActionButton>
                     {declining !== item.id && <ActionButton kind="secondary" disabled={busy || msLeft <= 0 || !desk.canAccept} onClick={() => { setDeclining(item.id); setAccepting(null); }}>Decline</ActionButton>}

@@ -30,7 +30,7 @@ function problemOf(error: unknown): string {
   return "The document could not be saved. Please try again.";
 }
 
-export function RequestDocumentPanel({ invitationId, document, role, editable, failedBefore = false, onChanged }: {
+export function RequestDocumentPanel({ invitationId, document, role, editable, failedBefore = false, onChanged, autoOpen = false }: {
   invitationId: string;
   document: RequestDocument | null;
   role: "client" | "notary";
@@ -39,6 +39,8 @@ export function RequestDocumentPanel({ invitationId, document, role, editable, f
   /** The directory sent the request but could not attach its document: say so once. */
   failedBefore?: boolean;
   onChanged?: (document: RequestDocument | null) => void;
+  /** Open the document at once (the desk's "Read the document" leads here), and bring it into view. */
+  autoOpen?: boolean;
 }) {
   const [busy, setBusy] = useState<"attach" | "remove" | "open" | null>(null);
   const [problem, setProblem] = useState<string | null>(failedBefore ? "Your request was sent, but the document could not be attached. Please attach it again." : null);
@@ -77,6 +79,17 @@ export function RequestDocumentPanel({ invitationId, document, role, editable, f
     );
   };
 
+  // "Read the document" from the desk: opened once, as soon as there is a document to open.
+  const opened = useRef(false);
+  const panel = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!autoOpen || opened.current || document === null) return;
+    opened.current = true;
+    open();
+    panel.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the document is known
+  }, [autoOpen, document]);
+
   const lead = role === "notary"
     ? document === null
       ? "The client has not attached the document yet. They can still attach it before the call, or bring it to the session."
@@ -86,6 +99,7 @@ export function RequestDocumentPanel({ invitationId, document, role, editable, f
       : "The notary can read this document before they accept and before the call. It becomes the session's document when the session begins.";
 
   return (
+    <div ref={panel} style={{ scrollMarginTop: 90 }}>
     <Panel testId="request-document">
       <PanelTitle>The document to be notarized</PanelTitle>
       <p style={{ ...bodyText }}>{lead}</p>
@@ -96,7 +110,9 @@ export function RequestDocumentPanel({ invitationId, document, role, editable, f
             <strong>{document.name}</strong>
             <span style={{ display: "block", fontSize: 13, color: E.quiet }}>PDF · {sizeLabel(document.size)} · attached {stampLabel(document.addedAt)}</span>
           </span>
-          <ActionButton kind="secondary" disabled={busy !== null} onClick={open}>{busy === "open" ? "Opening…" : "Open the document"}</ActionButton>
+          <ActionButton kind="secondary" disabled={busy !== null} onClick={preview === null ? open : () => { setPreview(null); }}>
+            {busy === "open" ? "Opening…" : preview === null ? "Open the document" : "Close the document"}
+          </ActionButton>
         </div>
       )}
       {preview !== null && (
@@ -126,5 +142,6 @@ export function RequestDocumentPanel({ invitationId, document, role, editable, f
         </div>
       )}
     </Panel>
+    </div>
   );
 }

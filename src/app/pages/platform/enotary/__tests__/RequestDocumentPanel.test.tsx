@@ -70,6 +70,15 @@ describe("the document attached to a request", () => {
     expect(screen.getByRole("link", { name: "Open in a new tab" })).toHaveAttribute("href", "blob:doc");
   });
 
+  it("opens the document by itself when the notary came to read it", async () => {
+    documentBlob.mockResolvedValue(new Blob(["%PDF-"], { type: "application/pdf" }));
+    URL.createObjectURL = vi.fn(() => "blob:auto"); URL.revokeObjectURL = vi.fn();
+    Element.prototype.scrollIntoView = vi.fn();
+    render(<RequestDocumentPanel invitationId="eni_1" document={DOC} role="notary" editable={false} autoOpen />);
+    expect(await screen.findByTestId("request-document-preview")).toHaveAttribute("src", "blob:auto");
+    expect(documentBlob).toHaveBeenCalledTimes(1);
+  });
+
   it("tells the notary when nothing is attached yet", () => {
     render(<RequestDocumentPanel invitationId="eni_1" document={null} role="notary" editable={false} />);
     expect(screen.getByText(/has not attached the document yet/)).toBeInTheDocument();

@@ -6,7 +6,7 @@
 // desk's, handed in as `renderRequest`: this view lays the page out around them.
 
 import { useState, type ReactNode } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { ActionButton, GF, Notice } from "../../../../components/system/design-system";
 import { E } from "../EnotaryChrome";
 import { RequestTrail } from "../RequestTrail";
@@ -59,6 +59,9 @@ export function NotaryRequestView({ focus, request, incoming, banner, said, prob
   taking: string | null; receivedAt: number; now: number;
 }) {
   const [declining, setDeclining] = useState(false);
+  // From the desk's "Read the document": the document opens by itself.
+  const [params] = useSearchParams();
+  const readNow = params.get("read") === "document";
   const client = request?.client ?? incoming?.client ?? null;
   const heading = headingOf(request, incoming);
   const received = request?.receivedAt ?? incoming?.receivedAt ?? null;
@@ -93,7 +96,7 @@ export function NotaryRequestView({ focus, request, incoming, banner, said, prob
       <DetailNotes details={request?.details ?? incoming?.details} />
       {/* 131. The document the client attached, to read before accepting and before the call (the session holds it once it begins). */}
       {client !== null && (incoming !== null || (request !== null && (request.session ?? null) === null && (request.status === "claimed" || request.status === "accepted"))) && (
-        <RequestDocumentPanel invitationId={(incoming ?? request)?.id ?? focus} document={incoming?.document ?? request?.document ?? null} role="notary" editable={false} />
+        <RequestDocumentPanel invitationId={(incoming ?? request)?.id ?? focus} document={incoming?.document ?? request?.document ?? null} role="notary" editable={false} autoOpen={readNow} />
       )}
       {banner !== null && (
         <div data-testid="desk-banner">
