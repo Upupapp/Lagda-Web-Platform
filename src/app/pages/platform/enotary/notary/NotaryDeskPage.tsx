@@ -34,6 +34,7 @@ import { useConfirm } from "../../../../components/platform/ConfirmDialog";
 import { USE_REAL_BACKEND } from "../../../../services/backend-flag";
 import { NotaryRequestView } from "./NotaryRequestView";
 import { DeclineReasonPanel } from "./DeclineReasonPanel";
+import { RequestBinButton, RequestBinPanel, useBinCount, useMoveToTrash } from "../RequestBin";
 import { announceNavCountsChanged } from "../../../../services/nav-counts-signal";
 import {
   describePaymentError, errorCode, formatPesos, realEnotaryInvitationsService,
@@ -101,6 +102,16 @@ export function groupRequests(requests: readonly DeskRequest[]): {
     else out.closed.push(request);
   }
   return out;
+}
+
+/** 132. A request that is over can go to the notary's trash: declined, cancelled, ran out, a session called off, or
+ *  notarized with no certified copy still under way. */
+export function deskCanTrash(request: DeskRequest): boolean {
+  if (request.status === "declined" || request.status === "revoked" || request.status === "expired") return true;
+  if (request.status !== "accepted") return false;
+  if (request.session?.status === "cancelled") return true;
+  const copy = request.case?.copy?.status;
+  return request.session?.status === "notarized" && (copy === undefined || copy === null || ["received", "declined", "cancelled"].includes(copy));
 }
 
 /** 131. Which of the desk's groups is shown: every one, or one of the four the counts name. */
@@ -222,6 +233,10 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
   const lastWaiting = useRef<number | null>(null);
   const { confirm, confirmDialog } = useConfirm();
   const now = useNow(1000);
+  // 132. The trash: how many are in it, its panel, and the button on each request that is over.
+  const [binOpen, setBinOpen] = useState(false);
+  const [binTick, setBinTick] = useState(0);
+  const [binCount] = useBinCount("notary", binTick);
 
   const load = useCallback((quiet: boolean) => {
     if (!USE_REAL_BACKEND) return;
@@ -249,6 +264,10 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
     document.addEventListener("visibilitychange", shown);
     return () => { alive.current = false; clearInterval(timer); document.removeEventListener("visibilitychange", shown); };
   }, [load]);
+
+  // 132. After a move to the trash (or back), the desk and the count are read again.
+  const binChanged = useCallback(() => { setBinTick(tick => tick + 1); load(true); }, [load]);
+  const mover = useMoveToTrash(binChanged);
 
   // 131. Open the session again and go to the room, once, as the notice asked. Anything that stops it is said on the
   // request's page, which stays open.
@@ -550,6 +569,7 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
               {!desk.canAccept && <p style={{ margin: "8px 0 0", fontSize: 12.5, color: E.quiet }}>You can answer once your application is approved.</p>}
             </div>
           )}
+          {focus === undefined && deskCanTrash(request) && <div style={buttonRow()}>{mover.button(request.id, request.client.name)}</div>}
         </DeskCard>
       );
   };
@@ -601,6 +621,8 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
     >
       {confirmDialog}
       {screenshotDialog}
+      {mover.confirmDialog}
+      {binOpen && <RequestBinPanel role="notary" onClose={() => { setBinOpen(false); }} onChanged={binChanged} />}
       <style>{`${DESK_CARD_STYLES}
         .dk-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid ${E.line}; background: #FFFFFF; color: ${T.ink}; font-weight: 700; text-decoration: none; transition: background 140ms ease, border-color 140ms ease, transform 100ms ease; }
         .dk-link:hover { background: ${E.wash}; border-color: #C5D2DF; }
@@ -636,6 +658,7 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
           <input id="desk-search" data-testid="desk-search" type="search" value={query} placeholder="Search by client name or reference (EN-2026-…)"
             onChange={event => { setQuery(event.target.value); }} style={{ ...fieldStyle(), paddingLeft: 36 }} />
         </label>
+        <RequestBinButton count={binCount} onClick={() => { setBinOpen(true); }} />
         {filtering && (
           <button type="button" className="dk-link" data-testid="desk-show-all" onClick={showEverything} style={{ cursor: "pointer" }}>
             <X size={16} aria-hidden /> Show all requests
@@ -652,6 +675,7 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
         </div>
       )}
       {said !== null && <div role="status" style={{ ...GF, margin: "0 0 12px", fontSize: 14, fontWeight: 600, color: E.ok }}>{said}</div>}
+      {mover.problem !== null && <div data-testid="trash-problem"><Notice icon={AlertTriangle} tone="danger">{mover.problem}</Notice></div>}
       {problem !== null && <Notice icon={AlertTriangle} tone="danger">{problem}</Notice>}
 
       {shownIncoming.length > 0 && (
@@ -721,7 +745,9 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
                   ...(bookingFact(item.booking) === null ? [] : [bookingFact(item.booking)!]),
                   ...(item.details?.actWantedLabel !== undefined && item.details.actWantedLabel !== "" ? [{ icon: PenLine, label: "Service", value: item.details.actWantedLabel }] : []),
                 ]}
-              />
+              >
+                <div style={buttonRow(0)}>{mover.button(item.id, item.client.name, "missed request")}</div>
+              </DeskCard>
             ))}
           </ul>
         </section>
@@ -775,7 +801,9 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
                   key={request.id} name={request.client.name} reference={request.reference} verified={request.client.identityVerified}
                   pills={[{ ...pillOf(request), testId: "desk-copy-state" }]} openTo={`/app/enotary/desk/${encodeURIComponent(request.id)}`}
                   facts={factsOf(request)} data={{ "data-status": "completed" }}
-                />
+                >
+                  {deskCanTrash(request) && <div style={buttonRow(0)}>{mover.button(request.id, request.client.name)}</div>}
+                </DeskCard>
               ))}
             </DeskGroup>
           )}

@@ -25,6 +25,7 @@ import { E, SERIF } from "../EnotaryChrome";
 import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryStates";
 import { OnrampNote, linkButton, statusLabel, useNow } from "../onramp-ui";
 import { ExpiryClock, countdownText, expiryTone, stampLabel } from "./expiry";
+import { RequestBinButton, RequestBinPanel, useBinCount, useMoveToTrash } from "../RequestBin";
 
 const MAROON_HERO = "linear-gradient(110deg, #6E0F24 0%, #84152E 48%, #9A1B36 100%)";
 
@@ -99,6 +100,8 @@ const STYLES = `
   .rh-btn:disabled { opacity: 0.6; cursor: default; }
   .rh-btn:focus-visible { outline: 3px solid rgba(140,29,63,0.35); outline-offset: 2px; }
   .rh-foot { margin: 8px 18px 14px 22px; display: flex; align-items: center; gap: 6px; font-size: 12px; color: ${E.quiet}; }
+  .rh-trash { display: flex; justify-content: flex-end; margin: -4px 18px 14px 22px; }
+  @media (max-width: 560px) { .rh-trash { margin: -2px 14px 12px 18px; } .rh-trash .rb-move { flex: 1 1 auto; justify-content: center; } }
   .rh-none { margin: 0; padding: 18px; border: 1px dashed ${E.line}; border-radius: 12px; text-align: center; font-size: 14px; color: ${E.text}; background: #FFFFFF; }
   .rh-empty { padding: 22px; border-radius: 16px; border: 1px solid ${E.line}; background: #FFFFFF; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -130,6 +133,12 @@ type Loaded =
   | { kind: "ready"; invitations: Invitation[]; receivedAt: number };
 
 type Filter = "all" | "open" | "notarized" | "closed";
+
+/** 132. A request that is over can go to the trash: declined, cancelled, ran out, a session called off, or notarized. */
+export function canTrash(item: Invitation): boolean {
+  return item.status === "declined" || item.status === "revoked" || item.status === "expired"
+    || (item.status === "accepted" && (item.session?.status === "notarized" || item.session?.status === "cancelled"));
+}
 
 /** Where a request stands for the client, past the invitation's own status: its room and whether it was notarized. */
 export function standing(item: Invitation): "open" | "notarized" | "closed" {
@@ -218,6 +227,10 @@ export function ClientRequestsPage() {
   const [query, setQuery] = useState("");
   const alive = useRef(true);
   const now = useNow(1000);
+  // 132. The trash: how many are in it, its panel, and the button on each request that is over.
+  const [binOpen, setBinOpen] = useState(false);
+  const [binTick, setBinTick] = useState(0);
+  const [binCount] = useBinCount("client", binTick);
 
   const load = useCallback(() => {
     if (!USE_REAL_BACKEND) return;
@@ -234,6 +247,8 @@ export function ClientRequestsPage() {
     return () => { alive.current = false; };
   }, [load]);
 
+  const binChanged = useCallback(() => { setBinTick(tick => tick + 1); load(); }, [load]);
+  const mover = useMoveToTrash(binChanged);
   const invitations = useMemo(() => (loaded.kind === "ready" ? loaded.invitations : []), [loaded]);
   const anyOpen = invitations.some(item => invitationIsOpen(item.status));
   useEffect(() => {
@@ -290,22 +305,31 @@ export function ClientRequestsPage() {
           </div>
         )}
 
+        {mover.confirmDialog}
+        {binOpen && <RequestBinPanel role="client" onClose={() => { setBinOpen(false); }} onChanged={binChanged} />}
         {invitations.length === 0 ? (
           <div className="rh-empty" data-testid="requests-empty" style={{ marginTop: -40, position: "relative", zIndex: 1 }}>
-            <p style={{ margin: "0 0 12px", fontSize: 14.5, color: E.text, lineHeight: 1.6 }}>You have not asked a notary yet. Find a notary in the Notary Directory and choose Request this notary.</p>
-            <a href={ENOTARY_DIRECTORY_PATH} style={linkButton("maroon")}><Search size={16} aria-hidden /> Go to the Notary Directory</a>
+            <p style={{ margin: "0 0 12px", fontSize: 14.5, color: E.text, lineHeight: 1.6 }}>{binCount !== null && binCount > 0 ? "No request in your list. The ones you moved to the trash are still there." : "You have not asked a notary yet. Find a notary in the Notary Directory and choose Request this notary."}</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              <a href={ENOTARY_DIRECTORY_PATH} style={linkButton("maroon")}><Search size={16} aria-hidden /> Go to the Notary Directory</a>
+              {binCount !== null && binCount > 0 && <RequestBinButton count={binCount} onClick={() => { setBinOpen(true); }} />}
+            </div>
           </div>
         ) : (
           <>
             <div className="rh-tools" data-testid="history-tools">
               <h2>Your requests</h2>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", flex: "1 1 auto", justifyContent: "flex-end", minWidth: 0 }}>
+              <RequestBinButton count={binCount} onClick={() => { setBinOpen(true); }} />
               <div className="rh-search">
                 <label htmlFor="history-search" className="sr">Find a request</label>
                 <Search size={16} aria-hidden style={{ position: "absolute", left: 13, top: 14, color: E.quiet }} />
                 <input id="history-search" type="search" value={query} placeholder="Search notary, number or document" autoComplete="off"
                   onChange={event => { setQuery(event.target.value); }} />
               </div>
+              </div>
             </div>
+            {mover.problem !== null && <p className="rh-none" role="alert" data-testid="trash-problem" style={{ color: "#B0182B", marginBottom: 12 }}>{mover.problem}</p>}
 
             {shown.length === 0 ? (
               <p className="rh-none" data-testid="history-none">No request matches. Try fewer words, or another filter.</p>
@@ -386,6 +410,9 @@ export function ClientRequestsPage() {
                           </div>
                           <p className="rh-foot"><Scale size={13} aria-hidden /> The fee is paid directly to the notary, who confirms receipt.</p>
                         </>
+                      )}
+                      {canTrash(item) && (
+                        <div className="rh-trash">{mover.button(item.id, `Atty. ${name}`)}</div>
                       )}
                     </li>
                   );
