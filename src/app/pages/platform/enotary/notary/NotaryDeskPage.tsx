@@ -33,6 +33,7 @@ import { ActionButton, GF, Notice, T, useViewport } from "../../../../components
 import { useConfirm } from "../../../../components/platform/ConfirmDialog";
 import { USE_REAL_BACKEND } from "../../../../services/backend-flag";
 import { NotaryRequestView } from "./NotaryRequestView";
+import { DeclineReasonPanel } from "./DeclineReasonPanel";
 import { announceNavCountsChanged } from "../../../../services/nav-counts-signal";
 import {
   describePaymentError, errorCode, formatPesos, realEnotaryInvitationsService,
@@ -309,7 +310,7 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
 
   const finish = () => { if (alive.current) { setWorking(null); load(true); } };
 
-  const answer = async (request: DeskRequest, kind: "accept" | "decline") => {
+  const answer = async (request: DeskRequest, kind: "accept" | "decline", why = "") => {
     setWorking(request.id);
     setProblem(null);
     setSaid(null);
@@ -320,12 +321,29 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
         setSaid(`You accepted the request from ${request.client.name}. Once they start the session, you open the room from here.`);
         setAccepting(null);
       } else {
-        await withProcess("enotary-decline", request.client.name, () => realEnotaryInvitationsService.decline(request.id, reason), refused);
+        await withProcess("enotary-decline", request.client.name, () => realEnotaryInvitationsService.decline(request.id, why), refused);
         if (!alive.current) return;
         setSaid(`You declined the request from ${request.client.name}.`);
         setDeclining(null);
         setReason("");
       }
+    } catch (error) {
+      if (alive.current) setProblem(refused(error));
+    } finally {
+      finish();
+    }
+  };
+
+  /** 131. Declines a request nobody has taken yet, with the reason the client is shown. */
+  const declineNew = async (item: DeskIncoming, why: string) => {
+    setWorking(item.id);
+    setProblem(null);
+    setSaid(null);
+    try {
+      await withProcess("enotary-decline", item.client.name, () => realEnotaryInvitationsService.decline(item.id, why), refused);
+      if (!alive.current) return;
+      setSaid(`You declined the request from ${item.client.name}. They were told why.`);
+      setDeclining(null);
     } catch (error) {
       if (alive.current) setProblem(refused(error));
     } finally {
@@ -490,15 +508,8 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
           {open && (
             <div style={{ marginTop: 12 }}>
               {declining === request.id ? (
-                <div>
-                  <label htmlFor={`reason-${request.id}`} style={{ display: "block", fontSize: 13.5, fontWeight: 700, marginBottom: 6 }}>Reason (optional)</label>
-                  <input id={`reason-${request.id}`} value={reason} maxLength={120} placeholder="e.g. The document is outside my notarial jurisdiction." onChange={event => { setReason(event.target.value); }} style={fieldStyle()} />
-                  <p style={{ margin: "6px 0 0", fontSize: 12.5, color: E.quiet }}>At most 120 characters. The client is told you declined.</p>
-                  <div style={buttonRow()}>
-                    <ActionButton kind="danger" icon={X} disabled={busy} onClick={() => { void answer(request, "decline"); }}>{busy ? "Declining…" : "Decline the request"}</ActionButton>
-                    <ActionButton kind="secondary" disabled={busy} onClick={() => { setDeclining(null); setReason(""); }}>Keep it</ActionButton>
-                  </div>
-                </div>
+                <DeclineReasonPanel idBase={`decline-${request.id}`} who={request.client.name} busy={busy}
+                  onDecline={why => { void answer(request, "decline", why); }} onCancel={() => { setDeclining(null); }} />
               ) : accepting === request.id ? (
                 <div data-testid="accept-panel">
                   <p style={{ margin: "0 0 8px", fontSize: 14, color: E.text }}>
@@ -558,7 +569,8 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
   const focusedNew = focus === undefined ? null : incoming.find(item => item.id === focus) ?? null;
   if (focus !== undefined) {
     return <>{screenshotDialog}<NotaryRequestView focus={focus} request={focused} incoming={focusedNew} banner={banner} said={said} problem={problem} confirmDialog={confirmDialog}
-      renderRequest={renderRequest} onTake={item => { void take(item); }} taking={working} receivedAt={receivedAt} now={now} /></>;
+      renderRequest={renderRequest} onTake={item => { void take(item); }} onDecline={(item, why) => { void declineNew(item, why); }} canAnswer={desk.canAccept}
+      taking={working} receivedAt={receivedAt} now={now} /></>;
   }
 
   // 130. Accepted bookings whose time has not ended, soonest first: the notary's calendar.
@@ -663,7 +675,14 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
                       <Link to={`/app/enotary/desk/${encodeURIComponent(item.id)}`} className="dk-link" data-testid="desk-new-read"><FileText size={16} aria-hidden /> Read the document</Link>
                     )}
                     <ActionButton icon={Check} disabled={busy || msLeft <= 0} onClick={() => { void take(item); }}>{busy ? "Taking…" : "Take this request"}</ActionButton>
+                    {declining !== item.id && <ActionButton kind="secondary" disabled={busy || msLeft <= 0 || !desk.canAccept} onClick={() => { setDeclining(item.id); setAccepting(null); }}>Decline</ActionButton>}
                   </div>
+                  {declining === item.id && (
+                    <div style={{ marginTop: 12 }}>
+                      <DeclineReasonPanel idBase={`decline-${item.id}`} who={item.client.name} busy={busy}
+                        onDecline={why => { void declineNew(item, why); }} onCancel={() => { setDeclining(null); }} />
+                    </div>
+                  )}
                 </DeskCard>
               );
             })}

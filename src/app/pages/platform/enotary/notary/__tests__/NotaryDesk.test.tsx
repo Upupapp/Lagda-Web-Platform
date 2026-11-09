@@ -234,17 +234,34 @@ describe("accepting and declining", () => {
     expect(screen.getByRole("button", { name: "Accept" })).toBeInTheDocument();
   });
 
-  it("declines with a reason cut to 120 characters", async () => {
+  it("declines only with a reason: one of the common ones, or another in 120 characters at most", async () => {
     decline.mockResolvedValue(undefined);
     await open(deskOf());
     press(screen.getByRole("button", { name: "Decline" }));
-    const box = screen.getByLabelText("Reason (optional)");
+    // No reason chosen: nothing is sent.
+    press(screen.getByRole("button", { name: "Decline the request" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Choose a reason. The client is shown it.");
+    expect(decline).not.toHaveBeenCalled();
+    press(screen.getByRole("radio", { name: "Another reason" }));
+    press(screen.getByRole("button", { name: "Decline the request" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Write the reason in a few words.");
+    const box = screen.getByLabelText("Your reason");
     expect(box).toHaveAttribute("maxlength", "120");
     fireEvent.change(box, { target: { value: "Out of town" } });
     press(screen.getByRole("button", { name: "Decline the request" }));
     await settle();
     expect(decline).toHaveBeenCalledWith("eni_1", "Out of town");
     expect(screen.getByRole("status")).toHaveTextContent("You declined the request from Ben Lim.");
+  });
+
+  it("declines with one of the common reasons", async () => {
+    decline.mockResolvedValue(undefined);
+    await open(deskOf());
+    press(screen.getByRole("button", { name: "Decline" }));
+    press(screen.getByRole("radio", { name: "The document is outside my notarial jurisdiction." }));
+    press(screen.getByRole("button", { name: "Decline the request" }));
+    await settle();
+    expect(decline).toHaveBeenCalledWith("eni_1", "The document is outside my notarial jurisdiction.");
   });
 
   it("can back out of declining", async () => {

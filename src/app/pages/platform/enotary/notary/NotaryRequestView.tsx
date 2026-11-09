@@ -5,7 +5,7 @@
 // The actions themselves (take, accept with the fee choice, decline, confirm a payment, start the session) are the
 // desk's, handed in as `renderRequest`: this view lays the page out around them.
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { ActionButton, GF, Notice } from "../../../../components/system/design-system";
 import { E } from "../EnotaryChrome";
@@ -17,6 +17,7 @@ import { OnrampNote, Panel, PanelTitle, bodyText, linkButton } from "../onramp-u
 import { ExpiryClock, countdownText, expiryLabel, stampLabel } from "../requests/expiry";
 import { Clock } from "lucide-react";
 import { DESK_CARD_STYLES } from "./DeskCard";
+import { DeclineReasonPanel } from "./DeclineReasonPanel";
 import type { DeskIncoming, DeskRequest } from "../../../../services/real/enotary-invitations.service";
 
 type Banner = { tone: "info" | "warn"; text: string; link: string; label: string } | null;
@@ -50,11 +51,14 @@ const NEXT_STEPS: readonly { title: string; text: string }[] = [
   { title: "You state the notarial act and your fee.", text: "Any fee is paid to you directly, and it does not hold up your seal." },
 ];
 
-export function NotaryRequestView({ focus, request, incoming, banner, said, problem, confirmDialog, renderRequest, onTake, taking, receivedAt, now }: {
+export function NotaryRequestView({ focus, request, incoming, banner, said, problem, confirmDialog, renderRequest, onTake, onDecline, canAnswer = true, taking, receivedAt, now }: {
   focus: string; request: DeskRequest | null; incoming: DeskIncoming | null; banner: Banner; said: string | null; problem: string | null;
   confirmDialog: ReactNode; renderRequest: (request: DeskRequest) => ReactNode; onTake: (item: DeskIncoming) => void;
+  /** 131. Declines the request without taking it, with the reason the client is shown. */
+  onDecline?: (item: DeskIncoming, reason: string) => void; canAnswer?: boolean;
   taking: string | null; receivedAt: number; now: number;
 }) {
+  const [declining, setDeclining] = useState(false);
   const client = request?.client ?? incoming?.client ?? null;
   const heading = headingOf(request, incoming);
   const received = request?.receivedAt ?? incoming?.receivedAt ?? null;
@@ -141,10 +145,18 @@ export function NotaryRequestView({ focus, request, incoming, banner, said, prob
         </Panel>
       )}
 
-      {incoming !== null && (
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+      {incoming !== null && !declining && (
+        <div style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: 10 }}>
+          {onDecline !== undefined && <ActionButton kind="secondary" disabled={taking === incoming.id || msLeft <= 0 || !canAnswer} onClick={() => { setDeclining(true); }}>Decline</ActionButton>}
           <ActionButton disabled={taking === incoming.id || msLeft <= 0} onClick={() => { onTake(incoming); }}>{taking === incoming.id ? "Taking…" : "Take this request"}</ActionButton>
         </div>
+      )}
+      {incoming !== null && declining && onDecline !== undefined && (
+        <Panel testId="decline-new">
+          <PanelTitle>Decline this request</PanelTitle>
+          <DeclineReasonPanel idBase={`decline-${incoming.id}`} who={incoming.client.name} busy={taking === incoming.id}
+            onDecline={why => { onDecline(incoming, why); }} onCancel={() => { setDeclining(false); }} />
+        </Panel>
       )}
 
       {request !== null && <><style>{DESK_CARD_STYLES}</style><ul style={{ listStyle: "none", margin: 0, padding: 0 }}>{renderRequest(request)}</ul></>}
