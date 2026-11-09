@@ -1,7 +1,8 @@
 // 131. The document attached to a request: the client attaches, replaces and removes it; the notary only reads it.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 vi.mock("../../../../services/backend-flag", () => ({ USE_REAL_BACKEND: true, API_BASE_URL: "http://api.test" }));
 
@@ -21,6 +22,8 @@ import { RequestDocumentPanel } from "../RequestDocumentPanel";
 import { ApiError } from "../../../../services/api-client";
 
 const DOC = { name: "Affidavit of Loss.pdf", size: 3_072, addedAt: "2026-11-09T01:04:00.000Z" };
+/** The input is hidden behind its button, and the PNG case must reach the page's own check. */
+const user = () => userEvent.setup({ applyAccept: false, pointerEventsCheck: 0 });
 const pdf = () => new File([new Uint8Array([37, 80, 68, 70, 45])], "deed.pdf", { type: "application/pdf" });
 
 describe("the document attached to a request", () => {
@@ -31,18 +34,18 @@ describe("the document attached to a request", () => {
     const onChanged = vi.fn();
     render(<RequestDocumentPanel invitationId="eni_1" document={null} role="client" editable onChanged={onChanged} />);
     expect(screen.getByRole("button", { name: /Attach the PDF/ })).toBeInTheDocument();
-    fireEvent.change(screen.getByTestId("request-document-input"), { target: { files: [pdf()] } });
+    await user().upload(screen.getByTestId("request-document-input"), pdf());
     await waitFor(() => { expect(onChanged).toHaveBeenCalledWith(DOC); });
     expect(attachDocument).toHaveBeenCalledWith("eni_1", expect.any(File));
   });
 
   it("refuses a file that is not a PDF before sending it, and says the server's reason in plain words", async () => {
     render(<RequestDocumentPanel invitationId="eni_1" document={null} role="client" editable />);
-    fireEvent.change(screen.getByTestId("request-document-input"), { target: { files: [new File(["x"], "photo.png", { type: "image/png" })] } });
+    await user().upload(screen.getByTestId("request-document-input"), new File(["x"], "photo.png", { type: "image/png" }));
     expect(await screen.findByText("Only a PDF can be notarized here.")).toBeInTheDocument();
     expect(attachDocument).not.toHaveBeenCalled();
     attachDocument.mockRejectedValue(new ApiError(422, { code: "session_document_rejected", message: "The file was rejected by security scanning." } as never, "x"));
-    fireEvent.change(screen.getByTestId("request-document-input"), { target: { files: [pdf()] } });
+    await user().upload(screen.getByTestId("request-document-input"), pdf());
     expect(await screen.findByText("The file was rejected by security scanning.")).toBeInTheDocument();
   });
 
@@ -52,7 +55,7 @@ describe("the document attached to a request", () => {
     render(<RequestDocumentPanel invitationId="eni_1" document={DOC} role="client" editable onChanged={onChanged} />);
     expect(screen.getByTestId("request-document-file")).toHaveTextContent("Affidavit of Loss.pdf");
     expect(screen.getByRole("button", { name: /Replace the PDF/ })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+    await user().click(screen.getByRole("button", { name: "Remove" }));
     await waitFor(() => { expect(onChanged).toHaveBeenCalledWith(null); });
   });
 
@@ -62,7 +65,7 @@ describe("the document attached to a request", () => {
     render(<RequestDocumentPanel invitationId="eni_1" document={DOC} role="notary" editable={false} />);
     expect(screen.getByText(/Read it before you accept and before the call/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Replace the PDF|Attach the PDF|Remove/ })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Open the document" }));
+    await user().click(screen.getByRole("button", { name: "Open the document" }));
     expect(await screen.findByTestId("request-document-preview")).toHaveAttribute("src", "blob:doc");
     expect(screen.getByRole("link", { name: "Open in a new tab" })).toHaveAttribute("href", "blob:doc");
   });
