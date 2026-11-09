@@ -145,3 +145,28 @@
   .how-n { font-size: 19px; } .how-steps h3 { font-size: 18px; } .how-steps p { font-size: 15.500px; }
 }
 
+
+/* ── the attached PDF in a pop-up at the centre of the page, with "Change file" (131) ── */
+.req-doc-acts { display: inline-flex; gap: 8px; margin-left: auto; }
+.req-doc-file .req-doc-acts .btn { margin-left: 0; }
+body.doc-view-open { overflow: hidden; }
+.doc-view { position: fixed; inset: 0; z-index: 2147483000; display: grid; place-items: center; padding: 16px; background: rgba(11,31,68,.55); }
+.doc-view .dv-panel { display: flex; flex-direction: column; width: min(960px, 100%); height: min(88vh, 1100px); background: var(--paper, #fff); border-radius: 14px; box-shadow: 0 24px 60px rgba(11,31,68,.35); overflow: hidden; }
+.doc-view .dv-head { display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px 12px; border-bottom: 1px solid #DDE6EF; }
+.doc-view .dv-meta { flex: 1 1 auto; min-width: 0; }
+.doc-view .dv-meta p { margin: 0; }
+.doc-view .dv-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #8C1D3F; }
+.doc-view .dv-name { margin-top: 4px !important; font-weight: 700; font-size: 16px; color: #0B1F44; overflow-wrap: anywhere; }
+.doc-view .dv-size { font-size: 13px; color: #647789; }
+.doc-view .dv-x { flex: 0 0 auto; width: 44px; height: 44px; border: 1px solid #DDE6EF; border-radius: 10px; background: #fff; color: #0B1F44; font-size: 26px; line-height: 1; cursor: pointer; }
+.doc-view .dv-x:focus-visible, .doc-view .dv-foot .btn:focus-visible { outline: 3px solid var(--sky, #0A84D6); outline-offset: 2px; }
+.doc-view .dv-body { flex: 1 1 auto; min-height: 0; background: #E9EDF3; }
+.doc-view .dv-body iframe { display: block; width: 100%; height: 100%; border: 0; }
+.doc-view .dv-err { margin: 10px 18px 0; }
+.doc-view .dv-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 18px 16px; border-top: 1px solid #DDE6EF; }
+.doc-view .dv-input { display: none; }
+@media (max-width: 560px) {
+  .doc-view { padding: 0; }
+  .doc-view .dv-panel { width: 100%; height: 100%; border-radius: 0; }
+  .doc-view .dv-foot .btn { flex: 1 1 0; }
+}

@@ -841,12 +841,65 @@
   function docForm(sel) {
     var f = sel.file;
     return '<fieldset class="req-doc"><legend><b>The document to be notarized</b> <span class="fine">(optional)</span></legend>' +
-      (f ? '<p class="req-doc-file" role="status"><b>' + esc(f.name) + "</b> · PDF · " + esc(fileSize(f.size)) + ' <button type="button" class="btn outline small" data-doc-remove>Remove</button></p>'
+      (f ? '<p class="req-doc-file" role="status"><b>' + esc(f.name) + "</b> · PDF · " + esc(fileSize(f.size)) + ' <span class="req-doc-acts"><button type="button" class="btn outline small" data-doc-view>View</button><button type="button" class="btn outline small" data-doc-remove>Remove</button></span></p>'
         : '<div class="field"><label for="rf-doc">Attach the PDF</label><input id="rf-doc" type="file" accept="application/pdf,.pdf"></div>') +
       (sel.fileError ? '<p class="err-box" role="alert">' + esc(sel.fileError) + "</p>" : "") +
       '<p class="fine left">PDF only, up to 20 MB. The notary can read it before they accept and before the call. You can also add it later, on your request’s page or in the session.</p>' +
       "</fieldset>";
   }
+  /** The page's own checks on a chosen file: "" when it may be attached, else why not. */
+  function fileProblem(f) {
+    if (!f) return "";
+    if (!/\.pdf$/i.test(f.name) && f.type !== "application/pdf") return "Only a PDF can be notarized here.";
+    if (f.size > DOC_MAX) return "The file is larger than 20 MB.";
+    if (f.size === 0) return "The file is empty.";
+    return "";
+  }
+  // ── the attached PDF, viewed in a pop-up at the centre of the page, with "Change file" ──
+  var VIEW = null;
+  function closeDocView() {
+    if (!VIEW) return;
+    URL.revokeObjectURL(VIEW.url); VIEW.el.remove(); document.body.classList.remove("doc-view-open");
+    var back = VIEW.back; VIEW = null;
+    var b = document.querySelector("[data-doc-view]") || back; if (b && b.focus) b.focus();
+  }
+  function fillDocView() {
+    var f = SEL && SEL.file; if (!VIEW || !f) return;
+    URL.revokeObjectURL(VIEW.url); VIEW.url = URL.createObjectURL(f);
+    VIEW.el.querySelector(".dv-name").textContent = f.name;
+    VIEW.el.querySelector(".dv-size").textContent = "PDF · " + fileSize(f.size);
+    VIEW.el.querySelector("iframe").src = VIEW.url;
+    VIEW.el.querySelector(".dv-err").hidden = true;
+  }
+  function openDocView(from) {
+    if (!SEL || !SEL.file) return;
+    closeDocView();
+    var el = document.createElement("div");
+    el.className = "doc-view";
+    el.innerHTML = '<div class="dv-panel" role="dialog" aria-modal="true" aria-labelledby="dv-title">' +
+      '<div class="dv-head"><div class="dv-meta"><p class="dv-eyebrow" id="dv-title">The document to be notarized</p><p class="dv-name"></p><p class="dv-size"></p></div>' +
+      '<button type="button" class="dv-x" data-dv-close aria-label="Close">&times;</button></div>' +
+      '<div class="dv-body"><iframe title="The attached PDF"></iframe></div>' +
+      '<p class="err-box dv-err" role="alert" hidden></p>' +
+      '<div class="dv-foot"><button type="button" class="btn outline" data-dv-change>Change file</button><input id="rf-doc-change" type="file" accept="application/pdf,.pdf" class="dv-input" tabindex="-1" aria-hidden="true">' +
+      '<button type="button" class="btn" data-dv-close>Done</button></div></div>';
+    document.body.appendChild(el); document.body.classList.add("doc-view-open");
+    VIEW = { el: el, url: "", back: from };
+    fillDocView();
+    el.addEventListener("click", function (e) {
+      if (e.target === el || e.target.closest("[data-dv-close]")) closeDocView();
+      else if (e.target.closest("[data-dv-change]")) el.querySelector("#rf-doc-change").click();
+    });
+    el.querySelector("#rf-doc-change").addEventListener("change", function (e) {
+      var picked = e.target.files && e.target.files[0]; e.target.value = "";
+      if (!picked) return;
+      var why = fileProblem(picked), err = el.querySelector(".dv-err");
+      if (why) { err.textContent = why; err.hidden = false; return; }
+      SEL.file = picked; SEL.fileError = ""; fillDocView(); redraw(false);
+    });
+    el.querySelector(".dv-x").focus();
+  }
+
   /** Sends the attached file to a request just made. Never rejects: true when it was kept. */
   function sendDocument(id, file) {
     var csrf = cookie("lagda_csrf"), form = new FormData();
@@ -967,7 +1020,7 @@
   }
 
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-go],[data-open],[data-select],[data-close],[data-page],[data-clear],[data-step],[data-idv-start],[data-idv-ask],[data-idv-retry],[data-idv-reload],[data-register],[data-request],[data-doc-remove],#clear,#veil,[data-wait-hide],[data-wait-show],[data-sel-wrap]");
+    var t = e.target.closest("[data-go],[data-open],[data-select],[data-close],[data-page],[data-clear],[data-step],[data-idv-start],[data-idv-ask],[data-idv-retry],[data-idv-reload],[data-register],[data-request],[data-doc-remove],[data-doc-view],#clear,#veil,[data-wait-hide],[data-wait-show],[data-sel-wrap]");
     if (!t) return;
     if (t.id === "veil") { if (e.target === t) closeProfile(); return; }
     if (t.hasAttribute("data-go")) { e.preventDefault(); if (t.hasAttribute("data-forget")) forget(); go(t.getAttribute("data-go")); }
@@ -981,6 +1034,7 @@
     else if (t.hasAttribute("data-clear") || t.id === "clear") reset();
     else if (!SEL) return;
     else if (t.hasAttribute("data-step")) { if (t.hasAttribute("data-outcome")) SEL.outcome = t.getAttribute("data-outcome"); SEL.step = t.getAttribute("data-step"); SEL.error = ""; store(CHECK, null); redraw(true); }
+    else if (t.hasAttribute("data-doc-view")) openDocView(t);
     else if (t.hasAttribute("data-doc-remove")) { SEL.file = null; SEL.fileError = ""; redraw(false); var fi = document.getElementById("rf-doc"); if (fi) fi.focus(); }
     else if (t.hasAttribute("data-idv-start")) { if (SEL.agree) startCheck(); }
     else if (t.hasAttribute("data-idv-ask")) ask();
@@ -1035,11 +1089,8 @@
     var id = e.target.id;
     if (SEL && id === "rf-doc") {
       var picked = e.target.files && e.target.files[0];
-      SEL.fileError = "";
-      if (picked && !/\.pdf$/i.test(picked.name) && picked.type !== "application/pdf") SEL.fileError = "Only a PDF can be notarized here.";
-      else if (picked && picked.size > DOC_MAX) SEL.fileError = "The file is larger than 20 MB.";
-      else if (picked && picked.size === 0) SEL.fileError = "The file is empty.";
-      else SEL.file = picked || null;
+      SEL.fileError = fileProblem(picked);
+      if (!SEL.fileError) SEL.file = picked || null;
       redraw(false); var fd = document.querySelector("[data-doc-remove]") || document.getElementById("rf-doc"); if (fd) fd.focus(); return;
     }
     if (SEL && id === "rb-day") { var bd = booking(SEL); bd.day = e.target.value; bd.at = null; SEL.error = ""; redraw(false); var dd = document.getElementById("rb-day"); if (dd) dd.focus(); return; }
@@ -1065,6 +1116,15 @@
     if (SEL && (e.target.id === "rd-city" || e.target.id === "rd-province")) { details(SEL)[e.target.id === "rd-city" ? "city" : "province"] = e.target.value; syncRequestButton(); return; }
     if (e.target.id === "req-email") { if (SEL) SEL.email = e.target.value; return; } if (e.target.id !== "f-q") return; F.q = e.target.value; F.page = 0; clearTimeout(typing); typing = setTimeout(list, 160); });
   document.addEventListener("keydown", function (e) {
+    if (VIEW) {
+      // The document pop-up: Escape closes it, and Tab stays inside it.
+      if (e.key === "Escape") { e.preventDefault(); closeDocView(); return; }
+      if (e.key === "Tab") {
+        var stops = [].slice.call(VIEW.el.querySelectorAll("button, iframe")), i = stops.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); stops[stops.length - 1].focus(); } else if (!e.shiftKey && i === stops.length - 1) { e.preventDefault(); stops[0].focus(); }
+      }
+      return;
+    }
     var at = e.target.closest ? e.target : document.body, modal = document.getElementById("modal-root").firstElementChild;
     if (MENU) {
       var rows = [].slice.call(document.querySelectorAll("#menu a")), k = rows.indexOf(document.activeElement);
