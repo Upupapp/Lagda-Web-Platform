@@ -953,17 +953,62 @@
   // ── 131. the document to be notarized, attached to the request so the notary can read it before the call ──
   var DOC_MAX = 20 * 1024 * 1024;
   function fileSize(n) { return n >= 1024 * 1024 ? (n / 1024 / 1024).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB"; }
+  // The document section's pictures: a stack of pages with a PDF badge and a small seal (soft depth, no photo), and
+  // three small icons for why it helps. Inline SVG, drawn in LAGDA's navy, maroon and gold.
+  var DOC_ART = '<svg class="dd-art" viewBox="0 0 120 120" aria-hidden="true" focusable="false">' +
+    '<defs><linearGradient id="ddPage" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E9EFF7"/></linearGradient>' +
+    '<linearGradient id="ddBadge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A3264B"/><stop offset="1" stop-color="#7A1535"/></linearGradient>' +
+    '<radialGradient id="ddSeal" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#F3D9A4"/><stop offset="1" stop-color="#B98A2E"/></radialGradient>' +
+    '<filter id="ddShadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#0B1F44" flood-opacity=".22"/></filter></defs>' +
+    '<g filter="url(#ddShadow)">' +
+      '<rect x="30" y="14" width="58" height="76" rx="6" fill="#DCE5F1" transform="rotate(8 59 52)"/>' +
+      '<rect x="24" y="18" width="58" height="76" rx="6" fill="#EEF3F9" transform="rotate(-6 53 56)"/>' +
+      '<path d="M28 16h40l16 16v62a6 6 0 0 1-6 6H28a6 6 0 0 1-6-6V22a6 6 0 0 1 6-6z" fill="url(#ddPage)" stroke="#C7D4E5"/>' +
+      '<path d="M68 16v12a4 4 0 0 0 4 4h12z" fill="#D5E0EE"/>' +
+      '<rect x="31" y="40" width="36" height="4" rx="2" fill="#C2CFE0"/><rect x="31" y="50" width="44" height="4" rx="2" fill="#D3DDEA"/>' +
+      '<rect x="31" y="60" width="40" height="4" rx="2" fill="#D3DDEA"/><rect x="31" y="70" width="28" height="4" rx="2" fill="#D3DDEA"/>' +
+      '<rect x="14" y="74" width="40" height="20" rx="5" fill="url(#ddBadge)"/><text x="34" y="88.5" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="12" font-weight="700" fill="#fff" letter-spacing=".5">PDF</text>' +
+      '<circle cx="86" cy="86" r="15" fill="url(#ddSeal)" stroke="#fff" stroke-width="3"/><path d="M79.5 86.5l4.5 4.5 8.5-9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '</g></svg>';
+  var DOC_ICON = {
+    lock: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+    eye: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    file: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>',
+    upload: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>',
+  };
   function docForm(sel) {
     var f = sel.file;
-    return '<fieldset class="req-doc"><legend><b>The document to be notarized</b> <span class="fine">(optional)</span></legend>' +
-      (f ? '<p class="req-doc-file" role="status"><b>' + esc(f.name) + "</b> · PDF · " + esc(fileSize(f.size)) + ' <span class="req-doc-acts"><button type="button" class="btn outline small" data-doc-view>View</button><button type="button" class="btn outline small" data-doc-remove>Remove</button></span></p>'
-        : '<div class="field req-doc-pick"><span class="req-doc-label" id="rf-doc-label">Upload the document <span class="fine">(PDF format only)</span></span>' +
+    var why = '<ul class="dd-why">' +
+      "<li>" + DOC_ICON.eye + "<span><b>Read before accepting.</b> The notary sees exactly what you need notarized.</span></li>" +
+      "<li>" + DOC_ICON.clock + "<span><b>A shorter call.</b> Nothing to upload during the session.</span></li>" +
+      "<li>" + DOC_ICON.lock + "<span><b>Private.</b> Only you and this notary can open it.</span></li></ul>";
+    var body = f
+      ? '<div class="dd-file" role="status"><span class="dd-file-icon">' + DOC_ICON.file + '<em>PDF</em></span>' +
+          '<span class="dd-file-meta"><b>' + esc(f.name) + "</b><small>PDF · " + esc(fileSize(f.size)) + ' · ready to send with your request</small></span>' +
+          '<span class="req-doc-acts"><button type="button" class="btn outline small" data-doc-view>View</button><button type="button" class="btn outline small" data-doc-remove>Remove</button></span></div>'
+      : '<div class="dd-drop" data-doc-drop>' + DOC_ART +
+          '<div class="dd-copy"><p class="dd-title" id="rf-doc-label">Upload the document <span>(PDF format only)</span></p>' +
+          '<p class="dd-sub">Drag the file here, or</p>' +
           '<input id="rf-doc" class="req-doc-input" type="file" accept="application/pdf,.pdf" aria-labelledby="rf-doc-label" aria-describedby="rf-doc-help">' +
-          '<label for="rf-doc" class="btn outline req-doc-btn">Choose a PDF file</label><span class="req-doc-none">No file chosen</span></div>') +
+          '<label for="rf-doc" class="btn dd-btn">' + DOC_ICON.upload + "Choose a PDF file</label>" +
+          '<p class="dd-limit">PDF only (.pdf) · up to 20 MB</p></div></div>';
+    return '<fieldset class="req-doc"><legend><b>The document to be notarized</b> <span class="dd-pill">Optional</span></legend>' +
+      '<div class="dd-card">' + body + why + "</div>" +
       (sel.fileError ? '<p class="err-box" role="alert">' + esc(sel.fileError) + "</p>" : "") +
-      '<p class="fine left" id="rf-doc-help">Accepted format: PDF only (.pdf), up to 20 MB. Scanned papers and photos must first be saved as a PDF. The notary can read the document before accepting your request and before the call. You may also add it later, on your request’s page or during the session.</p>' +
+      '<p class="fine left" id="rf-doc-help">Scanned papers and photos must first be saved as a PDF. You may also add the document later, on your request’s page or during the session.</p>' +
       "</fieldset>";
   }
+  // Dropping a file on the document area chooses it, with the same checks as the button.
+  document.addEventListener("dragover", function (e) { var z = e.target.closest && e.target.closest("[data-doc-drop]"); if (!z) return; e.preventDefault(); z.classList.add("is-over"); });
+  document.addEventListener("dragleave", function (e) { var z = e.target.closest && e.target.closest("[data-doc-drop]"); if (z && !z.contains(e.relatedTarget)) z.classList.remove("is-over"); });
+  document.addEventListener("drop", function (e) {
+    var z = e.target.closest && e.target.closest("[data-doc-drop]"); if (!z || !SEL) return;
+    e.preventDefault(); z.classList.remove("is-over");
+    var picked = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (!picked) return;
+    SEL.fileError = fileProblem(picked); if (!SEL.fileError) SEL.file = picked;
+    redraw(false); var fd = document.querySelector("[data-doc-view]") || document.getElementById("rf-doc"); if (fd) fd.focus();
+  });
   /** The page's own checks on a chosen file: "" when it may be attached, else why not. */
   function fileProblem(f) {
     if (!f) return "";

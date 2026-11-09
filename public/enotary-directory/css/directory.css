@@ -204,3 +204,44 @@ body.dir-busy-open { overflow: hidden; }
 .req-doc-btn { cursor: pointer; min-height: 44px; display: inline-flex; align-items: center; }
 .req-doc-input:focus-visible + .req-doc-btn { outline: 3px solid var(--sky, #0A84D6); outline-offset: 2px; }
 .req-doc-none { font-size: 14px; color: #56677D; }
+
+/* ── "The document to be notarized": a card that stands out (layered paper art, drop area, three reasons) ── */
+.req-doc legend { display: flex; align-items: center; gap: 10px; }
+.dd-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; background: #EEF3F9; border: 1px solid #D3DEEC; color: #33475B; font-size: 12px; font-weight: 700; letter-spacing: .02em; }
+.dd-card { border: 1px solid #D3DEEC; border-radius: 16px; background: linear-gradient(180deg, #FFFFFF 0%, #F7FAFD 100%); box-shadow: 0 1px 2px rgba(11,31,68,.04), 0 12px 28px -18px rgba(11,31,68,.35); overflow: hidden; }
+.dd-drop { display: flex; align-items: center; gap: 22px; margin: 14px; padding: 18px 20px; border: 2px dashed #B9C9DD; border-radius: 12px; background: radial-gradient(120% 140% at 0% 0%, #F3F7FC 0%, #FFFFFF 60%); transition: border-color .2s ease, background .2s ease, transform .2s ease; }
+.dd-drop.is-over { border-color: #8C1D3F; background: #FAEFF2; transform: scale(1.01); }
+.dd-art { flex: 0 0 auto; width: 104px; height: 104px; transition: transform .35s cubic-bezier(.22,1,.36,1); }
+.dd-drop:hover .dd-art, .dd-drop.is-over .dd-art { transform: translateY(-3px) rotate(-2deg); }
+.dd-copy { min-width: 0; }
+.dd-copy p { margin: 0; }
+.dd-title { font-size: 17px; font-weight: 700; color: #0B1F44; }
+.dd-title span { font-size: 13px; font-weight: 600; color: #8C1D3F; }
+.dd-sub { margin-top: 4px !important; font-size: 14px; color: #56677D; }
+.dd-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; min-height: 44px; padding: 0 18px; cursor: pointer; }
+.dd-btn svg, .dd-why svg, .dd-file-icon svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.dd-btn svg { width: 18px; height: 18px; }
+.req-doc-input:focus-visible + .dd-btn { outline: 3px solid var(--sky, #0A84D6); outline-offset: 2px; }
+.dd-limit { margin-top: 8px !important; font-size: 12.5px; color: #647789; }
+.dd-why { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 0; padding: 0; list-style: none; border-top: 1px solid #E3EAF2; background: #FBFCFE; }
+.dd-why li { display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; font-size: 13px; line-height: 1.45; color: #33475B; }
+.dd-why li + li { border-left: 1px solid #E3EAF2; }
+.dd-why li b { color: #0B1F44; }
+.dd-why svg { flex: 0 0 auto; width: 30px; height: 30px; padding: 6px; border-radius: 9px; background: #FAEFF2; color: #8C1D3F; box-sizing: border-box; }
+.dd-file { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin: 14px; padding: 14px 16px; border: 1px solid #CBE3D3; border-radius: 12px; background: linear-gradient(180deg, #F4FBF6 0%, #FFFFFF 100%); }
+.dd-file-icon { position: relative; flex: 0 0 auto; display: grid; place-items: center; width: 48px; height: 56px; border-radius: 10px; background: #FFFFFF; border: 1px solid #D3DEEC; box-shadow: 0 6px 14px -8px rgba(11,31,68,.45); color: #56677D; }
+.dd-file-icon svg { width: 26px; height: 26px; }
+.dd-file-icon em { position: absolute; left: -6px; bottom: 6px; padding: 1px 5px; border-radius: 4px; background: #8C1D3F; color: #fff; font-style: normal; font-size: 9.5px; font-weight: 700; letter-spacing: .04em; }
+.dd-file-meta { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
+.dd-file-meta b { display: block; color: #0B1F44; font-size: 15px; }
+.dd-file-meta small { display: block; margin-top: 2px; font-size: 12.5px; color: #17703C; }
+@media (max-width: 640px) {
+  .dd-drop { flex-direction: column; text-align: center; gap: 12px; }
+  .dd-why { grid-template-columns: minmax(0, 1fr); }
+  .dd-why li + li { border-left: 0; border-top: 1px solid #E3EAF2; }
+}
+@media (prefers-reduced-motion: reduce) { .dd-drop, .dd-art { transition: none; } .dd-drop.is-over { transform: none; } .dd-drop:hover .dd-art { transform: none; } }
+@media (max-width: 640px) {
+  .dd-title span { display: block; margin-top: 2px; }
+  .dd-sub { display: none; }  /* a phone has no file to drag */
+}
