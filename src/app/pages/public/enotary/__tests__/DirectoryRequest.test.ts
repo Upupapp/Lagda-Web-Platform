@@ -142,12 +142,12 @@ describe("after the identity step, where requests to notaries are offered", () =
     expect(assigned).toEqual(["/app/enotary/requests/eni_77"]);
   });
 
-  it("asks what is needed first: abroad is coming soon, a will cannot be chosen, a deed carries its notice, and the request waits", async () => {
+  it("asks what is needed first: no choice of being abroad, a will cannot be chosen, a deed carries its notice, and the request waits", async () => {
     await openDirectory();
     click("[data-step=interest]");
     await pass(20);
-    expect((document.getElementById("rd-abroad") as HTMLInputElement).disabled).toBe(true);
-    expect(view()).toContain("Coming soon");
+    expect(document.getElementById("rd-abroad")).toBeNull();
+    expect(view()).not.toContain("Outside the Philippines");
     expect((document.querySelector("#rd-kind option[value=will]") as HTMLOptionElement).disabled).toBe(true);
     expect((document.querySelector("[data-request]") as HTMLButtonElement).disabled).toBe(true);
     await fillDetails({ kind: "deed_of_sale" });

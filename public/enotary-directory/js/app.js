@@ -774,8 +774,6 @@
       '<p class="fine left" id="rd-blocked" role="note" hidden>Wills and certified copies of public records cannot be notarized remotely.</p>' +
       '<div class="req-where"><b>Where will you be during the call?</b>' +
         '<label class="idv-agree"><input type="radio" name="rd-where" id="rd-ph" checked><span>In the Philippines</span></label>' +
-        '<label class="idv-agree" aria-disabled="true"><input type="radio" name="rd-where" id="rd-abroad" disabled><span>Outside the Philippines <em class="idchip">Coming soon</em></span></label>' +
-        '<p class="fine left">LAGDA eNotary serves people who are in the Philippines for now. Notarizing for Filipinos abroad is coming soon.</p>' +
         '<div class="two"><div class="field"><label for="rd-city">City or municipality</label><input id="rd-city" type="text" maxlength="80" autocomplete="address-level2" value="' + esc(d.city) + '"></div>' +
         '<div class="field"><label for="rd-province">Province</label><input id="rd-province" type="text" maxlength="80" autocomplete="address-level1" value="' + esc(d.province) + '"></div></div></div>' +
       '<label class="idv-agree"><input type="checkbox" id="rd-abroad-use"' + (d.usedAbroad ? " checked" : "") + '><span>The document will be used outside the Philippines.</span></label>' +
