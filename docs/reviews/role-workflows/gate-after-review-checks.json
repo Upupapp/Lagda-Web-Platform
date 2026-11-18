@@ -1,0 +1,21 @@
+{
+  "scenario": "gate",
+  "stage": "after-review",
+  "requestState": "partially-completed",
+  "states": [
+    "active",
+    "signed",
+    "waiting"
+  ],
+  "completedCount": 1,
+  "requiredCount": 3,
+  "invitationCount": 2,
+  "deniedChecks": [
+    {
+      "role": "signer",
+      "continueStatus": 404,
+      "error": "SIGNING_UNAVAILABLE"
+    }
+  ],
+  "completedPdfUnavailable": true
+}

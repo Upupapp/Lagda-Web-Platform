@@ -212,9 +212,9 @@ function InteractiveLogo() {
 // ── Transaction dashboard mockup ──────────────────────────────────────────────
 function DashboardMockup() {
   const docs = [
-    { name: "Professional Services Agreement", status: "Awaiting Approval", statusColor: "#F59E0B", updated: "Just now" },
-    { name: "Engagement Letter — Reyes Family", status: "Completed",         statusColor: "#22C55E", updated: "Yesterday" },
-    { name: "Board Resolution No. 12",          status: "Sent",              statusColor: "#0078D4", updated: "2 days ago" },
+    { name: "Professional Services Agreement", status: "Awaiting Approval", statusColor: ON_LIGHT.gold, updated: "Just now" },
+    { name: "Engagement Letter — Reyes Family", status: "Completed",         statusColor: ON_LIGHT.success, updated: "Yesterday" },
+    { name: "Board Resolution No. 12",          status: "Sent",              statusColor: ON_LIGHT.azure, updated: "2 days ago" },
   ];
 
   return (

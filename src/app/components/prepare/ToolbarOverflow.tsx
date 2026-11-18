@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../utils/on-light";
 // The field editor's secondary controls, on a narrow screen.
 //
 // The toolbar carried fourteen buttons in one non-wrapping row. At 320px the
@@ -18,7 +19,7 @@ import { Z } from "../../utils/z-index";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 const NAVY = "#07111F";
-const SILVER = "#8A9BAE";
+const SILVER = ON_LIGHT.muted;
 
 export interface ToolbarItem {
   readonly id: string;
@@ -59,6 +60,7 @@ export function ToolbarOverflow({ items, zoom }: {
         onClick={() => { setOpen(v => !v); }}
         aria-expanded={open}
         aria-haspopup="menu"
+        className="prep-editor-more"
         aria-label="More editor actions"
         title="More actions"
         style={{

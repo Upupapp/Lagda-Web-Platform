@@ -1,0 +1,92 @@
+[
+  {
+    "tag": "demo-waiting",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-expired",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-pdf-failure",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-waiting",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-expired",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-pdf-failure",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  }
+]

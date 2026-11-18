@@ -13,7 +13,7 @@
 // anywhere.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { CeremonyField } from "../../../services/real/signing-access.service";
 
@@ -241,5 +241,25 @@ describe("what still needs doing", () => {
     })]);
 
     expect(await screen.findByText("All your fields are complete")).toBeTruthy();
+  });
+});
+
+
+describe("capture sheet keyboard access", () => {
+  it("contains Tab, closes with Escape and restores the signature-field trigger", async () => {
+    const { user } = setup([field()]);
+    const trigger = await screen.findByRole("button", { name: /Add your signature/ });
+    await user.click(trigger);
+    const sheet = screen.getByRole("dialog", { name: /Add your signature/ });
+    await user.click(within(sheet).getByRole("button", { name: "Done" }));
+    expect(trigger).toHaveFocus();
+    await user.click(trigger);
+    const reopened = screen.getByRole("dialog", { name: /Add your signature/ });
+    within(reopened).getByRole("button", { name: "Done" }).focus();
+    await user.tab();
+    expect(reopened).toContainElement(document.activeElement as HTMLElement);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(trigger).toHaveFocus();
   });
 });

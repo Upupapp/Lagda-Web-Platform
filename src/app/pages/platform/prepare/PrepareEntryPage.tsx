@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../../utils/on-light";
 // Entry screen for the guided preparation workflow at /app/prepare.
 // Shows three paths: Start with Files, Use a Template, Resume a Draft.
 // Permission gate: users without prepareFlowEnabled see a plan-upgrade notice.
@@ -21,7 +22,7 @@ import {
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
-const SILVER = "#8A9BAE";
+const SILVER = ON_LIGHT.muted;
 
 /** "8 Oct 2026, 2:15 pm": when a draft last changed. Empty if unreadable. */
 export function draftChangedLabel(iso: string): string {
@@ -241,8 +242,8 @@ export function PrepareEntryPage() {
           Prepare a Document
         </h1>
         <p style={{ fontSize: 14, color: SILVER, margin: 0, lineHeight: 1.6 }}>
-          Set up a new eSignature transaction — add files, participants, routing, and authentication
-          before placing signature fields.
+          Prepare your document, add participants and their order, choose settings, place fields,
+          then review authentication and authorize sending.
         </p>
       </div>
 
@@ -360,7 +361,7 @@ export function PrepareEntryPage() {
                     style={{
                       ...GF, minHeight: 44, padding: "0 16px", borderRadius: 8,
                       border: `1px solid ${AZURE}`, background: "#FFFFFF",
-                      color: AZURE, fontSize: 13, fontWeight: 700, cursor: "pointer",
+                      color: ON_LIGHT.azure, fontSize: 13, fontWeight: 700, cursor: "pointer",
                       flexShrink: 0,
                     }}
                   >

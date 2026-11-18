@@ -1,0 +1,584 @@
+[
+  {
+    "tag": "routing-configured",
+    "url": "/app/prepare/routing",
+    "text": "Documents\n›\nPrepare Document\n›\nLocal replica smoke test\nDiscard draft\n1. Documents\nThe file everyone will sign\n2. Signers\nWho needs to sign it\n3. Order\nWhat order they sign in\n4. Settings\nReminders and expiration\n5. Place Fields\nWhere each signature goes\n6. Authentication\nHow signers prove who they are\n7. Review\nCheck everything before sending\n8. Authorization\nConfirm you are authorised to send\n\nSTEP 3 OF 8\n\nRouting\n\nChoose how participants are sequenced and whether they act simultaneously or one at a time.\n\nSequential — one step at a time\n\nNeed named stages and per-person requirements?\n\nAfter this document exists, its Signing Workflow tab can turn the routing order below into named stages — each with an explicit required action and an individual electronic signature requirement for every person. Routing configured here keeps working on its own, and nothing here depends on Workflow Automation.\n\nRouting mode\nParallel — everyone at once\nAll participants in each routing group may act simultaneously, without waiting for one another.\nSequential — one step at a time\nEach routing step begins only after all required participants in the previous step complete their actions.\nMixed — groups, each in parallel\nMultiple participants may act in parallel within ordered routing steps.\nApproval-based — approve before sign\nAn Approver or Reviewer step must complete before later signing or acknowledgment steps begin.\nRouting steps\n1\n↑\n↓\nPARTICIPANTS IN THIS STEP\nLAGDA Local Review Recipient\nSigner\nComplete when:\nAll participants complete\nAny one participant completes\n+ Add routing step\n\nROUTING PREVIEW\n\nMode: Sequential — one step at a time\nStep 1: Step 1\nAll must complete\nLAGDA Local Review Recipient\n← Previous\nGuide\n1\nContinue →",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              "a"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<a href=\"/app/documents\" data-discover=\"true\" style=\"color: rgb(138, 155, 174); text-decoration: none; font-weight: 500; white-space: nowrap;\">Documents</a>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(1) > button[title=\"Documents\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">The file everyone will sign</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(2) > button[title=\"Signers\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Who needs to sign it</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(3) > button[title=\"Order\"][aria-current=\"step\"][type=\"button\"] > span:nth-child(2) > span:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.07 (foreground color: #0078d4, background color: #ebf4fc, font size: 9.4pt (12.5px), font weight: bold). Expected contrast ratio of 4.5:1",
+            "html": "<span style=\"display: block; font-size: 12.5px; font-weight: 700; color: rgb(0, 120, 212);\">3. Order</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(3) > button[title=\"Order\"][aria-current=\"step\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #8a9bae, background color: #ebf4fc, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">What order they sign in</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(4) > button[title=\"Settings\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Reminders and expiration</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(5) > button[title=\"Place Fields\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Where each signature goes</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(6) > button[title=\"Authentication\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">How signers prove who they are</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(7) > button[title=\"Review\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Check everything before sending</span>"
+          },
+          {
+            "target": [
+              "p:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.66 (foreground color: #8a9bae, background color: #f0f9ff, font size: 9.4pt (12.5px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<p style=\"font-size: 12.5px; color: rgb(138, 155, 174); margin: 0px; line-height: 1.6;\">"
+          },
+          {
+            "target": [
+              "label:nth-child(1) > div > div:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<div style=\"font-size: 12px; color: rgb(138, 155, 174); margin-top: 3px; line-height: 1.5;\">All participants in each routing group may act simultaneously, without waiting for one another.</div>"
+          },
+          {
+            "target": [
+              "label:nth-child(2) > div > div:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #8a9bae, background color: #ebf4fc, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<div style=\"font-size: 12px; color: rgb(138, 155, 174); margin-top: 3px; line-height: 1.5;\">Each routing step begins only after all required participants in the previous step complete their actions.</div>"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "settings",
+    "url": "/app/prepare/settings",
+    "text": "Documents\n›\nPrepare Document\n›\nLocal replica smoke test\nDiscard draft\n1. Documents\nThe file everyone will sign\n2. Signers\nWho needs to sign it\n3. Order\nWhat order they sign in\n4. Settings\nReminders and expiration\n5. Place Fields\nWhere each signature goes\n6. Authentication\nHow signers prove who they are\n7. Review\nCheck everything before sending\n8. Authorization\nConfirm you are authorised to send\n\nSTEP 4 OF 8\n\nSettings\n\nChoose when participants are reminded, set an optional expiration date, and choose whether participants are emailed the completed document.\n\nReminders on · No expiration · Completed copy emailed\nInvitation\nEach participant is emailed a private signing link when their turn comes.\n\nRecipients see Local Owner as the sender — your profile's Sender Display name. Change it in Settings › Profile.\n\nReminders\nReminder emails to participants who have not yet acted.\nRemind participants who have not acted\nEach participant is reminded by email, counting from when it became their turn.\nFirst reminder after\ndays\nThen every\ndays\n\nUp to 3 reminders, until they act. Reminders stop when the document is completed, declined, cancelled or expires.\n\nExpiration\nOptional. Close signing on a date you choose. Without one, the document waits until it is signed.\nSet an expiration date\nSigning closes at the end of this day, Philippine time. Anyone who has not acted by then can no longer sign.\nCompletion\nWhat happens when all required participants have completed their actions.\nEmail participants the completed document\nWhen everyone has finished, each participant is emailed a link to download the completed document. The link works for 30 days. Viewers are not sent one. Switch this off for a sensitive document: participants can still open it in LAGDA under Records.\n\nREMINDERS & EXPIRY\n\nReminders: first after 3 days, then every 3 days.\nNo expiration date set.\n\nON COMPLETION\n\nCompleted document emailed to participants\nOn\n← Previous\nGuide\n1\nContinue to Place Fields →",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              "a"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<a href=\"/app/documents\" data-discover=\"true\" style=\"color: rgb(138, 155, 174); text-decoration: none; font-weight: 500; white-space: nowrap;\">Documents</a>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(1) > button[title=\"Documents\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">The file everyone will sign</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(2) > button[title=\"Signers\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Who needs to sign it</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(3) > button[title=\"Order\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">What order they sign in</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(4) > button[title=\"Settings\"][aria-current=\"step\"][type=\"button\"] > span:nth-child(2) > span:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.07 (foreground color: #0078d4, background color: #ebf4fc, font size: 9.4pt (12.5px), font weight: bold). Expected contrast ratio of 4.5:1",
+            "html": "<span style=\"display: block; font-size: 12.5px; font-weight: 700; color: rgb(0, 120, 212);\">4. Settings</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(4) > button[title=\"Settings\"][aria-current=\"step\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #8a9bae, background color: #ebf4fc, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Reminders and expiration</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(5) > button[title=\"Place Fields\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Where each signature goes</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(6) > button[title=\"Authentication\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">How signers prove who they are</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(7) > button[title=\"Review\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Check everything before sending</span>"
+          },
+          {
+            "target": [
+              ".step-two-col-main > div > div:nth-child(1) > div > div:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<div style=\"font-family: Geist, sans-serif; font-size: 12px; color: rgb(138, 155, 174); margin-top: 3px; line-height: 1.5;\">Each participant is emailed a private signing link when their turn comes.</div>"
+          },
+          {
+            "target": [
+              ".step-two-col-main > div > div:nth-child(2) > div:nth-child(1) > div:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<div style=\"font-family: Geist, sans-serif; font-size: 12px; color: rgb(138, 155, 174); margin-top: 3px; line-height: 1.5;\">Reminder emails to participants who have not yet acted.</div>"
+          },
+          {
+            "target": [
+              "label[for=\"reminders-enabled\"] > div:nth-child(1) > div:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<div style=\"font-size: 12px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.5;\">Each participant is reminded by email, counting from when it became their turn.</div>"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "fields",
+    "url": "/app/prepare/fields",
+    "text": "Documents\n›\nPrepare Document\n›\nLocal replica smoke test\nDiscard draft\n1. Documents\nThe file everyone will sign\n2. Signers\nWho needs to sign it\n3. Order\nWhat order they sign in\n4. Settings\nReminders and expiration\n5. Place Fields\nWhere each signature goes\n6. Authentication\nHow signers prove who they are\n7. Review\nCheck everything before sending\n8. Authorization\nConfirm you are authorised to send\nPlace Document Fields — Local replica smoke test\n← Review\nLocal replica smoke test\n— Place Fields\nUnsaved changes\n↩ Undo\n↪ Redo\nCopy\nPaste\n+ Add Field\nPlace for everyone\nList\n−\n100%\n+\nFit\n✓ Validate\nContinue →\nDOCUMENTS\nLocal replica smoke test\n1 page · 1 field\nPage 1\n1 field\nPlaced 1 field for 1 participant\nUndo\n×\n✍Signature over Name\nLAGDA Local Review Recipient\nP1\n?\nPage 1 of 1 — 1 field\nFIELD TYPES\nSIGNATURE & IDENTITY\n✍\nSignature\nParticipant handwritten or typed signature\n✍\nSignature over Name\nSignature with the participant's full name printed beneath it — they only sign\n✔\nReviewed over Name\nStamped 'Reviewed' with the date when the reviewer completes, with their name printed beneath\n✪\nApproved over Name\nStamped 'Approved' (or 'Skipped') with the date, name beneath\nIi\nInitials\nParticipant initials on a page\nAa\nFull Name\nParticipant's legal full name\n📅\nDate Signed\nDate recorded when participant completes this field\nDATA ENTRY\nT\nText\nSingle-line text entry\n☑\nCheckbox\nBoolean checkbox — checked or unchecked\nPARTICIPANT DETAILS\n@\nEmail\nParticipant's email address\nTi\nTitle / Position\nParticipant's job title or position\n🏢\nCompany\nParticipant's organisation name",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              "a"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<a href=\"/app/documents\" data-discover=\"true\" style=\"color: rgb(138, 155, 174); text-decoration: none; font-weight: 500; white-space: nowrap;\">Documents</a>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(2) > button[title=\"Signers\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Who needs to sign it</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(3) > button[title=\"Order\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">What order they sign in</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(4) > button[title=\"Settings\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Reminders and expiration</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(5) > button[title=\"Place Fields\"][aria-current=\"step\"][type=\"button\"] > span:nth-child(2) > span:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.07 (foreground color: #0078d4, background color: #ebf4fc, font size: 9.4pt (12.5px), font weight: bold). Expected contrast ratio of 4.5:1",
+            "html": "<span style=\"display: block; font-size: 12.5px; font-weight: 700; color: rgb(0, 120, 212);\">5. Place Fields</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(5) > button[title=\"Place Fields\"][aria-current=\"step\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #8a9bae, background color: #ebf4fc, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Where each signature goes</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(6) > button[title=\"Authentication\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">How signers prove who they are</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(7) > button[title=\"Review\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Check everything before sending</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(8) > button[title=\"Authorization\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Confirm you are authorised to send</span>"
+          },
+          {
+            "target": [
+              "span > div:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.19 (foreground color: #0078d4, background color: #f0f7ff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<div>Page 1</div>"
+          },
+          {
+            "target": [
+              "span > div:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.63 (foreground color: #8a9bae, background color: #f0f7ff, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<div style=\"font-size: 9px; color: rgb(138, 155, 174);\">1 field</div>"
+          },
+          {
+            "target": [
+              "div[data-testid=\"fields-canvas-scroller\"] > div > div:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.2 (foreground color: #8a9bae, background color: #dfe3e8, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<div style=\"font-family: Geist, sans-serif; font-size: 11px; color: rgb(138, 155, 174); text-align: center; margin-top: 8px;\">Page 1 of 1 — 1 field</div>"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "authentication",
+    "url": "/app/prepare/authentication",
+    "text": "Documents\n›\nPrepare Document\n›\nLocal replica smoke test\nDiscard draft\n1. Documents\nThe file everyone will sign\n2. Signers\nWho needs to sign it\n3. Order\nWhat order they sign in\n4. Settings\nReminders and expiration\n5. Place Fields\nWhere each signature goes\n6. Authentication\nHow signers prove who they are\n7. Review\nCheck everything before sending\n8. Authorization\nConfirm you are authorised to send\n\nSTEP 6 OF 8\n\nAuthentication\n\nChoose how participants verify their identity before accessing the document. Set a default for all participants, then override individually if needed.\n\nDefault: Secure Invitation Link\n• Secure Invitation Link is the only access control. Consider Email Code for additional confirmation.\nDefault authentication method\nSecure Invitation Link\nEach participant receives a unique invitation link. No additional authentication step is required.\n\nEvery participant opens the document through a secure invitation link that is theirs alone. Participants with a LAGDA account also confirm their password before they act.\n\nAUTHENTICATION BY PARTICIPANT\n\nLAGDA Local Review Recipient\nSecure Invitation Link\n← Previous\nGuide\nContinue →",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              "a"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<a href=\"/app/documents\" data-discover=\"true\" style=\"color: rgb(138, 155, 174); text-decoration: none; font-weight: 500; white-space: nowrap;\">Documents</a>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(2) > button[title=\"Signers\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Who needs to sign it</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(3) > button[title=\"Order\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">What order they sign in</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(4) > button[title=\"Settings\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Reminders and expiration</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(5) > button[title=\"Place Fields\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Where each signature goes</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(6) > button[title=\"Authentication\"][aria-current=\"step\"][type=\"button\"] > span:nth-child(2) > span:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.07 (foreground color: #0078d4, background color: #ebf4fc, font size: 9.4pt (12.5px), font weight: bold). Expected contrast ratio of 4.5:1",
+            "html": "<span style=\"display: block; font-size: 12.5px; font-weight: 700; color: rgb(0, 120, 212);\">6. Authentication</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(6) > button[title=\"Authentication\"][aria-current=\"step\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #8a9bae, background color: #ebf4fc, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">How signers prove who they are</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(7) > button[title=\"Review\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Check everything before sending</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(8) > button[title=\"Authorization\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Confirm you are authorised to send</span>"
+          },
+          {
+            "target": [
+              "ul > li"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.54 (foreground color: #c9960c, background color: #fef9ec, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<li>• Secure Invitation Link is the only access control. Consider Email Code for additional confirmation.</li>"
+          },
+          {
+            "target": [
+              ".step-two-col-rail > div > p"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1",
+            "html": "<p style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(138, 155, 174); margin: 0px 0px 12px;\">Authentication by participant</p>"
+          },
+          {
+            "target": [
+              "div > span:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span style=\"font-family: Geist, sans-serif; font-size: 11px; color: rgb(138, 155, 174); flex-shrink: 0; font-weight: 400;\">Secure Invitation Link</span>"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "review",
+    "url": "/app/prepare/review",
+    "text": "Documents\n›\nPrepare Document\n›\nLocal replica smoke test\nDiscard draft\n1. Documents\nThe file everyone will sign\n2. Signers\nWho needs to sign it\n3. Order\nWhat order they sign in\n4. Settings\nReminders and expiration\n5. Place Fields\nWhere each signature goes\n6. Authentication\nHow signers prove who they are\n7. Review\nCheck everything before sending\n8. Authorization\nConfirm you are authorised to send\n\nSTEP 7 OF 8\n\nReview\n\nCheck all preparation settings before proceeding to place signature fields.\n\nReady for field placement\nItems to review\n○\nSecure Invitation Link is the only access control. Consider Email Code for additional confirmation.\nDocuments\nEdit\n1. Local replica smoke test\n888 B\nTitle: Local replica smoke test\nParticipants\nEdit\nLAGDA Local Review Recipientscreen.review@example.test\nSigner\nRouting\nEdit\nMode: sequential\nStep 1: Step 1 · 1 participant\nAuthentication\nEdit\nDefault: Secure Invitation Link\nSettings\nEdit\nReminders: First after 3 days, then every 3 days\nExpiration: No expiration set\nCompleted document: Emailed to participants when everyone has finished\nReady to place fields\n1 file, 1 participant, and routing are configured. You may proceed to place signature fields.\nLegal notice\nProceeding to field placement does not send invitations and does not produce a signature — nobody is contacted until you send the transaction on the final step. Your document and its participants are already saved to your workspace, so the work is kept if you leave and come back.\n\nThe legal validity of electronic signatures in the Philippines is governed by the Electronic Commerce Act (Republic Act No. 8792) and its implementing rules. LAGDA does not guarantee the legal effect of any particular transaction; ask a lawyer where that matters.\n\nREADINESS CHECKLIST\n\nDocuments\nSigners\nOrder\nSettings\nAuthentication\nAuthorization\nAll steps ready\n← Previous\nGuide\nContinue →",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              "a"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<a href=\"/app/documents\" data-discover=\"true\" style=\"color: rgb(138, 155, 174); text-decoration: none; font-weight: 500; white-space: nowrap;\">Documents</a>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(2) > button[title=\"Signers\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Who needs to sign it</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(3) > button[title=\"Order\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">What order they sign in</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(4) > button[title=\"Settings\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Reminders and expiration</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(5) > button[title=\"Place Fields\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Where each signature goes</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(6) > button[title=\"Authentication\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">How signers prove who they are</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(7) > button[title=\"Review\"][aria-current=\"step\"][type=\"button\"] > span:nth-child(2) > span:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.07 (foreground color: #0078d4, background color: #ebf4fc, font size: 9.4pt (12.5px), font weight: bold). Expected contrast ratio of 4.5:1",
+            "html": "<span style=\"display: block; font-size: 12.5px; font-weight: 700; color: rgb(0, 120, 212);\">7. Review</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(7) > button[title=\"Review\"][aria-current=\"step\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #8a9bae, background color: #ebf4fc, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Check everything before sending</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(8) > button[title=\"Authorization\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Confirm you are authorised to send</span>"
+          },
+          {
+            "target": [
+              "div:nth-child(2) > div:nth-child(1) > button"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.21 (foreground color: #0078d4, background color: #f5f7fa, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<button style=\"font-family: Geist, sans-serif; font-size: 12px; font-weight: 600; color: rgb(0, 120, 212); background: none; border: none; cursor: pointer; padding: 4px 8px;\">Edit</button>"
+          },
+          {
+            "target": [
+              "div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div > span:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span style=\"color: rgb(138, 155, 174);\">888 B</span>"
+          },
+          {
+            "target": [
+              ".step-two-col-main > div > div:nth-child(3) > div:nth-child(1) > button"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.21 (foreground color: #0078d4, background color: #f5f7fa, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<button style=\"font-family: Geist, sans-serif; font-size: 12px; font-weight: 600; color: rgb(0, 120, 212); background: none; border: none; cursor: pointer; padding: 4px 8px;\">Edit</button>"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "authorization",
+    "url": "/app/prepare/authorization",
+    "text": "Documents\n›\nPrepare Document\n›\nLocal replica smoke test\nDiscard draft\n1. Documents\nThe file everyone will sign\n2. Signers\nWho needs to sign it\n3. Order\nWhat order they sign in\n4. Settings\nReminders and expiration\n5. Place Fields\nWhere each signature goes\n6. Authentication\nHow signers prove who they are\n7. Review\nCheck everything before sending\n8. Authorization\nConfirm you are authorised to send\n\nSTEP 8 OF 8\n\nAuthorization\n\nThe last step before anyone is emailed. Check what is about to be sent, then press Authorize below.\n\nWhat you are about to send\n\nRead this back. Once you authorize, every participant below is emailed a link to sign, approve or review this document, in routing order, and it cannot be recalled.\n\nDOCUMENT\nLocal replica smoke test\nPARTICIPANTS\nLAGDA Local Review Recipient (Signer)\nWILL BE EMAILED\n1 person\n\nAuthorizing confirms that you intend to send this on behalf of your organisation. It is a confirmation, not an identity check — your account and its permissions are what actually authorise the send.\n\n← Previous\nGuide\nAuthorize",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              "a"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<a href=\"/app/documents\" data-discover=\"true\" style=\"color: rgb(138, 155, 174); text-decoration: none; font-weight: 500; white-space: nowrap;\">Documents</a>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(2) > button[title=\"Signers\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Who needs to sign it</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(3) > button[title=\"Order\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">What order they sign in</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(4) > button[title=\"Settings\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Reminders and expiration</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(5) > button[title=\"Place Fields\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Where each signature goes</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(6) > button[title=\"Authentication\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">How signers prove who they are</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(7) > button[title=\"Review\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Check everything before sending</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(8) > button[title=\"Authorization\"][aria-current=\"step\"][type=\"button\"] > span:nth-child(2) > span:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.07 (foreground color: #0078d4, background color: #ebf4fc, font size: 9.4pt (12.5px), font weight: bold). Expected contrast ratio of 4.5:1",
+            "html": "<span style=\"display: block; font-size: 12.5px; font-weight: 700; color: rgb(0, 120, 212);\">8. Authorization</span>"
+          },
+          {
+            "target": [
+              "ol[data-testid=\"prep-step-cards\"] > li:nth-child(8) > button[title=\"Authorization\"][aria-current=\"step\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.55 (foreground color: #8a9bae, background color: #ebf4fc, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">Confirm you are authorised to send</span>"
+          },
+          {
+            "target": [
+              "div:nth-child(3) > div > div:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<div style=\"font-family: Geist, sans-serif; font-size: 11px; color: rgb(138, 155, 174); text-transform: uppercase; letter-spacing: 0.05em;\">Document</div>"
+          },
+          {
+            "target": [
+              "div:nth-child(2) > div:nth-child(4) > div > div:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<div style=\"font-family: Geist, sans-serif; font-size: 11px; color: rgb(138, 155, 174); text-transform: uppercase; letter-spacing: 0.05em;\">Participants</div>"
+          },
+          {
+            "target": [
+              "div:nth-child(5) > div > div:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<div style=\"font-family: Geist, sans-serif; font-size: 11px; color: rgb(138, 155, 174); text-transform: uppercase; letter-spacing: 0.05em;\">Will be emailed</div>"
+          }
+        ]
+      }
+    ]
+  }
+]

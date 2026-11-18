@@ -1,0 +1,25 @@
+{
+  "pages": [
+    {
+      "page": 1,
+      "sourceTextPreserved": true,
+      "sourceImages": 0,
+      "finalImages": 0,
+      "width": 612.0,
+      "height": 792.0
+    },
+    {
+      "page": 2,
+      "sourceTextPreserved": true,
+      "sourceImages": 0,
+      "finalImages": 0,
+      "width": 612.0,
+      "height": 792.0
+    }
+  ],
+  "signatureOnPage": 2,
+  "recipientNamePresent": true,
+  "typedSignatureAndPrintedNamePresent": true,
+  "sha256": "886e6f16fb3fee56969dc2defc19e36bcf2d7a4378b0c73b7eba4a70efac6ea5",
+  "clamavPing": "PONG"
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "tag": "billing",
+    "width": 1440,
+    "url": "/app/workspace/settings/billing",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "invitations",
+    "width": 1440,
+    "url": "/app/invitations",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "billing",
+    "width": 390,
+    "url": "/app/workspace/settings/billing",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "invitations",
+    "width": 390,
+    "url": "/app/invitations",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "billing",
+    "width": 320,
+    "url": "/app/workspace/settings/billing",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "invitations",
+    "width": 320,
+    "url": "/app/invitations",
+    "overflow": false,
+    "violations": []
+  }
+]

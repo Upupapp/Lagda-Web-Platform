@@ -1,0 +1,9 @@
+
+ RUN  v3.2.4 C:/Users/paulg/OneDrive/Documents/ChatGPT/LAGDA
+
+ ✓ src/app/pages/platform/prepare/__tests__/RoutingStep.backend.test.tsx (6 tests) 171ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  19:49:57
+   Duration  2.76s (transform 380ms, setup 1.83s, collect 265ms, tests 171ms, environment 306ms, prepare 60ms)

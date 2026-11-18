@@ -1,14 +1,16 @@
+import { ON_LIGHT } from "../../../../utils/on-light";
 // Shared pieces for the Members page's join-link surfaces (078): the dialog
 // shell (a centred modal on wide screens, a bottom sheet on phones), buttons,
 // the privileges multi-select, and the role title + privileges editor used
 // both when approving a request and later from the member list.
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useWorkspaceDialog } from "../../../../hooks/useWorkspaceDialog";
 import { Z } from "../../../../utils/z-index";
 import { useViewport } from "../../../../hooks/useViewport";
 import { JOIN_ROLE_TITLE_MAX, NEW_COMER_LABEL } from "../../../../services/real/workspace-join.service";
 import {
-  GF, GM, NAVY, AZURE, SLATE, BORDER, DANGER, PRIVILEGE_OPTIONS, inputStyle, labelStyle, hintStyle,
+  GF, GM, NAVY, SLATE, BORDER, DANGER, PRIVILEGE_OPTIONS, inputStyle, labelStyle, hintStyle,
   type Privileges,
 } from "./join-styles";
 
@@ -29,19 +31,7 @@ export function Dialog({ title, onClose, children, footer, describedBy }: {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    const first = panelRef.current?.querySelector<HTMLElement>("input, textarea, button, [tabindex]");
-    first?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      previous?.focus?.();
-    };
-    // Focus once on open; onClose identity changes every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useWorkspaceDialog(panelRef, onClose);
 
   return (
     <div
@@ -52,7 +42,7 @@ export function Dialog({ title, onClose, children, footer, describedBy }: {
       }}
     >
       <div
-        ref={panelRef}
+        ref={panelRef} tabIndex={-1} className="ws-admin-dialog"
         role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={describedBy}
         style={{
           background: "#FFFFFF", width: isNarrow ? "100%" : "min(480px, calc(100vw - 32px))",
@@ -61,7 +51,7 @@ export function Dialog({ title, onClose, children, footer, describedBy }: {
           boxShadow: "0 20px 60px rgba(7,17,31,0.22)",
         }}
       >
-        <h2 id={titleId} style={{ ...GF, fontSize: 18, fontWeight: 800, color: NAVY, margin: "0 0 12px" }}>{title}</h2>
+        <h2 id={titleId} style={{ overflowWrap: "anywhere", ...GF, fontSize: 18, fontWeight: 800, color: NAVY, margin: "0 0 12px" }}>{title}</h2>
         {children}
         <div style={{
           display: "flex", gap: 10, marginTop: 20,
@@ -83,7 +73,7 @@ export function PrivilegeChips({ privileges, inherent = false }: { privileges: P
     <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
       {on.map(o => (
         <span key={o.key} title={inherent ? "Included with this role" : undefined}
-          style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#EBF4FC", color: AZURE, whiteSpace: "nowrap" }}>
+          style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#EBF4FC", color: ON_LIGHT.azure, whiteSpace: "nowrap" }}>
           {o.chip}
         </span>
       ))}

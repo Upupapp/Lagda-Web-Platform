@@ -1,0 +1,1777 @@
+{
+  "errors": [],
+  "results": [
+    {
+      "path": "/",
+      "tag": "desktop-home",
+      "title": "LAGDA eSignature | Send, Sign & Verify Documents Online",
+      "url": "/",
+      "headings": [
+        "Everything you need to send, sign, track, and verify documents online.",
+        "Built for the full eSignature workflow.",
+        "Every capability in one eSignature platform.",
+        "Designed differently for senders and recipients.",
+        "Know exactly where every document stands.",
+        "Ready to send your first document?"
+      ],
+      "text": "Skip to main content\neSignature\nSolutions\nPricing\nSecurity\nResources\neNotary\nSign In\nCreate Free Account\nOverview\nCore Workflow\nVerification & Audit\nAdvanced Capabilities\nTemplates & Branding\nTeam & Enterprise\n\nLAGDA ESIGNATURE — AVAILABLE NOW\n\nEverything you need to send, sign, track, and verify documents online.\n\nLAGDA eSignature helps Philippine professionals and organizations prepare documents, verify signers, collect signatures, track status, generate audit records, and confirm completed transactions.\n\nCreate Free Account\nSee How It Works\nVerify a Document →\neSignature Available Now\nIdentity-Aware Signing\nAudit-Ready Records\nDocument Verification\nBuilt for Philippine Workflows\nPrepare\nSign\nVerify\nTrack\nVerification ID\n\nFULL LIFECYCLE\n\nBuilt for the full eSignature workflow.\n\nLAGDA covers every step — from preparing a document to verifying the completed record.\n\n01\nPrepare\n02\nAdd Participants\n03\nConfigure Routing\n04\nPlace Fields\n05\nSend\n06\nOpen Invitation\n07\nAuthenticate\n08\nSign or Approve\n09\nTrack Progress\n10\nComplete & Verify\nBlue = Sender actions\nGold = Recipient actions\nMy Documents\n3 active\n\nProfessional Services Agreement\n\nJust now\n\nAwaiting Approval\n\nEngagement Letter — Reyes Family\n\nYesterday\n\nCompleted\n\nBoard Resolution No. 12\n\n2 days ago\n\nSent\n\nLATEST EVENT\n\nMarco Santos viewed the document\n2m ago\n\nCAPABILITIES\n\nEvery capability in one eSignature platform.\n📄\n\nDocument Preparation\n\nUpload PDFs, configure fields, and prepare the document before it goes out.\n\n👥\n\nRecipient Management\n\nAdd signers, approvers, reviewers, and copy recipients — each with their own role and access level.\n\n🔀\n\nParallel & Sequential Routing\n\nControl the order documents move through participants. Send to everyone at once or in a defined sequence.\n\n🔐\n\nSigner Authentication\n\nConfirm participant identity at signing with a secure invitation link and an email code, or by signing from a LAGDA account.\n\n📋\n\nAudit Trail\n\nEvery invitation, view, authentication event, signature, and completion is recorded with timestamp and evidence.\n\n🔍\n\nDocument Verification\n\nCompleted documents receive a Verification ID and QR code that anyone can use to confirm status — no account needed.\n\n📁\n\nTemplates\n\nSave and reuse complete signing workflows — fields, routing, authentication, and branding — as reusable templates.\n\n🏢\n\nTeam Workspaces\n\nManage multiple senders, shared templates, role-based access, and organization-wide settings in one workspace.\n\nTWO EXPERIENCES\n\nDesigned differently for senders and recipients.\n\nThe sender configures and tracks. The recipient signs in a clean, guided experience, using a free LAGDA account.\n\nSENDER EXPERIENCE\n\n01\nPrepare documents\n02\nAdd participants and roles\n03\nConfigure signing order\n04\nSet authentication requirements\n05\nPlace fields\n06\nSend and track progress\n\nRECIPIENT EXPERIENCE\n\n01\nReceive secure invitation\n02\nAuthenticate identity\n03\nReview the document\n04\nComplete required fields\n05\nSign or approve\n06\nDownload or verify when complete\n\nTRANSACTION STATES\n\nKnow exactly where every document stands.\n\nLAGDA tracks your documents through every stage — from draft to completed and verified.\n\nDraft\nSent\nViewed\nAwaiting Signature\nAwaiting Approval\nPartially Completed\nCompleted\nDeclined\nCancelled\nExpired\n\nEXPLORE MORE\n\nCore Workflow\n\nStep-by-step sender and recipient journey\n\n→\n\nVerification & Audit\n\nEvidence, audit trail, and public verification\n\n→\n\nAdvanced Capabilities\n\nRouting, reminders, and enterprise features\n\n→\n\nTemplates & Branding\n\nReusable workflows and company branding\n\n→\nReady to send your first document?\n\nCreate a free LAGDA account and send your first document today.\n\nCreate Free Account\nBook a Demo\n\nSome documents may still require wet signatures, notarization, personal appearance, witnesses, or other legal formalities. Users remain responsible for determining the requirements that apply to each transaction.\n\nElectronic signing and electronic notarization are separate processes. LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules.\n\nLAGDA eSignature is available now. LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules.\n\nPRODUCT\neSignature\nDocument Workflows\nCore Workflow\nDocument Verification\nTemplates & Branding\nTeam & Enterprise\nPricing\nSOLUTIONS\nLawyers\nLaw Firms\nBusiness Teams\nGovernment / LGU\nReal Estate\nFinance\nSECURITY & TRUST\nSecurity Overview\nTrust Center\nIdentity Verification\nAudit Trail\nDocument Verification\nPrivacy\nRESOURCES\nGuides\nFAQ\nLegal Framework\nHelp Center\nContact\nService Status\nENOTARY\nNotary Directory\nRoadmap\nJoin Waitlist\nFAQ\nLEGAL\nPrivacy Policy\nTerms of Service\nAccessibility\n\nThe Philippine-first electronic signature and document verification platform for legal, business, and institutional workflows.\n\nA product of UpUp Technologies\n\n© 2026 UpUp Technologies. LAGDA and the LAGDA shield mark are trademarks of UpUp Technologies.\n\nSign In\nPrivacy Policy\nTerms of Service\nAccessibility",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                "div[aria-hidden=\"true\"] > div:nth-child(2) > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2 (foreground color: #f59e0b, background color: #fef6e8, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1",
+              "html": "<span style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 10px; font-weight: 700; color: rgb(245, 158, 11); flex-shrink: 0; background: rgba(245, 158, 11, 0.094); padding: 2px 8px; border-radius: 999px;\">Awaiting Approval</span>"
+            },
+            {
+              "target": [
+                "div[aria-hidden=\"true\"] > div:nth-child(3) > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.1 (foreground color: #22c55e, background color: #eafaf0, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1",
+              "html": "<span style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 10px; font-weight: 700; color: rgb(34, 197, 94); flex-shrink: 0; background: rgba(34, 197, 94, 0.094); padding: 2px 8px; border-radius: 999px;\">Completed</span>"
+            },
+            {
+              "target": [
+                "div[aria-hidden=\"true\"] > div:nth-child(4) > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.98 (foreground color: #0078d4, background color: #e7f2fb, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1",
+              "html": "<span style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 10px; font-weight: 700; color: rgb(0, 120, 212); flex-shrink: 0; background: rgba(0, 120, 212, 0.094); padding: 2px 8px; border-radius: 999px;\">Sent</span>"
+            },
+            {
+              "target": [
+                "#sender-recipient > div > div:nth-child(1) > p:nth-child(3)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.43 (foreground color: #64748b, background color: #f0f8ff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<p style=\"color: rgb(100, 116, 139); font-family: Geist, sans-serif; font-size: 16px; line-height: 1.65; margin: 0px auto; max-width: 640px;\">The sender configures and tracks. The recipient signs in a clean, guided experience, using a free LAGDA account.</p>"
+            },
+            {
+              "target": [
+                "#statuses > div > div:nth-child(1) > p:nth-child(3)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.43 (foreground color: #64748b, background color: #f0f8ff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<p style=\"color: rgb(100, 116, 139); font-family: Geist, sans-serif; font-size: 16px; line-height: 1.65; margin: 0px; max-width: 640px;\">LAGDA tracks your documents through every stage — from draft to completed and verified.</p>"
+            },
+            {
+              "target": [
+                "section:nth-child(8) > div > p"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.21 (foreground color: #64748b, background color: #e6f3fd, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<p style=\"color: rgb(100, 116, 139); font-family: Geist, sans-serif; font-size: 16px; line-height: 1.65; margin: 0px auto 24px; max-width: 520px;\">Create a free LAGDA account and send your first document today.</p>"
+            },
+            {
+              "target": [
+                "#main-content > div > div > p:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.44 (foreground color: #94a3b8, background color: #f8fafb, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<p style=\"color: rgb(148, 163, 184); font-family: Geist, sans-serif; font-size: 12px; line-height: 1.6; margin: 0px;\">Electronic signing and electronic notarization are separate processes. LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules.</p>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/sign-in",
+      "tag": "desktop-sign-in",
+      "title": "Sign In — LAGDA",
+      "url": "/sign-in",
+      "headings": [
+        "Move important work forward.",
+        "Upload Files",
+        "Digital Signing",
+        "Send for Signing"
+      ],
+      "text": "←\nBack to LAGDA eSignature\nDIGITAL SIGNING PLATFORM\n\nLAGDA eSIGNATURE\n\nDigital document signing designed for Philippine organizations and teams.\n\nDOCUMENTS, SIGNED WITH CONFIDENCE\n\nMove important work forward.\n\nUpload, sign, and send documents from one clear, trusted workspace.\n\n01\nUpload Files\n\nUsers securely upload contracts, forms, or official documents.\n\n02\nDigital Signing\n\nApply electronic signatures with a full audit trail.\n\n03\nSend for Signing\n\nRoute documents to multiple signatories and track progress to completion.\n\n‹\n›\n\nWelcome back. Access your documents and workspace.\n\nEmail address *\nPassword *\nForgot password?\nShow\nSign In\nDon't have an account? Create one free\nPrivacy Policy\nTerms of Service\nHelp Center\n\n© 2026 UpUp Technologies",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": []
+    },
+    {
+      "path": "/create-account",
+      "tag": "desktop-create-account",
+      "title": "Create Your LAGDA Account",
+      "url": "/create-account",
+      "headings": [
+        "Set Up Your Digital Signing Workspace"
+      ],
+      "text": "←\nBack to LAGDA eSignature\nSET UP YOUR DIGITAL SIGNING WORKSPACE\nFull name *\nEmail address *\nOrganization (optional)\nIntended use (optional)\nSelect your intended use\nPersonal document signing\nLegal professional\nBusiness team\nGovernment or LGU\nHR and recruitment\nFinance or accounting\nProcurement\nEducation\nHealthcare or wellness\nOther\nPassword *\nConfirm password *\nI agree to LAGDA's Terms of Service and Privacy Policy.\nCreate account\n\nAgree to the Terms of Service and Privacy Policy to create your account.\n\nAlready have an account? Sign In\n\nThe Philippine-first electronic signature and document verification platform for legal, business, and institutional workflows.\n\nA product of UpUp Technologies\n\n© 2026 UpUp Technologies. LAGDA and the LAGDA shield mark are trademarks of UpUp Technologies.",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                ".create-account-back"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.36 (foreground color: #0078d4, background color: #f8fbff, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1",
+              "html": "<a class=\"create-account-back\" aria-label=\"Go back to the LAGDA eSignature page\" href=\"/esignature\" data-discover=\"true\"><span aria-hidden=\"true\">←</span> Back to LAGDA eSignature</a>"
+            },
+            {
+              "target": [
+                "a[href$=\"terms\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #0078d4, background color: #f8fafb, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<a href=\"/legal/terms\" data-discover=\"true\" style=\"color: rgb(0, 120, 212); text-decoration: none;\">Terms of Service</a>"
+            },
+            {
+              "target": [
+                "a[href$=\"privacy\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #0078d4, background color: #f8fafb, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<a href=\"/legal/privacy\" data-discover=\"true\" style=\"color: rgb(0, 120, 212); text-decoration: none;\">Privacy Policy</a>"
+            },
+            {
+              "target": [
+                ".create-account-footer-copyright"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.47 (foreground color: #94a3b8, background color: #f8fbff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<p class=\"create-account-footer-copyright\">© 2026 UpUp Technologies. LAGDA and the LAGDA shield mark are trademarks of UpUp Technologies.</p>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/forgot-password",
+      "tag": "desktop-forgot-password",
+      "title": "Forgot Password — LAGDA",
+      "url": "/forgot-password",
+      "headings": [
+        "Move important work forward.",
+        "Upload Files",
+        "Digital Signing",
+        "Send for Signing",
+        "Reset your password"
+      ],
+      "text": "←\nBack to LAGDA eSignature\nDIGITAL SIGNING PLATFORM\n\nLAGDA eSIGNATURE\n\nDigital document signing designed for Philippine organizations and teams.\n\nDOCUMENTS, SIGNED WITH CONFIDENCE\n\nMove important work forward.\n\nUpload, sign, and send documents from one clear, trusted workspace.\n\n01\nUpload Files\n\nUsers securely upload contracts, forms, or official documents.\n\n02\nDigital Signing\n\nApply electronic signatures with a full audit trail.\n\n03\nSend for Signing\n\nRoute documents to multiple signatories and track progress to completion.\n\n‹\n›\nReset your password\n\nEnter your email and we will send instructions to reset your password.\n\nEmail address *\nSend reset link\n← Back to Sign In\nPrivacy Policy\nTerms of Service\nHelp Center\n\n© 2026 UpUp Technologies",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": []
+    },
+    {
+      "path": "/pricing",
+      "tag": "desktop-pricing",
+      "title": "Pricing — LAGDA",
+      "url": "/pricing",
+      "headings": [
+        "Choose the LAGDA plan that fits your document workflow.",
+        "eSignature plans for everyone, individuals and teams.",
+        "Core capabilities across all plans.",
+        "Full feature comparison.",
+        "Common pricing questions.",
+        "High volume or a large organization?"
+      ],
+      "text": "Skip to main content\neSignature\nSolutions\nPricing\nSecurity\nResources\neNotary\nSign In\nCreate Free Account\nOverview\nCompare Plans\nSigning Requests\nStorage\nTemplates\nAuthentication\nEnterprise\nFAQ\n\nLAGDA ESIGNATURE\n\nChoose the LAGDA plan that fits your document workflow.\n\nStart free with one document. Personal adds your branding, sharing and ready-made templates; Business adds your team. Prices shown are test-mode prices, confirmed at launch, and Enterprise is coming soon.\n\nPLANS\n\neSignature plans for everyone, individuals and teams.\n\nEvery plan includes document preparation, the audit trail and Document Verification, and signing what others send you is always free. A plan belongs to a person: a workspace has its owner's plan.\n\nFREE\n\nFree\n\nTry LAGDA with one document\n\n₱0\n\nFree, always\n\n✓\n1 document sent for signing\n✓\nUnlimited signing of documents sent to you\n✓\nSecure invitation link and email code\n✓\nAudit trail and Document Verification\n✓\nPersonal contacts and contact requests\n✓\nTwo-step verification for your account\nCreate Free Account\n\nUpgrade any time from My Settings › Plan & Billing.\n\nPERSONAL\n\nPersonal\n\nFor individuals and solo practitioners\n\n₱299 / month\n\nTest-mode price · final price confirmed at launch\n\n✓\nEverything in Free\n✓\n50 documents a month\n✓\nYour logo and colours\n✓\nShare completed documents\n✓\nReady-made templates and the LAGDA Chatbot\n✓\nJoin other workspaces\nCreate Account\n\nStart on Free, then choose Personal in Plan & Billing.\n\nRECOMMENDED FOR TEAMS\n\nBUSINESS\n\nBusiness\n\nFor teams and growing organizations\n\n₱799 per user / month\n\nTest-mode price · final price confirmed at launch\n\n✓\nEverything in Personal\n✓\n200 documents per user a month\n✓\nMembers and invitations\n✓\nTeams, roles and join links\n✓\nCompany branding\n✓\nShared contacts and the workspace activity log\nCreate Account\n\nStart on Free, then choose Business in Plan & Billing.\n\nCOMING SOON\n\nENTERPRISE\n\nEnterprise\n\nFor large organizations and institutions\n\nComing soon\n\nPriced for your organization\n\n✓\nEverything in Business\n✓\nCustom document volume\n✓\nDedicated onboarding and support\nAsk About Enterprise\n\nEnterprise is coming soon. Contact us to be told when it opens.\n\nCompare all features in detail →\n\nWHAT'S INCLUDED\n\nCore capabilities across all plans.\n📄\n\nDocument Preparation\n\nUpload PDFs, configure fields, set participant roles, routing, and authentication.\n\n📋\n\nAudit Trail\n\nEvery invitation, view, authentication event, and signature recorded with timestamps.\n\n🔍\n\nDocument Verification\n\nVerification ID and QR code included on all completed transactions on all plans.\n\n📑\n\nTemplates\n\nTemplates on every plan. Ready-made templates and the LAGDA Chatbot on Personal and Business.\n\n🔐\n\nAuthentication\n\nSecure invitation link and email code for signers, and two-step verification for your account, on every plan.\n\n🏢\n\nWorkspace\n\nMembers, teams, roles, join links and the activity log on Business.\n\nCOMPARISON\n\nFull feature comparison.\nLAGDA ESIGNATURE PLAN COMPARISON · LAGDA ENOTARY IS A SEPARATE FUTURE PRODUCT NOT INCLUDED IN ANY PLAN\nFeature\tFree\tPersonal\tBusiness\tEnterprise\nCOMING SOON\n\n\n▶\nCORE WORKFLOW\n\nDocument preparation\t✓ Included\t✓ Included\t✓ Included\t✓ Included\nParticipant roles (signer, approver, viewer, CC)\t✓ Included\t✓ Included\t✓ Included\t✓ Included\nParallel signing\t✓ Included\t✓ Included\t✓ Included\t✓ Included\nSequential signing\t✓ Included\t✓ Included\t✓ Included\t✓ Included\nAutomatic reminders\t✓ Included\t✓ Included\t✓ Included\t✓ Included\nTransaction expiration\t✓ Included\t✓ Included\t✓ Included\t✓ Included\n\n▶\nUSAGE AND LIMITS\n\nDocuments you send\t1 in total\t50 a month\t200 per user a month\tCustom\nSigning documents sent to you\tUnlimited\tUnlimited\tUnlimited\tUnlimited\nPeople in your workspace\t1\t1\tUp to 50\tCustom\nDocument storage\t500 MB\t5 GB\t50 GB shared\tCustom\n\n▶\nTRUST AND EVIDENCE\n\nAudit trail\t✓ Included\t✓ Included\t✓ Included\t✓ Included\nSealed completed document\t✓ Included\t✓ Included\t✓ Included\t✓ Included\nDocument Verification\t✓ Included\t✓ Included\t✓ Included\t✓ Included\nVerification ID and QR code\t✓ Included\t✓ Included\t✓ Included\t✓ Included\n\n▶\nAUTHENTICATION\n\nSecure invitation link\t✓ Included\t✓ Included\t✓ Included\t✓ Included\nEmail code for signers\t✓ Included\t✓ Included\t✓ Included\t✓ Included\nSign from your LAGDA account\t✓ Included\t✓ Included\t✓ Included\t✓ Included\nTwo-step verification for your account\t✓ Included\t✓ Included\t✓ Included\t✓ Included\n\n▶\nTEMPLATES, CONTACTS AND BRANDING\n\nTemplates\t3, blank only\t25\tUnlimited\tUnlimited\nReady-made templates\t— Not included\t✓ Included\t✓ Included\t✓ Included\nLAGDA Chatbot\t— Not included\t✓ Included\t✓ Included\t✓ Included\nPersonal contacts and requests\t✓ Included\t✓ Included\t✓ Included\t✓ Included\nYour logo and colours\t— Not included\t✓ Included\t✓ Included\t✓ Included\nNotification controls\t✓ Included\t✓ Included\t✓ Included\t✓ Included\n\n▶\nSHARING AND WORKSPACES\n\nShare completed documents\t— Not included\t✓ Included\t✓ Included\t✓ Included\nJoin other workspaces\t— Not included\t✓ Included\t✓ Included\t✓ Included\nMembers and invitations\t— Not included\t— Not included\t✓ Included\t✓ Included\nTeams, roles and join links\t— Not included\t— Not included\t✓ Included\t✓ Included\nShared contacts\t— Not included\t— Not included\t✓ Included\t✓ Included\nWorkspace activity log\t— Not included\t— Not included\t✓ Included\t✓ Included\n\n▶\nSUPPORT\n\nSupport\tHelp Center\tEmail\tPriority email\tDedicated\n\nLAGDA ENOTARY — SEPARATE FUTURE PRODUCT\n\nLAGDA eNotary is not included in any current eSignature plan. It is a separate future regulated product — Coming Soon and Subject to Supreme Court Accreditation and applicable rules.\n\nFREQUENTLY ASKED QUESTIONS\n\nCommon pricing questions.\nWhich plan should I choose?\n▾\nIs there a free plan?\n▾\nCan I change plans?\n▾\nIs annual billing available?\n▾\nView all pricing questions →\n\nENTERPRISE · COMING SOON\n\nHigh volume or a large organization?\n\nEnterprise is coming soon: everything in Business, with custom volume and dedicated onboarding and support. Contact us to be told when it opens.\n\nContact Sales\nLearn About Enterprise\n\nSome documents may still require wet signatures, notarization, personal appearance, witnesses, or other legal formalities. Users remain responsible for determining the requirements that apply to each transaction. LAGDA eNotary is a separate future regulated product — Coming Soon and Subject to Supreme Court Accreditation and applicable rules.\n\nLAGDA eSignature is available now. LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules.\n\nPRODUCT\neSignature\nDocument Workflows\nCore Workflow\nDocument Verification\nTemplates & Branding\nTeam & Enterprise\nPricing\nSOLUTIONS\nLawyers\nLaw Firms\nBusiness Teams\nGovernment / LGU\nReal Estate\nFinance\nSECURITY & TRUST\nSecurity Overview\nTrust Center\nIdentity Verification\nAudit Trail\nDocument Verification\nPrivacy\nRESOURCES\nGuides\nFAQ\nLegal Framework\nHelp Center\nContact\nService Status\nENOTARY\nNotary Directory\nRoadmap\nJoin Waitlist\nFAQ\nLEGAL\nPrivacy Policy\nTerms of Service\nAccessibility\n\nThe Philippine-first electronic signature and document verification platform for legal, business, and institutional workflows.\n\nA product of UpUp Technologies\n\n© 2026 UpUp Technologies. LAGDA and the LAGDA shield mark are trademarks of UpUp Technologies.\n\nSign In\nPrivacy Policy\nTerms of Service\nAccessibility",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": []
+    },
+    {
+      "path": "/verify",
+      "tag": "desktop-verify-public",
+      "title": "Verify a Document — LAGDA",
+      "url": "/verify",
+      "headings": [
+        "Verify a LAGDA Document"
+      ],
+      "text": "Skip to main content\neSignature\nSolutions\nPricing\nSecurity\nResources\neNotary\nSign In\nCreate Free Account\n\nDOCUMENT VERIFICATION\n\nVerify a LAGDA Document\n\nEnter the Verification ID printed on a completed LAGDA document, or scan its QR code. Participants can then open the signed document by confirming their email.\n\nVerification ID\nCheck record\nRead the Verification Guide →\nContact Support\n\nLAGDA eSignature is available now. LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules.\n\nPRODUCT\neSignature\nDocument Workflows\nCore Workflow\nDocument Verification\nTemplates & Branding\nTeam & Enterprise\nPricing\nSOLUTIONS\nLawyers\nLaw Firms\nBusiness Teams\nGovernment / LGU\nReal Estate\nFinance\nSECURITY & TRUST\nSecurity Overview\nTrust Center\nIdentity Verification\nAudit Trail\nDocument Verification\nPrivacy\nRESOURCES\nGuides\nFAQ\nLegal Framework\nHelp Center\nContact\nService Status\nENOTARY\nNotary Directory\nRoadmap\nJoin Waitlist\nFAQ\nLEGAL\nPrivacy Policy\nTerms of Service\nAccessibility\n\nThe Philippine-first electronic signature and document verification platform for legal, business, and institutional workflows.\n\nA product of UpUp Technologies\n\n© 2026 UpUp Technologies. LAGDA and the LAGDA shield mark are trademarks of UpUp Technologies.\n\nSign In\nPrivacy Policy\nTerms of Service\nAccessibility",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                "#main-content > div > div > div:nth-child(2) > a[data-discover=\"true\"]:nth-child(1)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #0078d4, background color: #f8fafb, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<a href=\"/resources/document-verification-guide\" data-discover=\"true\" style=\"color: rgb(0, 120, 212); font-family: Geist, sans-serif; font-size: 13px; text-decoration: none;\">Read the Verification Guide →</a>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/app/dashboard",
+      "tag": "desktop-dashboard",
+      "title": "Dashboard — LAGDA",
+      "url": "/app/dashboard",
+      "headings": [
+        "Dashboard",
+        "Your free document is ready",
+        "Send your first document",
+        "Welcome to LAGDA"
+      ],
+      "text": "LR\n\nLAGDA Local Replica\n\nFree\n\nPrepare Document\nHome\nDocuments\nShared Documents\nInvitations\nTemplates\nContacts\nVerify a Document\nNotary Directory\n\nWORKSPACE\n\nMy Settings\nLO\n\nLocal Owner\n\nOwner\n\nDashboard\nSearch…\nCtrl K\n1\nSkip to main content\nHi, Local\nEdit profile\nFREE PLAN\n1\nLEFT\nYour free document is ready\n\nSend one document for signing on us. Signing documents other people send you is always free.\n\n0 of 1 document sent\nUnlimited signing for you\nUNLOCK MORE\nPersonal\n₱299/mo\n50 documents a month\nYour logo and colours\nShare completed documents\nReady-made templates and chatbot\nJoin other workspaces\nChoose Personal\nMost popular\nBusiness\n₱799/user/mo\nEverything in Personal\nInvite your team\nTeams, roles and join links\nShared contacts and activity log\nChoose Business\nTest mode: no money is moved\nPlan & Billing\nMEET THE LAGDA CHATBOT\nPERSONAL PLAN\nYou\nDraft an NDA between Reyes Law and Maria Santos. Both sign.\nDescribe it, and it writes the template\nSigners and roles set for you\nSigning order ready to send\nIncluded with Personal and Business\nUnlock the Chatbot\nSend your first document\n\nUpload a PDF, add the people who need to sign, place their fields and send. Everything you send shows up here — what's waiting on whom, what's about to expire, and what's done.\n\nPrepare your first document\nSTEP 1 OF 4\nWelcome to LAGDA\n\nThis short tour walks through the Dashboard and the sidebar so you know where things live.\n\nSkip tour\nNext",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                ".active[aria-current=\"page\"][href$=\"dashboard\"] > span:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.74 (foreground color: #0078d4, background color: #dbecf9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span style=\"font-family: Geist, sans-serif; font-size: 13px; font-weight: 600; flex: 1 1 0%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">Home</span>"
+            },
+            {
+              "target": [
+                ".search-label"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span class=\"search-label\" style=\"display: none;\">Search…</span>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/app/documents",
+      "tag": "desktop-documents",
+      "title": "Documents — LAGDA",
+      "url": "/app/documents",
+      "headings": [
+        "Documents",
+        "Documents",
+        "Your documents will appear here"
+      ],
+      "text": "LR\n\nLAGDA Local Replica\n\nFree\n\nPrepare Document\nHome\nDocuments\nShared Documents\nInvitations\nTemplates\nContacts\nVerify a Document\nNotary Directory\n\nWORKSPACE\n\nMy Settings\nLO\n\nLocal Owner\n\nOwner\n\nDocuments\nSearch…\nCtrl K\n1\nSkip to main content\nDocuments\nPrepare Document\nCorrespondence\nRecords\nSent\nI must sign\nI must approve\nI must review\nAcknowledgement\nYour documents will appear here\n\nDocuments you prepare and send for signing will show up in this list. Use Prepare Document to start one.",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                ".active[aria-current=\"page\"][href$=\"documents\"] > span:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.74 (foreground color: #0078d4, background color: #dbecf9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span style=\"font-family: Geist, sans-serif; font-size: 13px; font-weight: 600; flex: 1 1 0%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">Documents</span>"
+            },
+            {
+              "target": [
+                ".search-label"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span class=\"search-label\" style=\"display: none;\">Search…</span>"
+            },
+            {
+              "target": [
+                ".doc-list-tab[role=\"tab\"][type=\"button\"]:nth-child(1)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #0078d4, background color: #f8fafc, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<button type=\"button\" role=\"tab\" class=\"doc-list-tab\" aria-selected=\"true\">"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/app/templates",
+      "tag": "desktop-templates",
+      "title": "Templates — LAGDA",
+      "url": "/app/templates",
+      "headings": [
+        "Templates",
+        "Templates",
+        "My Templates",
+        "No templates yet"
+      ],
+      "text": "LR\n\nLAGDA Local Replica\n\nFree\n\nPrepare Document\nHome\nDocuments\nShared Documents\nInvitations\nTemplates\nContacts\nVerify a Document\nNotary Directory\n\nWORKSPACE\n\nMy Settings\nLO\n\nLocal Owner\n\nOwner\n\nTemplates\nSearch…\nCtrl K\n1\nSkip to main content\nTemplates\n\nReusable document workflows for your team\n\nNew Template\nStart faster with 46 ready-made templates\nAcross 15 purposes — Recruitment, Sales, Procurement, Finance and more — with roles and signing order already set up.\nBrowse\nWRITE TEMPLATES WITH THE LAGDA CHATBOT\nPERSONAL PLAN\nYou\nA service agreement for a web design project. The client and the designer sign.\nA new template in seconds\nRoles and signing order included\nEdit it like any template\nIncluded with Personal and Business\nUnlock the Chatbot\nMy Templates\nFilters\nSort:\nLast Updated\nName (A–Z)\nLast Used\nMost Used\nStatus\nCategory\n↓\n\nNo templates found\n\nNo templates yet\n\nCreate your first template to build reusable signing workflows for your team.\n\nCreate Template",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                ".active[aria-current=\"page\"][href$=\"templates\"] > span:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.74 (foreground color: #0078d4, background color: #dbecf9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span style=\"font-family: Geist, sans-serif; font-size: 13px; font-weight: 600; flex: 1 1 0%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">Templates</span>"
+            },
+            {
+              "target": [
+                ".search-label"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span class=\"search-label\" style=\"display: none;\">Search…</span>"
+            },
+            {
+              "target": [
+                "div:nth-child(3) > div > p"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.45 (foreground color: #94a3b8, background color: #f8fafc, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<p style=\"font-family: Geist, sans-serif; font-size: 12px; color: rgb(148, 163, 184); margin-bottom: 14px;\">No templates found</p>"
+            }
+          ]
+        },
+        {
+          "id": "select-name",
+          "impact": "critical",
+          "description": "Ensure select element has an accessible name",
+          "nodes": [
+            {
+              "target": [
+                "select"
+              ],
+              "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\"",
+              "html": "<select style=\"font-family: Geist, sans-serif; font-size: 12px; color: rgb(15, 23, 42); border: 1px solid rgb(226, 232, 240); border-radius: 6px; padding: 5px 8px; background: white; cursor: pointer;\">"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/app/templates/gallery",
+      "tag": "desktop-template-gallery",
+      "title": "Ready-made Templates — LAGDA",
+      "url": "/app/templates/gallery",
+      "headings": [
+        "Templates › Ready-made",
+        "Ready-made Templates",
+        "46 ready-made templates are part of the Personal plan",
+        "Recruitment & HR4",
+        "Sales & Customer Agreements4",
+        "Procurement & Supply Chain3",
+        "Finance & Legal3",
+        "Corporate Governance4",
+        "Real Estate & Property3",
+        "Healthcare1",
+        "Education3",
+        "IT & Data Security4",
+        "Marketing & Partnerships4",
+        "Operations & Administration3",
+        "Compliance & Risk Management1",
+        "Customer Service & Support2",
+        "R&D & Innovation3",
+        "Logistics & Distribution4"
+      ],
+      "text": "LR\n\nLAGDA Local Replica\n\nFree\n\nPrepare Document\nHome\nDocuments\nShared Documents\nInvitations\nTemplates\nContacts\nVerify a Document\nNotary Directory\n\nWORKSPACE\n\nMy Settings\nLO\n\nLocal Owner\n\nOwner\n\nTemplates › Ready-made\nSearch…\nCtrl K\n1\nSkip to main content\nTemplates\nReady-made Templates\n\n46 templates with their roles and signing order already set up. They are part of the Personal plan.\n\nAll (46)\nRecruitment & HR (4)\nSales & Customer Agreements (4)\nProcurement & Supply Chain (3)\nFinance & Legal (3)\nCorporate Governance (4)\nReal Estate & Property (3)\nHealthcare (1)\nEducation (3)\nIT & Data Security (4)\nMarketing & Partnerships (4)\nOperations & Administration (3)\nCompliance & Risk Management (1)\nCustomer Service & Support (2)\nR&D & Innovation (3)\nLogistics & Distribution (4)\nPERSONAL PLAN\n46 ready-made templates are part of the Personal plan\n\nUpgrade to Personal to use it in this workspace. Anything you set up before comes back when you upgrade.\n\nUnlocks this\nPersonal\n₱299/mo\n50 documents a month\nYour logo and colours\nShare completed documents\nReady-made templates and chatbot\nJoin other workspaces\nChoose Personal\nUnlocks this\nBusiness\n₱799/user/mo\nEverything in Personal\nInvite your team\nTeams, roles and join links\nShared contacts and activity log\nChoose Business\nAnything you set up is kept · Test mode, no money is moved\nSee plans\nRecruitment & HR\n4\nPersonal\nRecruitment & HR\nEmployment Offer Letter and Contract Agreement\n\nEmployment contracts and offer letters\n\nHiring Manager\nCandidate\nHR Director\n+1 more\nPersonal\nRecruitment & HR\nNon-Disclosure Agreement (NDA)\n\nNDAs (Non-Disclosure Agreements)\n\nEmployee or Candidate\nLegal Counsel\nHR Manager\n+1 more\nPersonal\nRecruitment & HR\nEmployee Handbook Policy Acknowledgment Form\n\nPolicy acknowledgments (e.g., employee handbooks)\n\nEmployee\nHR Manager\nHR Records\nPersonal\nRecruitment & HR\nRemote Employee Onboarding Form\n\nRemote onboarding forms\n\nNew Employee\nIT Department\nHR Manager\n+1 more\nSales & Customer Agreements\n4\nPersonal\nSales & Customer Agreements\nSales Contract and Purchase Order Agreement\n\nSales contracts and purchase orders\n\nCustomer\nSales Manager\nFinance Officer\n+1 more\nPersonal\nSales & Customer Agreements\nSubscription Services Agreement\n\nSubscription agreements\n\nCustomer\nLegal Counsel\nSales Director\n+1 more\nPersonal\nSales & Customer Agreements\nService Level Agreement (SLA)\n\nService level agreements (SLAs)\n\nClient Representative\nOperations Manager\nLegal Counsel\n+1 more\nPersonal\nSales & Customer Agreements\nLicensing Agreement\n\nLicensing deals\n\nLicensee\nLegal Counsel\nExecutive Director\n+1 more\nProcurement & Supply Chain\n3\nPersonal\nProcurement & Supply Chain\nVendor Service Agreement\n\nVendor contracts\n\nVendor Representative\nProcurement Manager\nFinance or Legal Officer\n+1 more\nPersonal\nProcurement & Supply Chain\nSupplier Agreement\n\nSupplier agreements\n\nSupplier Representative\nProcurement Manager\nFinance Officer\n+1 more\nPersonal\nProcurement & Supply Chain\nDelivery Confirmation and Acceptance Form\n\nDelivery confirmations\n\nReceiving Officer\nWarehouse Supervisor\nProcurement Officer\n+1 more\nFinance & Legal\n3\nPersonal\nFinance & Legal\nInvestment Agreement\n\nInvestment contracts\n\nInvestor\nLegal Counsel\nChief Financial Officer\n+1 more\nPersonal\nFinance & Legal\nAudit Confirmation Letter\n\nAudit confirmations\n\nFinance Officer\nAudit Manager\nExternal Audit Partner\n+1 more\nPersonal\nFinance & Legal\nLegal Settlement Agreement\n\nLegal settlements and compliance documents\n\nInvolved Parties\nSenior Legal Counsel\nExecutive Management\n+1 more\nCorporate Governance\n4\nPersonal\nCorporate Governance\nBoard Resolution Document\n\nBoard resolutions\n\nBoard Members\nBoard Chairperson\nBoard of Directors\n+1 more\nPersonal\nCorporate Governance\nShareholder Agreement\n\nShareholder agreements\n\nShareholders\nCorporate Secretary\nBoard of Directors\n+1 more\nPersonal\nCorporate Governance\nPartnership Agreement\n\nPartnership contracts\n\nPartners\nSenior Management\nExecutive or Board\n+1 more\nPersonal\nCorporate Governance\nCorporate Confidentiality Agreement\n\nConfidentiality agreements\n\nInvolved Parties\nSenior Legal Counsel\nExecutive Management\n+1 more\nReal Estate & Property\n3\nPersonal\nReal Estate & Property\nProperty Lease Agreement\n\nLease agreements\n\nTenant\nLegal Counsel\nProperty Owner\n+1 more\nPersonal\nReal Estate & Property\nProperty Sale and Purchase Agreement\n\nProperty sales contracts\n\nBuyer and Seller\nLegal Counsel or Notary\nTitle or Escrow Officer\n+1 more\nPersonal\nReal Estate & Property\nMortgage Loan Agreement\n\nMortgage documents\n\nBorrower\nUnderwriter\nLending Approval Committee\n+1 more\nHealthcare\n1\nPersonal\nHealthcare\nPatient Informed Consent Form\n\nPatient consent forms\n\nPatient or Guardian\nAttending Physician\nMedical Records Department\nEducation\n3\nPersonal\nEducation\nStudent Enrollment Agreement\n\nEnrollment agreements\n\nStudent or Guardian\nRegistrar\nAcademic Dean\n+1 more\nPersonal\nEducation\nScholarship Agreement\n\nScholarship contracts\n\nStudent\nScholarship Committee\nAcademic Dean\n+1 more\nPersonal\nEducation\nInternship Agreement\n\nInternship agreements\n\nIntern\nHost Supervisor\nAcademic Coordinator\n+1 more\nIT & Data Security\n4\nPersonal\nIT & Data Security\nSoftware License Agreement\n\nSoftware licensing agreements\n\nLicensee or Client\nLegal Counsel\nIT Director\n+1 more\nPersonal\nIT & Data Security\nData Processing Agreement (DPA)\n\nData processing agreements (GDPR, HIPAA, etc.)\n\nData Processor or Vendor\nLegal Counsel\nCompliance Officer\n+1 more\nPersonal\nIT & Data Security\nCloud Service Agreement\n\nCloud service contracts\n\nService Provider Representative\nIT Security Officer\nChief Information Officer\n+1 more\nPersonal\nIT & Data Security\nConfidentiality and System Access Control Agreement\n\nConfidentiality and access control forms\n\nEmployee or Contractor\nIT Manager\nChief Security Officer\n+1 more\nMarketing & Partnerships\n4\nPersonal\nMarketing & Partnerships\nInfluencer Collaboration Agreement\n\nInfluencer/brand collaboration contracts\n\nCollaborating Individual\nLegal Counsel\nMarketing Director\n+1 more\nPersonal\nMarketing & Partnerships\nAdvertising Services Agreement\n\nAdvertising agreements\n\nClient Representative\nLegal Counsel\nMarketing Director\n+1 more\nPersonal\nMarketing & Partnerships\nSponsorship Agreement\n\nSponsorship deals\n\nSponsor Representative\nLegal Counsel\nMarketing Director\n+1 more\nPersonal\nMarketing & Partnerships\nCo-Marketing Memorandum of Understanding (MOU)\n\nCo-marketing MOUs\n\nPartner Organization Representative\nLegal Counsel\nMarketing Director\n+1 more\nOperations & Administration\n3\nPersonal\nOperations & Administration\nFacility Rental Agreement\n\nFacility rental agreements\n\nRenting Party\nLegal Counsel\nOperations Director\n+1 more\nPersonal\nOperations & Administration\nEquipment Lease Agreement\n\nEquipment lease contracts\n\nLessee\nFinance Manager\nOperations Director\n+1 more\nPersonal\nOperations & Administration\nMaintenance and Service Agreement\n\nMaintenance/service agreements\n\nService Provider\nOperations Manager\nFacilities Director\n+1 more\nCompliance & Risk Management\n1\nPersonal\nCompliance & Risk Management\nSafety Compliance Acknowledgment Form\n\nSafety compliance acknowledgments\n\nEmployee\nSupervisor\nSafety Manager\n+1 more\nCustomer Service & Support\n2\nPersonal\nCustomer Service & Support\nProduct Warranty Agreement\n\nWarranty agreements\n\nCustomer\nService Manager\nCustomer Service Director\n+1 more\nPersonal\nCustomer Service & Support\nCustomer Consent and Data Usage Form\n\nCustomer consent forms\n\nCustomer\nCompliance Officer\nCustomer Service Manager\n+1 more\nR&D & Innovation\n3\nPersonal\nR&D & Innovation\nJoint Research Agreement\n\nJoint research agreements\n\nPartner Institution Representative\nLegal Counsel\nR&D Director\n+1 more\nPersonal\nR&D & Innovation\nPatent Filing and Intellectual Property Transfer Agreement\n\nPatent filings and IP transfer contracts\n\nInventor or Assignee\nLegal Counsel\nIP or Legal Director\n+1 more\nPersonal\nR&D & Innovation\nProduct Development Confidentiality Agreement\n\nConfidentiality agreements for product development\n\nInvolved Parties\nLegal Counsel\nR&D Director\n+1 more\nLogistics & Distribution\n4\nPersonal\nLogistics & Distribution\nFreight and Shipping Agreement\n\nFreight/shipping contracts\n\nCarrier or Freight Provider\nLogistics Manager\nOperations Director\n+1 more\nPersonal\nLogistics & Distribution\nCustoms Declaration and Documentation Form\n\nCustoms documentation\n\nShipper or Exporter\nCustoms Officer\nRegulatory Authority\n+1 more\nPersonal\nLogistics & Distribution\nDelivery Acceptance Form\n\nDelivery acceptance forms\n\nReceiving Officer\nWarehouse Manager\nLogistics Department\nPersonal\nLogistics & Distribution\nDistributor Agreement\n\nDistributor agreements\n\nDistributor\nLegal Counsel\nSales Director\n+1 more",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                ".active[aria-current=\"page\"][href$=\"templates\"] > span:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.74 (foreground color: #0078d4, background color: #dbecf9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span style=\"font-family: Geist, sans-serif; font-size: 13px; font-weight: 600; flex: 1 1 0%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">Templates</span>"
+            },
+            {
+              "target": [
+                ".search-label"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span class=\"search-label\" style=\"display: none;\">Search…</span>"
+            },
+            {
+              "target": [
+                "div[role=\"group\"] > button[type=\"button\"]:nth-child(1) > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.2 (foreground color: #bfddf4, background color: #0078d4, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1",
+              "html": "<span style=\"opacity: 0.75;\">(46)</span>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/app/contacts",
+      "tag": "desktop-contacts",
+      "title": "Contacts — LAGDA",
+      "url": "/app/contacts",
+      "headings": [
+        "Contacts",
+        "Contacts",
+        "No contacts yet"
+      ],
+      "text": "LR\n\nLAGDA Local Replica\n\nFree\n\nPrepare Document\nHome\nDocuments\nShared Documents\nInvitations\nTemplates\nContacts\nVerify a Document\nNotary Directory\n\nWORKSPACE\n\nMy Settings\nLO\n\nLocal Owner\n\nOwner\n\nContacts\nSearch…\nCtrl K\n1\nSkip to main content\nSkip to contacts\nADDRESS BOOK\nContacts\n\nThe people you send documents to. Find anyone on LAGDA by their email, or add someone who isn't on LAGDA yet.\n\nContact groups\nFind people\nAll contacts\nPending\nDocument requests\nArchived\n0\nContacts\n0\nWaiting for you\n0\nRequests sent\nSearch contacts\n⌕\nFilters ▼\nRecently Updated\nRecently Used\nFrequently Used\nName\nOrganization\n↓\n\n👥\n\nNo contacts yet\n\nAdd contacts to quickly add participants to future document workflows.\n\nAdd First Contact",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                "a[data-testid=\"nav-contacts\"] > span:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.74 (foreground color: #0078d4, background color: #dbecf9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span style=\"font-family: Geist, sans-serif; font-size: 13px; font-weight: 600; flex: 1 1 0%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">Contacts</span>"
+            },
+            {
+              "target": [
+                ".search-label"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span class=\"search-label\" style=\"display: none;\">Search…</span>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/app/notifications",
+      "tag": "desktop-notifications",
+      "title": "Notifications — LAGDA",
+      "url": "/app/notifications",
+      "headings": [
+        "Notifications",
+        "Notifications"
+      ],
+      "text": "LR\n\nLAGDA Local Replica\n\nFree\n\nPrepare Document\nHome\nDocuments\nShared Documents\nInvitations\nTemplates\nContacts\nVerify a Document\nNotary Directory\n\nWORKSPACE\n\nMy Settings\nLO\n\nLocal Owner\n\nOwner\n\nNotifications\nSearch…\nCtrl K\n1\nSkip to main content\nNotifications\n\nReview updates, alerts, and action-related information across your LAGDA account and permitted Workspaces.\n\nMy documents\nWhole workspace\nNewest first\nOldest first\nPriority\nMark all read\nAll\n1\nUnread\n1\nAction Required\nDocuments\nMy Actions\nWorkspace\nSecurity\n1\nBilling & Usage\nIntegrations\nSystem\nDismissed\nTODAY\n\nConfirm your email address\n\n12m ago\n\nWe sent you a link to confirm this address belongs to you.\n\nSecurity\nInfo\n\nControl which notifications you receive.\n\nNotification Preferences",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "description": "Ensure ARIA attributes are not prohibited for an element's role",
+          "nodes": [
+            {
+              "target": [
+                "span[aria-label=\"Unread\"]"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute cannot be used on a span with no valid role attribute.",
+              "html": "<span aria-label=\"Unread\" style=\"width: 7px; height: 7px; border-radius: 50%; background: rgb(0, 120, 212); flex-shrink: 0; margin-top: 5px;\"></span>"
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                ".search-label"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span class=\"search-label\" style=\"display: none;\">Search…</span>"
+            },
+            {
+              "target": [
+                ".notif-tab[role=\"tab\"]:nth-child(1)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #0078d4, background color: #f8fafc, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<button role=\"tab\" aria-selected=\"true\" class=\"notif-tab\" style=\"font-family: Geist, sans-serif; font-size: 12px; font-weight: 600; color: rgb(0, 120, 212); background: none; border-top: none; border-right: none; border-bottom: 2px solid rgb(0, 120, 212); border-left: none; border-image: initial; padding: 10px 12px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 5px; transition: color 0.12s, border-color 0.12s;\">"
+            },
+            {
+              "target": [
+                "div:nth-child(3) > div:nth-child(1) > div > div:nth-child(1) > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1",
+              "html": "<span style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 10px; font-weight: 700; color: rgb(138, 155, 174); letter-spacing: 0.06em; text-transform: uppercase;\">Today</span>"
+            },
+            {
+              "target": [
+                "div:nth-child(1) > span:nth-child(3)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.7 (foreground color: #8a9bae, background color: #f5fafd, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 10px; color: rgb(138, 155, 174); flex-shrink: 0; margin-top: 2px;\">12m ago</span>"
+            },
+            {
+              "target": [
+                "div:nth-child(3) > span:nth-child(1)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span style=\"font-family: Geist, sans-serif; font-size: 10px; font-weight: 500; color: rgb(100, 116, 139); background: rgb(241, 245, 249); border-radius: 4px; padding: 2px 6px;\">Security</span>"
+            },
+            {
+              "target": [
+                "div:nth-child(3) > span:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #0078d4, background color: #e4f1fa, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span style=\"font-family: Geist, sans-serif; font-size: 10px; font-weight: 500; color: rgb(0, 120, 212); background: rgba(0, 120, 212, 0.07); border-radius: 4px; padding: 2px 6px;\">Info</span>"
+            },
+            {
+              "target": [
+                ".notif-pref-link"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #0078d4, background color: #f8fafc, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<a class=\"notif-pref-link\" href=\"/app/settings/notifications\" data-discover=\"true\" style=\"font-family: Geist, sans-serif; font-size: 12px; color: rgb(0, 120, 212); text-decoration: none; display: flex; align-items: center; gap: 4px;\">"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/app/verify",
+      "tag": "desktop-verify",
+      "title": "Verify a Document — LAGDA",
+      "url": "/app/verify",
+      "headings": [
+        "Verify",
+        "Verify a Document"
+      ],
+      "text": "LR\n\nLAGDA Local Replica\n\nFree\n\nPrepare Document\nHome\nDocuments\nShared Documents\nInvitations\nTemplates\nContacts\nVerify a Document\nNotary Directory\n\nWORKSPACE\n\nMy Settings\nLO\n\nLocal Owner\n\nOwner\n\nVerify\nSearch…\nCtrl K\n1\nSkip to main content\nVerify a Document\n\nLook up a completed LAGDA record by Verification ID, view the signed document if you are a participant, or check a file against the sealed original.\n\nVerification ID\nCheck record",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                "li:nth-child(7) > .active[aria-current=\"page\"][href$=\"verify\"] > span:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.74 (foreground color: #0078d4, background color: #dbecf9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span style=\"font-family: Geist, sans-serif; font-size: 13px; font-weight: 600; flex: 1 1 0%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">Verify a Document</span>"
+            },
+            {
+              "target": [
+                ".search-label"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span class=\"search-label\" style=\"display: none;\">Search…</span>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/app/settings/profile",
+      "tag": "desktop-profile",
+      "title": "Profile Settings — LAGDA",
+      "url": "/app/settings/profile",
+      "headings": [
+        "My Settings › Profile",
+        "My Settings",
+        "Profile"
+      ],
+      "text": "LR\n\nLAGDA Local Replica\n\nFree\n\nPrepare Document\nHome\nDocuments\nShared Documents\nInvitations\nTemplates\nContacts\nVerify a Document\nNotary Directory\n\nWORKSPACE\n\nMy Settings\nLO\n\nLocal Owner\n\nOwner\n\nMy Settings › Profile\nSearch…\nCtrl K\n1\nSkip to main content\nPERSONAL\nMy Settings\nSigned in as Local Owner · These settings are yours alone.\nMy Settings sections\nProfile\nYour name, photo and sender name\nPreferences\nTime zone, date and number formats\nSecurity\nPassword, two-step verification and sessions\nNotifications\nWhich emails LAGDA sends you\nSignatures & Initials\nThe signature and initials you apply to documents\nData & Privacy\nWhat LAGDA keeps about you, and your requests\nPlan & Billing\nYour plan, the Free document and upgrading\nPERSONAL\nProfile\nYour name, photo and how you appear to the people you send documents to.\nProfile Photo\nLO\nSelect image\nPNG, JPEG or WebP, up to 5 MB. Cropped to a square. Saved with the rest of your profile, and shown wherever your name appears.\nPersonal Information\nFull name*\nYour legal or preferred name used across the platform.\nDisplay name\nShown in notifications and the platform header. Defaults to full name.\nPrimary email\nRead-only. Contact support to change your account email.\nJob title\nYour role within your organization. Shown under your name in the account menu.\nDepartment\nTeam or department within your organization. Shown under your name in the account menu.\nSender Display\nPreferred sender name\nShown to recipients when you send documents for signing. Defaults to your full name.\nSave changes",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [
+        {
+          "tag": "LI",
+          "cls": "",
+          "text": "Data & PrivacyWhat LAGDA keeps about you, and your requests",
+          "right": 1545
+        },
+        {
+          "tag": "A",
+          "cls": "st-card-tab",
+          "text": "Data & PrivacyWhat LAGDA keeps about you, and your requests",
+          "right": 1545
+        },
+        {
+          "tag": "SPAN",
+          "cls": "st-card-icon",
+          "text": "",
+          "right": 1472
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 1461
+        },
+        {
+          "tag": "ellipse",
+          "cls": "",
+          "text": "",
+          "right": 1458.5
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 1458.5
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 1458.5
+        },
+        {
+          "tag": "SPAN",
+          "cls": "st-card-label",
+          "text": "Data & Privacy",
+          "right": 1500.828125
+        },
+        {
+          "tag": "SPAN",
+          "cls": "st-card-hint",
+          "text": "What LAGDA keeps about you, and your requests",
+          "right": 1530
+        },
+        {
+          "tag": "LI",
+          "cls": "",
+          "text": "Plan & BillingYour plan, the Free document and upgrading",
+          "right": 1745
+        },
+        {
+          "tag": "A",
+          "cls": "st-card-tab",
+          "text": "Plan & BillingYour plan, the Free document and upgrading",
+          "right": 1745
+        },
+        {
+          "tag": "SPAN",
+          "cls": "st-card-icon",
+          "text": "",
+          "right": 1672
+        }
+      ],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                "a[data-testid=\"nav-settings\"] > span:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.74 (foreground color: #0078d4, background color: #dbecf9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span style=\"font-family: Geist, sans-serif; font-size: 13px; font-weight: 600; flex: 1 1 0%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">My Settings</span>"
+            },
+            {
+              "target": [
+                ".search-label"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span class=\"search-label\" style=\"display: none;\">Search…</span>"
+            }
+          ]
+        },
+        {
+          "id": "label",
+          "impact": "critical",
+          "description": "Ensure every form element has a label",
+          "nodes": [
+            {
+              "target": [
+                "#full-name"
+              ],
+              "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\"",
+              "html": "<input id=\"full-name\" type=\"text\" autocomplete=\"name\" aria-invalid=\"false\" required=\"\" value=\"Local Owner\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(209, 217, 224); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">"
+            },
+            {
+              "target": [
+                "input[autocomplete=\"nickname\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\"",
+              "html": "<input type=\"text\" autocomplete=\"nickname\" value=\"Local Owner\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">"
+            },
+            {
+              "target": [
+                "input[type=\"email\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\"",
+              "html": "<input type=\"email\" readonly=\"\" disabled=\"\" value=\"local.owner@example.test\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(100, 116, 139); width: 100%; box-sizing: border-box; background: rgb(248, 250, 252);\">"
+            },
+            {
+              "target": [
+                "input[autocomplete=\"organization-title\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\"",
+              "html": "<input type=\"text\" autocomplete=\"organization-title\" value=\"\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">"
+            },
+            {
+              "target": [
+                "input[autocomplete=\"organization\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\"",
+              "html": "<input type=\"text\" autocomplete=\"organization\" value=\"\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">"
+            },
+            {
+              "target": [
+                ".st-card:nth-child(3) > div:nth-child(2) > div:nth-child(2) > input[value=\"Local Owner\"][type=\"text\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\"",
+              "html": "<input type=\"text\" value=\"Local Owner\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/app/settings/security",
+      "tag": "desktop-security",
+      "title": "Security Settings — LAGDA",
+      "url": "/app/settings/security",
+      "headings": [
+        "My Settings › Security",
+        "My Settings",
+        "Security overview"
+      ],
+      "text": "LR\n\nLAGDA Local Replica\n\nFree\n\nPrepare Document\nHome\nDocuments\nShared Documents\nInvitations\nTemplates\nContacts\nVerify a Document\nNotary Directory\n\nWORKSPACE\n\nMy Settings\nLO\n\nLocal Owner\n\nOwner\n\nMy Settings › Security\nSearch…\nCtrl K\n1\nSkip to main content\nPERSONAL\nMy Settings\nSigned in as Local Owner · These settings are yours alone.\nMy Settings sections\nProfile\nYour name, photo and sender name\nPreferences\nTime zone, date and number formats\nSecurity\nPassword, two-step verification and sessions\nNotifications\nWhich emails LAGDA sends you\nSignatures & Initials\nThe signature and initials you apply to documents\nData & Privacy\nWhat LAGDA keeps about you, and your requests\nPlan & Billing\nYour plan, the Free document and upgrading\nOverview\nPassword\nTwo-step verification\nSessions\nActivity\nSECURITY\nSecurity overview\nYour password, two-step verification and signed-in sessions.\nTwo-step verification is off. Turn it on so a stolen password alone cannot open your account. Set it up\nPassword\nSet\nChange it any time. Other sessions are signed out when you do.\nChange\nTwo-step verification\nOff\nOnly your password protects your account.\nSet up\nSessions\n3 signed in\n3 browsers are signed in to your account, including this one.\nManage\nSign-in history\nNot recorded yet\nLAGDA does not keep a sign-in history yet.\nDetails",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [
+        {
+          "tag": "LI",
+          "cls": "",
+          "text": "Data & PrivacyWhat LAGDA keeps about you, and your requests",
+          "right": 1545
+        },
+        {
+          "tag": "A",
+          "cls": "st-card-tab",
+          "text": "Data & PrivacyWhat LAGDA keeps about you, and your requests",
+          "right": 1545
+        },
+        {
+          "tag": "SPAN",
+          "cls": "st-card-icon",
+          "text": "",
+          "right": 1472
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 1461
+        },
+        {
+          "tag": "ellipse",
+          "cls": "",
+          "text": "",
+          "right": 1458.5
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 1458.5
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 1458.5
+        },
+        {
+          "tag": "SPAN",
+          "cls": "st-card-label",
+          "text": "Data & Privacy",
+          "right": 1500.828125
+        },
+        {
+          "tag": "SPAN",
+          "cls": "st-card-hint",
+          "text": "What LAGDA keeps about you, and your requests",
+          "right": 1530
+        },
+        {
+          "tag": "LI",
+          "cls": "",
+          "text": "Plan & BillingYour plan, the Free document and upgrading",
+          "right": 1745
+        },
+        {
+          "tag": "A",
+          "cls": "st-card-tab",
+          "text": "Plan & BillingYour plan, the Free document and upgrading",
+          "right": 1745
+        },
+        {
+          "tag": "SPAN",
+          "cls": "st-card-icon",
+          "text": "",
+          "right": 1672
+        }
+      ],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                ".search-label"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span class=\"search-label\" style=\"display: none;\">Search…</span>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/app/workspace/settings/billing",
+      "tag": "desktop-billing",
+      "title": "Security Settings — LAGDA",
+      "url": "/app/settings/security",
+      "headings": [
+        "My Settings › Security",
+        "My Settings",
+        "Security overview"
+      ],
+      "text": "LR\n\nLAGDA Local Replica\n\nFree\n\nPrepare Document\nHome\nDocuments\nShared Documents\nInvitations\nTemplates\nContacts\nVerify a Document\nNotary Directory\n\nWORKSPACE\n\nMy Settings\nLO\n\nLocal Owner\n\nOwner\n\nMy Settings › Security\nSearch…\nCtrl K\n1\nSkip to main content\nPERSONAL\nMy Settings\nSigned in as Local Owner · These settings are yours alone.\nMy Settings sections\nProfile\nYour name, photo and sender name\nPreferences\nTime zone, date and number formats\nSecurity\nPassword, two-step verification and sessions\nNotifications\nWhich emails LAGDA sends you\nSignatures & Initials\nThe signature and initials you apply to documents\nData & Privacy\nWhat LAGDA keeps about you, and your requests\nPlan & Billing\nYour plan, the Free document and upgrading\nOverview\nPassword\nTwo-step verification\nSessions\nActivity\nSECURITY\nSecurity overview\nYour password, two-step verification and signed-in sessions.\nTwo-step verification is off. Turn it on so a stolen password alone cannot open your account. Set it up\nPassword\nSet\nChange it any time. Other sessions are signed out when you do.\nChange\nTwo-step verification\nOff\nOnly your password protects your account.\nSet up\nSessions\n3 signed in\n3 browsers are signed in to your account, including this one.\nManage\nSign-in history\nNot recorded yet\nLAGDA does not keep a sign-in history yet.\nDetails",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [
+        {
+          "tag": "LI",
+          "cls": "",
+          "text": "Data & PrivacyWhat LAGDA keeps about you, and your requests",
+          "right": 1545
+        },
+        {
+          "tag": "A",
+          "cls": "st-card-tab",
+          "text": "Data & PrivacyWhat LAGDA keeps about you, and your requests",
+          "right": 1545
+        },
+        {
+          "tag": "SPAN",
+          "cls": "st-card-icon",
+          "text": "",
+          "right": 1472
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 1461
+        },
+        {
+          "tag": "ellipse",
+          "cls": "",
+          "text": "",
+          "right": 1458.5
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 1458.5
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 1458.5
+        },
+        {
+          "tag": "SPAN",
+          "cls": "st-card-label",
+          "text": "Data & Privacy",
+          "right": 1500.828125
+        },
+        {
+          "tag": "SPAN",
+          "cls": "st-card-hint",
+          "text": "What LAGDA keeps about you, and your requests",
+          "right": 1530
+        },
+        {
+          "tag": "LI",
+          "cls": "",
+          "text": "Plan & BillingYour plan, the Free document and upgrading",
+          "right": 1745
+        },
+        {
+          "tag": "A",
+          "cls": "st-card-tab",
+          "text": "Plan & BillingYour plan, the Free document and upgrading",
+          "right": 1745
+        },
+        {
+          "tag": "SPAN",
+          "cls": "st-card-icon",
+          "text": "",
+          "right": 1672
+        }
+      ],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                ".search-label"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span class=\"search-label\" style=\"display: none;\">Search…</span>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/app/prepare/upload",
+      "tag": "desktop-prepare-upload",
+      "title": "Prepare a Document — LAGDA",
+      "url": "/app/prepare",
+      "headings": [
+        "Prepare a Document",
+        "Start with files from your computer",
+        "Resume a draft"
+      ],
+      "text": "Documents\n›\nPrepare Document\n1. Documents\nThe file everyone will sign\n2. Signers\nWho needs to sign it\n3. Order\nWhat order they sign in\n4. Settings\nReminders and expiration\n5. Place Fields\nWhere each signature goes\n6. Authentication\nHow signers prove who they are\n7. Review\nCheck everything before sending\n8. Authorization\nConfirm you are authorised to send\nPrepare a Document\n\nSet up a new eSignature transaction — add files, participants, routing, and authentication before placing signature fields.\n\n📄\nStart with files from your computer\n\nSelect one or more PDF or Word documents. They are uploaded to your workspace and scanned before anyone is invited to sign.\n\nStart preparation →\nResume a draft\nLocal replica smoke test\nLast changed Nov 18, 2026, 4:40 PM\nResume →\nAbout LAGDA eSignature\nDocuments you add here are uploaded to your workspace and stored there. Sending a transaction emails a real signing link to each participant. Drafts are kept on the server, so you can finish one later or on another device.",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [
+        {
+          "tag": "LI",
+          "cls": "",
+          "text": "7. ReviewCheck everything before sending",
+          "right": 1510
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "7. ReviewCheck everything before sending",
+          "right": 1490
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "7. ReviewCheck everything before sending",
+          "right": 1477
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "7. Review",
+          "right": 1477
+        },
+        {
+          "tag": "SPAN",
+          "cls": "prep-card-blurb",
+          "text": "Check everything before sending",
+          "right": 1477
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "",
+          "right": 1510
+        },
+        {
+          "tag": "LI",
+          "cls": "",
+          "text": "8. AuthorizationConfirm you are authorised to send",
+          "right": 1704
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "8. AuthorizationConfirm you are authorised to send",
+          "right": 1704
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "",
+          "right": 1557
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 1551
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 1549.83056640625
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 1545.75
+        }
+      ],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                "a"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<a href=\"/app/documents\" data-discover=\"true\" style=\"color: rgb(138, 155, 174); text-decoration: none; font-weight: 500; white-space: nowrap;\">Documents</a>"
+            },
+            {
+              "target": [
+                "ol[data-testid=\"prep-step-cards\"] > li:nth-child(1) > button[title=\"Documents\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 11px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">The file everyone will sign</span>"
+            },
+            {
+              "target": [
+                "#prep-main-content > div > div:nth-child(1) > p"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<p style=\"font-size: 14px; color: rgb(138, 155, 174); margin: 0px; line-height: 1.6;\">Set up a new eSignature transaction — add files, participants, routing, and authentication before placing signature fields.</p>"
+            },
+            {
+              "target": [
+                "li > div > div:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.74 (foreground color: #8a9bae, background color: #fafbfc, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<div style=\"font-family: Geist, sans-serif; font-size: 12px; color: rgb(138, 155, 174); margin-top: 3px;\">Last changed Nov 18, 2026, 4:40 PM</div>"
+            },
+            {
+              "target": [
+                "#prep-main-content > div > div:nth-child(4)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<div style=\"font-family: Geist, sans-serif; font-size: 12px; color: rgb(138, 155, 174); line-height: 1.7; padding-top: 24px; border-top: 1px solid rgb(227, 232, 239);\">"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/app/documents/doc_7ab9aafa92434d1eab975ec401fe954e",
+      "tag": "desktop-document-detail",
+      "title": "Documents — LAGDA",
+      "url": "/app/documents",
+      "headings": [
+        "Documents",
+        "Documents",
+        "Your documents will appear here"
+      ],
+      "text": "LR\n\nLAGDA Local Replica\n\nFree\n\nPrepare Document\nHome\nDocuments\nShared Documents\nInvitations\nTemplates\nContacts\nVerify a Document\nNotary Directory\n\nWORKSPACE\n\nMy Settings\nLO\n\nLocal Owner\n\nOwner\n\nDocuments\nSearch…\nCtrl K\n1\nSkip to main content\nDocuments\nPrepare Document\nCorrespondence\nRecords\nSent\nI must sign\nI must approve\nI must review\nAcknowledgement\nYour documents will appear here\n\nDocuments you prepare and send for signing will show up in this list. Use Prepare Document to start one.",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                ".active[aria-current=\"page\"][href$=\"documents\"] > span:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.74 (foreground color: #0078d4, background color: #dbecf9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span style=\"font-family: Geist, sans-serif; font-size: 13px; font-weight: 600; flex: 1 1 0%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;\">Documents</span>"
+            },
+            {
+              "target": [
+                ".search-label"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span class=\"search-label\" style=\"display: none;\">Search…</span>"
+            },
+            {
+              "target": [
+                ".doc-list-tab[role=\"tab\"][type=\"button\"]:nth-child(1)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.32 (foreground color: #0078d4, background color: #f8fafc, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<button type=\"button\" role=\"tab\" class=\"doc-list-tab\" aria-selected=\"true\">"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/app/dashboard",
+      "tag": "mobile-dashboard",
+      "title": "Dashboard — LAGDA",
+      "url": "/app/dashboard",
+      "headings": [
+        "Dashboard",
+        "Your free document is ready",
+        "Send your first document"
+      ],
+      "text": "1\nLO\nSkip to main content\nHi, Local\nEdit profile\nFREE PLAN\n1\nLEFT\nYour free document is ready\n\nSend one document for signing on us. Signing documents other people send you is always free.\n\n0 of 1 document sent\nUnlimited signing for you\nUNLOCK MORE\nPersonal\n₱299/mo\n50 documents a month\nYour logo and colours\nShare completed documents\nReady-made templates and chatbot\nJoin other workspaces\nChoose Personal\nMost popular\nBusiness\n₱799/user/mo\nEverything in Personal\nInvite your team\nTeams, roles and join links\nShared contacts and activity log\nChoose Business\nTest mode: no money is moved\nPlan & Billing\nMEET THE LAGDA CHATBOT\nYou\nDraft an NDA between Reyes Law and Maria Santos. Both sign.\nDescribe it, and it writes the template\nSigners and roles set for you\nSigning order ready to send\nIncluded with Personal and Business\nUnlock the Chatbot\nSend your first document\n\nUpload a PDF, add the people who need to sign, place their fields and send. Everything you send shows up here — what's waiting on whom, what's about to expire, and what's done.\n\nPrepare your first document",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "violations": []
+    },
+    {
+      "path": "/app/documents",
+      "tag": "mobile-documents",
+      "title": "Documents — LAGDA",
+      "url": "/app/documents",
+      "headings": [
+        "Documents",
+        "Documents",
+        "Your documents will appear here"
+      ],
+      "text": "1\nLO\nSkip to main content\nDocuments\nPrepare Document\nCorrespondence\nRecords\nSent\nI must sign\nI must approve\nI must review\nAcknowledgement\nYour documents will appear here\n\nDocuments you prepare and send for signing will show up in this list. Use Prepare Document to start one.",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [
+        {
+          "tag": "BUTTON",
+          "cls": "doc-list-tab",
+          "text": " I must review",
+          "right": 503.359375
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 401.828125
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 400.6617431640625
+        },
+        {
+          "tag": "circle",
+          "cls": "",
+          "text": "",
+          "right": 396.578125
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "doc-list-tab",
+          "text": " Acknowledgement",
+          "right": 673.8125
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 538.359375
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 534.859375
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 537.1926879882812
+        }
+      ],
+      "violations": []
+    },
+    {
+      "path": "/app/templates",
+      "tag": "mobile-templates",
+      "title": "Templates — LAGDA",
+      "url": "/app/templates",
+      "headings": [
+        "Templates",
+        "Templates",
+        "My Templates",
+        "No templates yet"
+      ],
+      "text": "1\nLO\nSkip to main content\nTemplates\n\nReusable document workflows for your team\n\nNew Template\nStart faster with 46 ready-made templates\nRoles and signing order already set up.\nWRITE TEMPLATES WITH THE LAGDA CHATBOT\nYou\nA service agreement for a web design project. The client and the designer sign.\nIncluded with Personal and Business\nUnlock the Chatbot\nMy Templates\nFilters\nSort:\nLast Updated\nName (A–Z)\nLast Used\nMost Used\nStatus\nCategory\n↓\n\nNo templates found\n\nNo templates yet\n\nCreate your first template to build reusable signing workflows for your team.\n\nCreate Template",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                "div:nth-child(3) > div > p"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.45 (foreground color: #94a3b8, background color: #f8fafc, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<p style=\"font-family: Geist, sans-serif; font-size: 12px; color: rgb(148, 163, 184); margin-bottom: 14px;\">No templates found</p>"
+            }
+          ]
+        },
+        {
+          "id": "select-name",
+          "impact": "critical",
+          "description": "Ensure select element has an accessible name",
+          "nodes": [
+            {
+              "target": [
+                "select"
+              ],
+              "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\"",
+              "html": "<select style=\"font-family: Geist, sans-serif; font-size: 12px; color: rgb(15, 23, 42); border: 1px solid rgb(226, 232, 240); border-radius: 6px; padding: 5px 8px; background: white; cursor: pointer;\">"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/app/contacts",
+      "tag": "mobile-contacts",
+      "title": "Contacts — LAGDA",
+      "url": "/app/contacts",
+      "headings": [
+        "Contacts",
+        "Contacts",
+        "No contacts yet"
+      ],
+      "text": "1\nLO\nSkip to main content\nSkip to contacts\nADDRESS BOOK\nContacts\n\nThe people you send documents to. Find anyone on LAGDA by their email, or add someone who isn't on LAGDA yet.\n\nContact groups\nFind people\nAll contacts\nPending\nDocument requests\nArchived\n0\nContacts\n0\nWaiting for you\n0\nRequests sent\nSearch contacts\n⌕\nFilters ▼\nRecently Updated\nRecently Used\nFrequently Used\nName\nOrganization\n↓\n\n👥\n\nNo contacts yet\n\nAdd contacts to quickly add participants to future document workflows.\n\nAdd First Contact",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "",
+          "text": "Document requests",
+          "right": 403.65625
+        },
+        {
+          "tag": "A",
+          "cls": "",
+          "text": "Archived",
+          "right": 504.796875
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 430.65625
+        },
+        {
+          "tag": "rect",
+          "cls": "",
+          "text": "",
+          "right": 429.40625
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 428.15625
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 424.40625
+        }
+      ],
+      "violations": []
+    },
+    {
+      "path": "/app/settings/profile",
+      "tag": "mobile-profile",
+      "title": "Profile Settings — LAGDA",
+      "url": "/app/settings/profile",
+      "headings": [
+        "My Settings › Profile",
+        "My Settings",
+        "Profile"
+      ],
+      "text": "1\nLO\nSkip to main content\nPERSONAL\nMy Settings\nSigned in as Local Owner · These settings are yours alone.\nMY SETTINGS SECTIONS\nProfile\nYour name, photo and sender name\nPreferences\nTime zone, date and number formats\nSecurity\nPassword, two-step verification and sessions\nNotifications\nWhich emails LAGDA sends you\nSignatures & Initials\nThe signature and initials you apply to documents\nData & Privacy\nWhat LAGDA keeps about you, and your requests\nPlan & Billing\nYour plan, the Free document and upgrading\nPERSONAL\nProfile\nYour name, photo and how you appear to the people you send documents to.\nProfile Photo\nLO\nSelect image\nPNG, JPEG or WebP, up to 5 MB. Cropped to a square. Saved with the rest of your profile, and shown wherever your name appears.\nPersonal Information\nFull name*\nYour legal or preferred name used across the platform.\nDisplay name\nShown in notifications and the platform header. Defaults to full name.\nPrimary email\nRead-only. Contact support to change your account email.\nJob title\nYour role within your organization. Shown under your name in the account menu.\nDepartment\nTeam or department within your organization. Shown under your name in the account menu.\nSender Display\nPreferred sender name\nShown to recipients when you send documents for signing. Defaults to your full name.\nSave changes",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [
+        {
+          "tag": "LI",
+          "cls": "",
+          "text": "SecurityPassword, two-step verification and sessions",
+          "right": 486
+        },
+        {
+          "tag": "A",
+          "cls": "st-card-tab",
+          "text": "SecurityPassword, two-step verification and sessions",
+          "right": 486
+        },
+        {
+          "tag": "SPAN",
+          "cls": "st-card-icon",
+          "text": "",
+          "right": 430
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 421
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 417.6666564941406
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 413.5
+        },
+        {
+          "tag": "SPAN",
+          "cls": "st-card-label",
+          "text": "Security",
+          "right": 439
+        },
+        {
+          "tag": "SPAN",
+          "cls": "st-card-hint",
+          "text": "Password, two-step verification and sessions",
+          "right": 473
+        },
+        {
+          "tag": "LI",
+          "cls": "",
+          "text": "NotificationsWhich emails LAGDA sends you",
+          "right": 646
+        },
+        {
+          "tag": "A",
+          "cls": "st-card-tab",
+          "text": "NotificationsWhich emails LAGDA sends you",
+          "right": 646
+        },
+        {
+          "tag": "SPAN",
+          "cls": "st-card-icon",
+          "text": "",
+          "right": 590
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 581
+        }
+      ],
+      "violations": [
+        {
+          "id": "label",
+          "impact": "critical",
+          "description": "Ensure every form element has a label",
+          "nodes": [
+            {
+              "target": [
+                "#full-name"
+              ],
+              "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\"",
+              "html": "<input id=\"full-name\" type=\"text\" autocomplete=\"name\" aria-invalid=\"false\" required=\"\" value=\"Local Owner\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(209, 217, 224); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">"
+            },
+            {
+              "target": [
+                "input[autocomplete=\"nickname\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\"",
+              "html": "<input type=\"text\" autocomplete=\"nickname\" value=\"Local Owner\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">"
+            },
+            {
+              "target": [
+                "input[type=\"email\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\"",
+              "html": "<input type=\"email\" readonly=\"\" disabled=\"\" value=\"local.owner@example.test\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(100, 116, 139); width: 100%; box-sizing: border-box; background: rgb(248, 250, 252);\">"
+            },
+            {
+              "target": [
+                "input[autocomplete=\"organization-title\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\"",
+              "html": "<input type=\"text\" autocomplete=\"organization-title\" value=\"\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">"
+            },
+            {
+              "target": [
+                "input[autocomplete=\"organization\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\"",
+              "html": "<input type=\"text\" autocomplete=\"organization\" value=\"\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">"
+            },
+            {
+              "target": [
+                ".st-card:nth-child(3) > div:nth-child(2) > div:nth-child(2) > input[value=\"Local Owner\"][type=\"text\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\"",
+              "html": "<input type=\"text\" value=\"Local Owner\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/app/prepare/upload",
+      "tag": "mobile-prepare-upload",
+      "title": "Prepare a Document — LAGDA",
+      "url": "/app/prepare",
+      "headings": [
+        "Prepare a Document",
+        "Start with files from your computer",
+        "Resume a draft"
+      ],
+      "text": "Documents\n\nSTEP 1 OF 8 · Documents\n\n1. Documents\nThe file everyone will sign\n2. Signers\nWho needs to sign it\n3. Order\nWhat order they sign in\n4. Settings\nReminders and expiration\n5. Place Fields\nWhere each signature goes\n6. Authentication\nHow signers prove who they are\n7. Review\nCheck everything before sending\n8. Authorization\nConfirm you are authorised to send\nPrepare a Document\n\nSet up a new eSignature transaction — add files, participants, routing, and authentication before placing signature fields.\n\n📄\nStart with files from your computer\n\nSelect one or more PDF or Word documents. They are uploaded to your workspace and scanned before anyone is invited to sign.\n\nStart preparation →\nResume a draft\nLocal replica smoke test\nLast changed Nov 18, 2026, 4:40 PM\nResume →\nAbout LAGDA eSignature\nDocuments you add here are uploaded to your workspace and stored there. Sending a transaction emails a real signing link to each participant. Drafts are kept on the server, so you can finish one later or on another device.",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [
+        {
+          "tag": "LI",
+          "cls": "",
+          "text": "3. OrderWhat order they sign in",
+          "right": 514
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "3. OrderWhat order they sign in",
+          "right": 502
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "3. OrderWhat order they sign in",
+          "right": 491
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "3. Order",
+          "right": 491
+        },
+        {
+          "tag": "SPAN",
+          "cls": "prep-card-blurb",
+          "text": "What order they sign in",
+          "right": 491
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "",
+          "right": 514
+        },
+        {
+          "tag": "LI",
+          "cls": "",
+          "text": "4. SettingsReminders and expiration",
+          "right": 682
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "4. SettingsReminders and expiration",
+          "right": 670
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "",
+          "right": 557
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 551
+        },
+        {
+          "tag": "line",
+          "cls": "",
+          "text": "",
+          "right": 549.25
+        },
+        {
+          "tag": "line",
+          "cls": "",
+          "text": "",
+          "right": 542.8333129882812
+        }
+      ],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                ".prep-cards-compact > li:nth-child(1) > button[title=\"Documents\"][type=\"button\"] > span:nth-child(2) > .prep-card-blurb"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 7.9pt (10.5px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<span class=\"prep-card-blurb\" style=\"display: block; font-size: 10.5px; color: rgb(138, 155, 174); margin-top: 2px; line-height: 1.4;\">The file everyone will sign</span>"
+            },
+            {
+              "target": [
+                "#prep-main-content > div > div:nth-child(1) > p"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<p style=\"font-size: 14px; color: rgb(138, 155, 174); margin: 0px; line-height: 1.6;\">Set up a new eSignature transaction — add files, participants, routing, and authentication before placing signature fields.</p>"
+            },
+            {
+              "target": [
+                "li > div > div:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.74 (foreground color: #8a9bae, background color: #fafbfc, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<div style=\"font-family: Geist, sans-serif; font-size: 12px; color: rgb(138, 155, 174); margin-top: 3px;\">Last changed Nov 18, 2026, 4:40 PM</div>"
+            },
+            {
+              "target": [
+                "#prep-main-content > div > div:nth-child(4)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<div style=\"font-family: Geist, sans-serif; font-size: 12px; color: rgb(138, 155, 174); line-height: 1.7; padding-top: 24px; border-top: 1px solid rgb(227, 232, 239);\">"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/app/documents/doc_7ab9aafa92434d1eab975ec401fe954e",
+      "tag": "mobile-document-detail",
+      "title": "Documents — LAGDA",
+      "url": "/app/documents",
+      "headings": [
+        "Documents",
+        "Documents",
+        "Your documents will appear here"
+      ],
+      "text": "1\nLO\nSkip to main content\nDocuments\nPrepare Document\nCorrespondence\nRecords\nSent\nI must sign\nI must approve\nI must review\nAcknowledgement\nYour documents will appear here\n\nDocuments you prepare and send for signing will show up in this list. Use Prepare Document to start one.",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [
+        {
+          "tag": "BUTTON",
+          "cls": "doc-list-tab",
+          "text": " I must review",
+          "right": 503.359375
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 401.828125
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 400.6617431640625
+        },
+        {
+          "tag": "circle",
+          "cls": "",
+          "text": "",
+          "right": 396.578125
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "doc-list-tab",
+          "text": " Acknowledgement",
+          "right": 673.8125
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 538.359375
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 534.859375
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 537.1926879882812
+        }
+      ],
+      "violations": []
+    },
+    {
+      "path": "/",
+      "tag": "mobile-home",
+      "title": "LAGDA eSignature | Send, Sign & Verify Documents Online",
+      "url": "/",
+      "headings": [
+        "Everything you need to send, sign, track, and verify documents online.",
+        "Built for the full eSignature workflow.",
+        "Every capability in one eSignature platform.",
+        "Designed differently for senders and recipients.",
+        "Know exactly where every document stands.",
+        "Ready to send your next document?"
+      ],
+      "text": "Skip to main content\nLO\nDashboard\nOverview\nCore Workflow\nVerification & Audit\nAdvanced Capabilities\nTemplates & Branding\nTeam & Enterprise\n\nLAGDA ESIGNATURE — AVAILABLE NOW\n\nEverything you need to send, sign, track, and verify documents online.\n\nLAGDA eSignature helps Philippine professionals and organizations prepare documents, verify signers, collect signatures, track status, generate audit records, and confirm completed transactions.\n\nGo to Dashboard\nSee How It Works\nVerify a Document →\neSignature Available Now\nIdentity-Aware Signing\nAudit-Ready Records\nDocument Verification\nBuilt for Philippine Workflows\n\nFULL LIFECYCLE\n\nBuilt for the full eSignature workflow.\n\nLAGDA covers every step — from preparing a document to verifying the completed record.\n\n01\nPrepare\n02\nAdd Participants\n03\nConfigure Routing\n04\nPlace Fields\n05\nSend\n06\nOpen Invitation\n07\nAuthenticate\n08\nSign or Approve\n09\nTrack Progress\n10\nComplete & Verify\nBlue = Sender actions\nGold = Recipient actions\n\nCAPABILITIES\n\nEvery capability in one eSignature platform.\n📄\n\nDocument Preparation\n\nUpload PDFs, configure fields, and prepare the document before it goes out.\n\n👥\n\nRecipient Management\n\nAdd signers, approvers, reviewers, and copy recipients — each with their own role and access level.\n\n🔀\n\nParallel & Sequential Routing\n\nControl the order documents move through participants. Send to everyone at once or in a defined sequence.\n\n🔐\n\nSigner Authentication\n\nConfirm participant identity at signing with a secure invitation link and an email code, or by signing from a LAGDA account.\n\n📋\n\nAudit Trail\n\nEvery invitation, view, authentication event, signature, and completion is recorded with timestamp and evidence.\n\n🔍\n\nDocument Verification\n\nCompleted documents receive a Verification ID and QR code that anyone can use to confirm status — no account needed.\n\n📁\n\nTemplates\n\nSave and reuse complete signing workflows — fields, routing, authentication, and branding — as reusable templates.\n\n🏢\n\nTeam Workspaces\n\nManage multiple senders, shared templates, role-based access, and organization-wide settings in one workspace.\n\nTWO EXPERIENCES\n\nDesigned differently for senders and recipients.\n\nThe sender configures and tracks. The recipient signs in a clean, guided experience, using a free LAGDA account.\n\nSENDER EXPERIENCE\n\n01\nPrepare documents\n02\nAdd participants and roles\n03\nConfigure signing order\n04\nSet authentication requirements\n05\nPlace fields\n06\nSend and track progress\n\nRECIPIENT EXPERIENCE\n\n01\nReceive secure invitation\n02\nAuthenticate identity\n03\nReview the document\n04\nComplete required fields\n05\nSign or approve\n06\nDownload or verify when complete\n\nTRANSACTION STATES\n\nKnow exactly where every document stands.\n\nLAGDA tracks your documents through every stage — from draft to completed and verified.\n\nDraft\nSent\nViewed\nAwaiting Signature\nAwaiting Approval\nPartially Completed\nCompleted\nDeclined\nCancelled\nExpired\n\nEXPLORE MORE\n\nCore Workflow\n\nStep-by-step sender and recipient journey\n\n→\n\nVerification & Audit\n\nEvidence, audit trail, and public verification\n\n→\n\nAdvanced Capabilities\n\nRouting, reminders, and enterprise features\n\n→\n\nTemplates & Branding\n\nReusable workflows and company branding\n\n→\nReady to send your next document?\n\nYou're signed in. Prepare a document and send it for signing.\n\nPrepare Document\nBook a Demo\n\nSome documents may still require wet signatures, notarization, personal appearance, witnesses, or other legal formalities. Users remain responsible for determining the requirements that apply to each transaction.\n\nElectronic signing and electronic notarization are separate processes. LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules.\n\nLAGDA eSignature is available now. LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules.\n\nPRODUCT\neSignature\nDocument Workflows\nCore Workflow\nDocument Verification\nTemplates & Branding\nTeam & Enterprise\nPricing\nSOLUTIONS\nLawyers\nLaw Firms\nBusiness Teams\nGovernment / LGU\nReal Estate\nFinance\nSECURITY & TRUST\nSecurity Overview\nTrust Center\nIdentity Verification\nAudit Trail\nDocument Verification\nPrivacy\nRESOURCES\nGuides\nFAQ\nLegal Framework\nHelp Center\nContact\nService Status\nENOTARY\nNotary Directory\nRoadmap\nJoin Waitlist\nFAQ\nLEGAL\nPrivacy Policy\nTerms of Service\nAccessibility\n\nThe Philippine-first electronic signature and document verification platform for legal, business, and institutional workflows.\n\nA product of UpUp Technologies\n\n© 2026 UpUp Technologies. LAGDA and the LAGDA shield mark are trademarks of UpUp Technologies.\n\nSign In\nPrivacy Policy\nTerms of Service\nAccessibility",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [
+        {
+          "tag": "UL",
+          "cls": "lsn-list",
+          "text": "OverviewCore WorkflowVerification & AuditAdvanced CapabilitiesTemplates & Brandi",
+          "right": 986.359375
+        },
+        {
+          "tag": "LI",
+          "cls": "lsn-item",
+          "text": "Verification & Audit",
+          "right": 440.8125
+        },
+        {
+          "tag": "A",
+          "cls": "lsn-tab",
+          "text": "Verification & Audit",
+          "right": 440.8125
+        },
+        {
+          "tag": "SPAN",
+          "cls": "lsn-label",
+          "text": "Verification & Audit",
+          "right": 428.8125
+        },
+        {
+          "tag": "LI",
+          "cls": "lsn-item",
+          "text": "Advanced Capabilities",
+          "right": 632.4375
+        },
+        {
+          "tag": "A",
+          "cls": "lsn-tab",
+          "text": "Advanced Capabilities",
+          "right": 632.4375
+        },
+        {
+          "tag": "SPAN",
+          "cls": "lsn-ico",
+          "text": "",
+          "right": 476.8125
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 471.3125
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 470.06378173828125
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 470.0625
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 459.4375
+        },
+        {
+          "tag": "SPAN",
+          "cls": "lsn-label",
+          "text": "Advanced Capabilities",
+          "right": 620.4375
+        }
+      ],
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            {
+              "target": [
+                "#sender-recipient > div > div:nth-child(1) > p:nth-child(3)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.43 (foreground color: #64748b, background color: #f0f8ff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<p style=\"color: rgb(100, 116, 139); font-family: Geist, sans-serif; font-size: 16px; line-height: 1.65; margin: 0px auto; max-width: 640px;\">The sender configures and tracks. The recipient signs in a clean, guided experience, using a free LAGDA account.</p>"
+            },
+            {
+              "target": [
+                "#statuses > div > div:nth-child(1) > p:nth-child(3)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.43 (foreground color: #64748b, background color: #f0f8ff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<p style=\"color: rgb(100, 116, 139); font-family: Geist, sans-serif; font-size: 16px; line-height: 1.65; margin: 0px; max-width: 640px;\">LAGDA tracks your documents through every stage — from draft to completed and verified.</p>"
+            },
+            {
+              "target": [
+                "section:nth-child(8) > div > p"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.21 (foreground color: #64748b, background color: #e6f3fd, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<p style=\"color: rgb(100, 116, 139); font-family: Geist, sans-serif; font-size: 16px; line-height: 1.65; margin: 0px auto 24px; max-width: 520px;\">You're signed in. Prepare a document and send it for signing.</p>"
+            },
+            {
+              "target": [
+                "#main-content > div > div > p:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.44 (foreground color: #94a3b8, background color: #f8fafb, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1",
+              "html": "<p style=\"color: rgb(148, 163, 184); font-family: Geist, sans-serif; font-size: 12px; line-height: 1.6; margin: 0px;\">Electronic signing and electronic notarization are separate processes. LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules.</p>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/sign-in",
+      "tag": "mobile-sign-in",
+      "title": "Dashboard — LAGDA",
+      "url": "/app/dashboard",
+      "headings": [
+        "Dashboard",
+        "Your free document is ready",
+        "Send your first document"
+      ],
+      "text": "1\nLO\nSkip to main content\nHi, Local\nEdit profile\nFREE PLAN\n1\nLEFT\nYour free document is ready\n\nSend one document for signing on us. Signing documents other people send you is always free.\n\n0 of 1 document sent\nUnlimited signing for you\nUNLOCK MORE\nPersonal\n₱299/mo\n50 documents a month\nYour logo and colours\nShare completed documents\nReady-made templates and chatbot\nJoin other workspaces\nChoose Personal\nMost popular\nBusiness\n₱799/user/mo\nEverything in Personal\nInvite your team\nTeams, roles and join links\nShared contacts and activity log\nChoose Business\nTest mode: no money is moved\nPlan & Billing\nMEET THE LAGDA CHATBOT\nYou\nDraft an NDA between Reyes Law and Maria Santos. Both sign.\nDescribe it, and it writes the template\nSigners and roles set for you\nSigning order ready to send\nIncluded with Personal and Business\nUnlock the Chatbot\nSend your first document\n\nUpload a PDF, add the people who need to sign, place their fields and send. Everything you send shows up here — what's waiting on whom, what's about to expire, and what's done.\n\nPrepare your first document",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "violations": []
+    }
+  ]
+}

@@ -48,7 +48,7 @@ import { roleCanBeAskedForIdentityCheck } from "../../models/identity-check";
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 const NAVY = "#07111F";
 const SLATE = "#64748B";
-const SILVER = "#8A9BAE";
+const SILVER = "#64748B";
 const AZURE = "#0078D4";
 const DANGER = "#C0392B";
 
@@ -407,14 +407,14 @@ export function ResendSigningDialog({
       <div
         ref={panelRef}
         tabIndex={-1}
-        role="dialog"
+        className="platform-task-dialog" role="dialog"
         aria-modal="true"
         aria-label={`Send ${documentTitle} for signing again`}
         style={{
           position: "fixed", zIndex: Z.drawer, outline: "none",
           left: "50%", top: "50%", transform: "translate(-50%, -50%)",
           width: "min(560px, calc(100vw - 32px))",
-          maxHeight: "calc(100vh - 32px)", overflowY: "auto",
+          maxHeight: "calc(100dvh - 32px)", overflowY: "auto",
           background: "#FFFFFF", borderRadius: 14,
           boxShadow: "0 24px 60px rgba(7,17,31,0.28)",
         }}

@@ -281,3 +281,14 @@ describe("saying what happened", () => {
     expect(h.copy).toHaveBeenCalledTimes(1);
   });
 });
+
+
+it("leaves modal Escape and Delete to the dialog instead of changing the canvas", () => {
+  const h = makeHandlers();
+  renderHook(() => useFieldEditorShortcuts(h));
+  const dialog = document.createElement("div"); dialog.setAttribute("role", "dialog");
+  const button = document.createElement("button"); dialog.append(button); document.body.append(dialog);
+  press("Escape", {}, button); press("Delete", {}, button);
+  expect(h.escape).not.toHaveBeenCalled(); expect(h.deleteSelected).not.toHaveBeenCalled();
+  dialog.remove();
+});

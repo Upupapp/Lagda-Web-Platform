@@ -1,0 +1,23 @@
+[
+  {
+    "tag": "overview",
+    "width": 1440,
+    "url": "/app/workspace",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "overview",
+    "width": 390,
+    "url": "/app/workspace",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "overview",
+    "width": 320,
+    "url": "/app/workspace",
+    "overflow": false,
+    "violations": []
+  }
+]

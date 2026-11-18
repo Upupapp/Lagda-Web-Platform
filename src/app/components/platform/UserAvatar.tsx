@@ -6,13 +6,8 @@
 import { useEffect, useState } from "react";
 import type { UserSummary } from "../../models";
 
-export function initialsOf(name: string): string {
-  const words = name.trim().split(/\s+/).filter(w => w.length > 0);
-  const first = words[0];
-  if (first === undefined) return "?";
-  const last = words.length > 1 ? words[words.length - 1] : undefined;
-  return `${first[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase();
-}
+export { personInitials as initialsOf } from "../../utils/person-initials";
+import { personInitials as initialsOf } from "../../utils/person-initials";
 
 export function UserAvatar({ user, size, fontSize }: {
   user: Pick<UserSummary, "displayName" | "avatarUrl">;

@@ -1,4 +1,6 @@
-// Review — full summary before proceeding to field placement.
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { ON_LIGHT } from "../../../utils/on-light";
+// Review — check preparation settings before final authorization.
 // Shows all draft data, validation status, and field-placement readiness.
 // Continue at the foot of the page is the one way on to Authorization, the
 // last step before anyone is emailed. This step used to carry its own
@@ -33,8 +35,7 @@ import {
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
-const AZURE  = "#0078D4";
-const SILVER = "#8A9BAE";
+const SILVER = ON_LIGHT.muted;
 const GOLD   = "#C9960C";
 
 function humanSize(bytes: number): string {
@@ -80,7 +81,7 @@ function SectionBlock({
             ...GF,
             fontSize: 12,
             fontWeight: 600,
-            color: AZURE,
+            color: ON_LIGHT.azure,
             background: "none",
             border: "none",
             cursor: "pointer",
@@ -123,10 +124,9 @@ function IssueRow({ issue, onGoToStep }: { issue: PrepValidationIssue; onGoToSte
         cursor: "pointer",
         transition: "filter 0.12s ease",
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(0.97)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.filter = ""; }}
+      className="prep-review-issue"
     >
-      <span aria-hidden="true" style={{ color: GOLD, flexShrink: 0 }}>{issue.severity === "error" ? "●" : "○"}</span>
+      <span aria-hidden="true" style={{ color: ON_LIGHT.gold, flexShrink: 0 }}>{issue.severity === "error" ? "●" : "○"}</span>
       <span style={{ flex: 1 }}>{issue.message}</span>
       <ChevronRight size={14} color={GOLD} style={{ flexShrink: 0 }} />
     </button>
@@ -186,7 +186,7 @@ export function ReviewStep() {
       {/* Documents */}
       <SectionBlock title="Documents" stepId="upload" onEdit={goToStep}>
         {files.length === 0 ? (
-          <span style={{ ...GF, fontSize: 13, color: GOLD, fontWeight: 600 }}>No files selected yet</span>
+          <span style={{ ...GF, fontSize: 13, color: ON_LIGHT.gold, fontWeight: 600 }}>No files selected yet</span>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {files.map((f, i) => (
@@ -208,7 +208,7 @@ export function ReviewStep() {
       {/* Participants */}
       <SectionBlock title="Participants" stepId="participants" onEdit={goToStep}>
         {participants.length === 0 ? (
-          <span style={{ ...GF, fontSize: 13, color: GOLD, fontWeight: 600 }}>No participants added yet</span>
+          <span style={{ ...GF, fontSize: 13, color: ON_LIGHT.gold, fontWeight: 600 }}>No participants added yet</span>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {participants.map((p, _i) => (
@@ -223,7 +223,7 @@ export function ReviewStep() {
                     fontSize: 11,
                     fontWeight: 600,
                     background: PREP_ROLE_IS_BLOCKING[p.role] ? "#EBF4FC" : "#F5F7FA",
-                    color: PREP_ROLE_IS_BLOCKING[p.role] ? AZURE : SILVER,
+                    color: PREP_ROLE_IS_BLOCKING[p.role] ? ON_LIGHT.azure : SILVER,
                     padding: "2px 8px",
                     borderRadius: 20,
                   }}
@@ -307,7 +307,7 @@ export function ReviewStep() {
               : "No expiration set"}
           </div>
           <div data-testid="review-final-copy" style={{ ...GF, fontSize: 12, color: "#4B5E70" }}>
-            Completed document: {emailsFinalCopy(settings)
+            Completed document: {USE_REAL_BACKEND ? "Available in LAGDA under Records" : emailsFinalCopy(settings)
               ? "Emailed to participants when everyone has finished"
               : "Not emailed to participants"}
           </div>
@@ -325,11 +325,11 @@ export function ReviewStep() {
         }}
       >
         <div style={{ ...GF, fontSize: 14, fontWeight: 700, color: isReady ? "#2E7D32" : "#8A6A16", marginBottom: 6 }}>
-          {isReady ? "Ready to place fields" : "Almost there — a few things left"}
+          {isReady ? "Preparation settings complete" : "Almost there — a few things left"}
         </div>
         <div style={{ ...GF, fontSize: 12, color: isReady ? "#388E3C" : "#8A6A16", lineHeight: 1.5 }}>
           {isReady
-            ? `${readyFiles.length} file${readyFiles.length !== 1 ? "s" : ""}, ${participants.length} participant${participants.length !== 1 ? "s" : ""}, and routing are configured. You may proceed to place signature fields.`
+            ? `${readyFiles.length} file${readyFiles.length !== 1 ? "s" : ""}, ${participants.length} participant${participants.length !== 1 ? "s" : ""}, and routing are configured. Review the details below before final authorization.`
             : "See the checklist on the right, or open the reminder below to jump straight to what's missing."}
         </div>
       </div>
@@ -350,7 +350,7 @@ export function ReviewStep() {
       >
         <strong style={{ color: "#4B5E70" }}>Legal notice</strong>
         <br />
-        Proceeding to field placement does not send invitations and does not
+        Reviewing these settings does not send invitations and does not
         produce a signature — nobody is contacted until you send the
         transaction on the final step. Your document and its participants are
         already saved to your workspace, so the work is kept if you leave and
@@ -409,7 +409,7 @@ export function ReviewStep() {
         })}
       </div>
       <div style={{ ...GF, marginTop: 12, paddingTop: 12, borderTop: "1px solid #F0F2F5", fontSize: 12, fontWeight: 700, color: isReady ? "#2E7D32" : "#8A6A16" }}>
-        {isReady ? "All steps ready" : "A few steps still need a bit more"}
+        {isReady ? "Preparation settings checked" : "A few steps still need a bit more"}
       </div>
     </RailCard>
   );
@@ -420,8 +420,8 @@ export function ReviewStep() {
         icon={ClipboardCheck}
         eyebrow={stepEyebrow("review")}
         title="Review"
-        description="Check all preparation settings before proceeding to place signature fields."
-        meta={isReady ? "Ready for field placement" : "Not yet ready"}
+        description="Review your document, participants, fields and settings before the final authorization step."
+        meta={isReady ? "Preparation settings complete" : "Not yet ready"}
       />
       <StepTwoColumn main={main} rail={rail} />
     </div>

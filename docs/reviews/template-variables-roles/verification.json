@@ -1,0 +1,344 @@
+{
+  "date": "2026-11-18",
+  "environment": "real local backend, database, storage, worker and captured Mailpit mail",
+  "frontendHead": "5934a8b",
+  "frontendBranch": "feat/emil-screen-sprints",
+  "backendHead": "cb3c3b0",
+  "noDeploy": true,
+  "mockedApiResponses": false,
+  "productionAccess": false,
+  "fixes": [
+    "Reject whitespace-only required template values",
+    "Exclude nonempty sender-filled static fields from unassigned-recipient errors"
+  ],
+  "workflows": [
+    {
+      "mode": "sequential",
+      "templateId": "wft_449b540eb6a24ef3b0d5d04aaa772994",
+      "sourceDocumentId": "doc_2d57c40295f249d8927b763da2538dd1",
+      "documentId": "doc_9fc14893b0f9442cac0157933d12905a",
+      "signingRequestId": "sr_210c2ccccdbd462d93df3455046bbac6",
+      "variables": {
+        "client_name": "Northwind QA Services",
+        "case_notes": "Sequential QA only.\nNo commercial obligation.",
+        "effective_date": "2026-11-18",
+        "fee_amount": "1250.50",
+        "consent_flag": "yes"
+      },
+      "roles": [
+        "approver",
+        "reviewer",
+        "signer"
+      ],
+      "routingOrders": [
+        1,
+        2,
+        3
+      ],
+      "fieldCount": 8,
+      "staticFieldCount": 5,
+      "sourceTemplateUnchanged": true,
+      "completed": true,
+      "pdfBytes": 1555177,
+      "sha256": "03b1e845e44a17e84fc440c27e95e788a53fcfa77d2ae3028471398fd26a37b4",
+      "verificationId": "LAGDA-VER-2026-sE8b6jtF8R",
+      "recipientDownloads": [
+        {
+          "signer": 1,
+          "sha256": "03b1e845e44a17e84fc440c27e95e788a53fcfa77d2ae3028471398fd26a37b4",
+          "recipientDownloadMatches": true,
+          "auditVisible": true,
+          "workspaceSetupAfterSigning": false
+        },
+        {
+          "signer": 2,
+          "sha256": "03b1e845e44a17e84fc440c27e95e788a53fcfa77d2ae3028471398fd26a37b4",
+          "recipientDownloadMatches": true,
+          "auditVisible": true,
+          "workspaceSetupAfterSigning": false
+        },
+        {
+          "signer": 3,
+          "sha256": "03b1e845e44a17e84fc440c27e95e788a53fcfa77d2ae3028471398fd26a37b4",
+          "recipientDownloadMatches": true,
+          "auditVisible": true,
+          "workspaceSetupAfterSigning": false
+        }
+      ],
+      "auditEntries": 15
+    },
+    {
+      "mode": "parallel",
+      "templateId": "wft_dbbf770d4348403182f800f31a7545f7",
+      "sourceDocumentId": "doc_d9fd2fecdf884b658face75fc1b5b058",
+      "documentId": "doc_fa7b58f4cfb140218ad79488408ade34",
+      "signingRequestId": "sr_9d3c9147c38e4ca49b1dc70676004da9",
+      "variables": {
+        "client_name": "QA Reuse Company",
+        "case_notes": "Parallel QA only.\nIndependent variable values.",
+        "effective_date": "2026-11-19",
+        "fee_amount": "0",
+        "consent_flag": "no"
+      },
+      "roles": [
+        "approver",
+        "reviewer",
+        "signer"
+      ],
+      "routingOrders": [
+        1,
+        1,
+        1
+      ],
+      "fieldCount": 8,
+      "staticFieldCount": 5,
+      "sourceTemplateUnchanged": true,
+      "completed": true,
+      "pdfBytes": 1555489,
+      "sha256": "409f1b246a4db65a2afad73026c272522f638f0880fb4d10ea500bd0111d80c7",
+      "verificationId": "LAGDA-VER-2026-nSWTyBrqH6",
+      "recipientDownloads": [
+        {
+          "signer": 1,
+          "sha256": "409f1b246a4db65a2afad73026c272522f638f0880fb4d10ea500bd0111d80c7",
+          "recipientDownloadMatches": true,
+          "auditVisible": true,
+          "workspaceSetupAfterSigning": false
+        },
+        {
+          "signer": 2,
+          "sha256": "409f1b246a4db65a2afad73026c272522f638f0880fb4d10ea500bd0111d80c7",
+          "recipientDownloadMatches": true,
+          "auditVisible": true,
+          "workspaceSetupAfterSigning": false
+        },
+        {
+          "signer": 3,
+          "sha256": "409f1b246a4db65a2afad73026c272522f638f0880fb4d10ea500bd0111d80c7",
+          "recipientDownloadMatches": true,
+          "auditVisible": true,
+          "workspaceSetupAfterSigning": false
+        }
+      ],
+      "auditEntries": 15
+    }
+  ],
+  "stageChecks": [
+    {
+      "mode": "sequential",
+      "stage": "initial",
+      "states": [
+        "active",
+        "waiting",
+        "waiting"
+      ],
+      "completedCount": 0,
+      "requiredCount": 3,
+      "requestState": "sent",
+      "invitations": 1,
+      "deniedWaitingRoles": [
+        {
+          "role": "reviewer",
+          "status": 404,
+          "code": "SIGNING_UNAVAILABLE"
+        },
+        {
+          "role": "signer",
+          "status": 404,
+          "code": "SIGNING_UNAVAILABLE"
+        }
+      ],
+      "completedPdfAvailable": false
+    },
+    {
+      "mode": "sequential",
+      "stage": "after-approve",
+      "states": [
+        "approved",
+        "active",
+        "waiting"
+      ],
+      "completedCount": 1,
+      "requiredCount": 3,
+      "requestState": "partially-completed",
+      "invitations": 2,
+      "deniedWaitingRoles": [
+        {
+          "role": "signer",
+          "status": 404,
+          "code": "SIGNING_UNAVAILABLE"
+        }
+      ],
+      "completedPdfAvailable": false
+    },
+    {
+      "mode": "sequential",
+      "stage": "after-review",
+      "states": [
+        "approved",
+        "signed",
+        "active"
+      ],
+      "completedCount": 2,
+      "requiredCount": 3,
+      "requestState": "partially-completed",
+      "invitations": 3,
+      "deniedWaitingRoles": [],
+      "completedPdfAvailable": false
+    },
+    {
+      "mode": "sequential",
+      "stage": "final",
+      "states": [
+        "approved",
+        "signed",
+        "signed"
+      ],
+      "completedCount": 3,
+      "requiredCount": 3,
+      "requestState": "completed",
+      "invitations": 3,
+      "deniedWaitingRoles": [],
+      "completedPdfAvailable": true
+    },
+    {
+      "mode": "parallel",
+      "stage": "initial",
+      "states": [
+        "active",
+        "active",
+        "active"
+      ],
+      "completedCount": 0,
+      "requiredCount": 3,
+      "requestState": "sent",
+      "invitations": 3,
+      "deniedWaitingRoles": [],
+      "completedPdfAvailable": false
+    },
+    {
+      "mode": "parallel",
+      "stage": "after-sign",
+      "states": [
+        "active",
+        "active",
+        "signed"
+      ],
+      "completedCount": 1,
+      "requiredCount": 3,
+      "requestState": "partially-completed",
+      "invitations": 3,
+      "deniedWaitingRoles": [],
+      "completedPdfAvailable": false
+    },
+    {
+      "mode": "parallel",
+      "stage": "after-review",
+      "states": [
+        "active",
+        "signed",
+        "signed"
+      ],
+      "completedCount": 2,
+      "requiredCount": 3,
+      "requestState": "partially-completed",
+      "invitations": 3,
+      "deniedWaitingRoles": [],
+      "completedPdfAvailable": false
+    },
+    {
+      "mode": "parallel",
+      "stage": "final",
+      "states": [
+        "approved",
+        "signed",
+        "signed"
+      ],
+      "completedCount": 3,
+      "requiredCount": 3,
+      "requestState": "completed",
+      "invitations": 3,
+      "deniedWaitingRoles": [],
+      "completedPdfAvailable": true
+    }
+  ],
+  "pdfInspection": [
+    {
+      "mode": "sequential",
+      "pages": 1,
+      "sourceTextPreserved": true,
+      "variableValues": {
+        "client_name": "Northwind QA Services",
+        "case_notes": "Sequential QA only.\nNo commercial obligation.",
+        "effective_date": "2026-11-18",
+        "fee_amount": "1250.50",
+        "consent_flag": "yes"
+      },
+      "allFiveValuesPresent": true,
+      "approvalStampPresent": true,
+      "reviewStampPresent": true,
+      "signerSignaturePresent": true,
+      "allRecipientNamesPresent": true,
+      "downloadUnmodified": true
+    },
+    {
+      "mode": "parallel",
+      "pages": 1,
+      "sourceTextPreserved": true,
+      "variableValues": {
+        "client_name": "QA Reuse Company",
+        "case_notes": "Parallel QA only.\nIndependent variable values.",
+        "effective_date": "2026-11-19",
+        "fee_amount": "0",
+        "consent_flag": "no"
+      },
+      "allFiveValuesPresent": true,
+      "approvalStampPresent": true,
+      "reviewStampPresent": true,
+      "signerSignaturePresent": true,
+      "allRecipientNamesPresent": true,
+      "downloadUnmodified": true
+    }
+  ],
+  "crossFileChecks": [
+    {
+      "verificationFor": "sequential",
+      "fileFrom": "parallel",
+      "matches": false
+    },
+    {
+      "verificationFor": "parallel",
+      "fileFrom": "sequential",
+      "matches": false
+    }
+  ],
+  "requiredWhitespaceBefore": {
+    "advancedToReview": true,
+    "instanceCreated": false,
+    "expected": "Whitespace-only required text must stay on variables and report a missing value"
+  },
+  "requiredWhitespaceAfter": {
+    "advancedToReview": false,
+    "instanceCreated": false,
+    "expected": "Whitespace-only required text must stay on variables and report a missing value"
+  },
+  "regression": {
+    "passed": 152,
+    "failed": 0,
+    "files": 10,
+    "additionalFocusedFinalPassed": 24
+  },
+  "verdict": "PASS",
+  "checks": {
+    "typecheck": "passed",
+    "build": "passed",
+    "eslintErrors": 0,
+    "eslintWarnings": 1,
+    "diffCheck": "passed",
+    "fieldValidatorBeforeFix": {
+      "failed": 3,
+      "passed": 18
+    },
+    "newRegressionCases": 10
+  }
+}

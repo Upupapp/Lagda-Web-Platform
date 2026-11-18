@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../utils/on-light";
 // Platform top bar — shown in the authenticated shell on desktop/tablet.
 // Contains: breadcrumb / page title, search trigger, notification bell, help link.
 
@@ -155,7 +156,7 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
             display: "flex", alignItems: "center", gap: 8,
             background: "#F1F5F9", border: "1px solid #E2E8F0",
             borderRadius: 8, padding: "6px 10px",
-            color: "#64748B", cursor: "pointer",
+            color: ON_LIGHT.slate, cursor: "pointer",
             ...GF, fontSize: 13,
             minHeight: 44, minWidth: 44,
           }}
@@ -175,7 +176,7 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
         </button>
 
         {/* Notification bell */}
-        <div style={{ color: "#64748B" }} data-guide="header-notification-bell">
+        <div style={{ color: ON_LIGHT.slate }} data-guide="header-notification-bell">
           <NotificationMenu align="right" />
         </div>
 

@@ -1,0 +1,12 @@
+[
+  {
+    "verificationFor": "sequential",
+    "fileFrom": "parallel",
+    "matches": false
+  },
+  {
+    "verificationFor": "parallel",
+    "fileFrom": "sequential",
+    "matches": false
+  }
+]

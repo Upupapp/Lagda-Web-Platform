@@ -296,6 +296,8 @@ export function SignatureCapture({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const drawing = useRef(false);
+  const activePointer = useRef<number | null>(null);
+  const measuredCanvas = useRef<HTMLCanvasElement | null>(null);
   /** The device-pixel ratio the canvas was last sized with. */
   const ratioRef = useRef(1);
   /**
@@ -345,19 +347,32 @@ export function SignatureCapture({
     if (canvas === null || wrap === null) return;
 
     const ratio = Math.min(window.devicePixelRatio || 1, 3);
-    ratioRef.current = ratio;
     const cssWidth = wrap.clientWidth;
+    if (cssWidth <= 0) return;
     const cssHeight = 150;
     const nextWidth = Math.round(cssWidth * ratio);
     const nextHeight = Math.round(cssHeight * ratio);
-    if (canvas.width === nextWidth && canvas.height === nextHeight) return;
+    canvas.style.height = `${String(cssHeight)}px`;
+    if (measuredCanvas.current === canvas && canvas.width === nextWidth && canvas.height === nextHeight) return;
 
-    // Resizing clears the canvas, so any existing mark is discarded and the
-    // value goes with it. Silently keeping a stale value while showing a blank
-    // pad would let a signer submit a mark they can no longer see.
+    // Rotation must not erase the mark or leave a hidden adopted value behind
+    // a blank pad. Copy the existing pixels before changing the backing store.
+    const previous = measuredCanvas.current === canvas ? document.createElement("canvas") : null;
+    if (previous !== null) {
+      previous.width = canvas.width;
+      previous.height = canvas.height;
+      previous.getContext("2d")?.drawImage(canvas, 0, 0);
+      if (drawing.current) {
+        const base64 = trimmedPng(canvas);
+        onChange(base64 === null ? null : { method: "drawn", base64, provenance: "drawn-live" });
+      }
+    }
+    drawing.current = false;
+    activePointer.current = null;
+    ratioRef.current = ratio;
+    measuredCanvas.current = canvas;
     canvas.width = nextWidth;
     canvas.height = nextHeight;
-    canvas.style.height = `${String(cssHeight)}px`;
     const context = canvas.getContext("2d");
     if (context !== null) {
       context.scale(ratio, ratio);
@@ -365,9 +380,15 @@ export function SignatureCapture({
       context.lineCap = "round";
       context.lineJoin = "round";
       context.strokeStyle = NAVY;
+      if (previous !== null && previous.width > 0 && previous.height > 0) {
+        // Uniform scaling preserves the handwriting when the pad changes aspect.
+        const scale = Math.min(nextWidth / previous.width, nextHeight / previous.height) / ratio;
+        const width = previous.width * scale, height = previous.height * scale;
+        context.drawImage(previous, (cssWidth - width) / 2, (cssHeight - height) / 2, width, height);
+      }
     }
-    setHasInk(false);
-  }, []);
+    if (previous === null) setHasInk(false);
+  }, [onChange]);
 
   useEffect(() => {
     sizeCanvas();
@@ -411,7 +432,7 @@ export function SignatureCapture({
   };
 
   const startStroke = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (disabled) return;
+    if (disabled || drawing.current || event.isPrimary === false || event.button !== 0) return;
     const context = canvasRef.current?.getContext("2d");
     const point = pointAt(event);
     if (context === undefined || context === null || point === null) return;
@@ -429,6 +450,7 @@ export function SignatureCapture({
       // Not fatal. Drawing continues uncaptured.
     }
     drawing.current = true;
+    activePointer.current = event.pointerId;
     setPadSession(true);
     context.beginPath();
     context.moveTo(point.x, point.y);
@@ -440,7 +462,7 @@ export function SignatureCapture({
   };
 
   const extendStroke = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!drawing.current) return;
+    if (disabled || !drawing.current || event.pointerId !== activePointer.current) return;
     const context = canvasRef.current?.getContext("2d");
     const point = pointAt(event);
     if (context === undefined || context === null || point === null) return;
@@ -448,9 +470,10 @@ export function SignatureCapture({
     context.stroke();
   };
 
-  const endStroke = () => {
-    if (!drawing.current) return;
+  const endStroke = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawing.current || event.pointerId !== activePointer.current) return;
     drawing.current = false;
+    activePointer.current = null;
     const canvas = canvasRef.current;
     if (canvas === null) return;
     const base64 = trimmedPng(canvas);
@@ -458,6 +481,8 @@ export function SignatureCapture({
   };
 
   const clearCanvas = () => {
+    drawing.current = false;
+    activePointer.current = null;
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
     if (canvas === null || context === undefined || context === null) return;
@@ -474,6 +499,8 @@ export function SignatureCapture({
   // representation is meant to be the one they last saw and approved.
   const switchMode = (next: Mode) => {
     if (next === mode) return;
+    drawing.current = false;
+    activePointer.current = null;
     setMode(next);
     setUploadError(null);
     setTyped("");
@@ -784,6 +811,7 @@ export function SignatureCapture({
             onPointerMove={extendStroke}
             onPointerUp={endStroke}
             onPointerCancel={endStroke}
+            onLostPointerCapture={endStroke}
             aria-label={`Draw your ${noun}`}
             style={{
               width: "100%", display: "block", borderRadius: 12,

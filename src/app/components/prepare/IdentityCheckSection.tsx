@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../utils/on-light";
 // Prepare › Authentication › "ID and face verification".
 //
 // A switch per participant who acts on the document. Rendered only when the
@@ -25,7 +26,7 @@ import type { IdentityRequirementsControl } from "../../hooks/useIdentityCheckRe
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY = "#07111F";
 const AZURE = "#0078D4";
-const SILVER = "#8A9BAE";
+const SILVER = ON_LIGHT.muted;
 const GOLD = "#C9960C";
 
 function Switch({ checked, disabled, label, onChange }: {

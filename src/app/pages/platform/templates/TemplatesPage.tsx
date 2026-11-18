@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../../utils/on-light";
 // /app/templates — Template library.
 // Views, search, filter bar, sort, grid/list toggle, pagination, empty states.
 // Inline styles only. No Tailwind. No Burgundy.
@@ -5,7 +6,7 @@
 import { ChatbotShowcase } from "../../../components/dashboard/ChatbotShowcase";
 import { useWorkspaceAllows } from "../../../hooks/usePlans";
 import { useReadyMade } from "../../../hooks/useReadyMade";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useId } from "react";
 import { useLiveRefresh } from "../../../services/live/use-live-refresh";
 import { SETTINGS_TTL_MS } from "../../../services/live/live-query";
 import { Link, useNavigate } from "react-router";
@@ -36,7 +37,7 @@ import { FilterChips } from "../../../components/platform/FilterChips";
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const AZURE = "#0078D4";
 const GOLD  = "#C9960C";
-const GREEN = "#059669";
+const GREEN = ON_LIGHT.success;
 const RED   = "#DC2626";
 
 const SORT_OPTIONS: { value: TemplateSortField; label: string }[] = [
@@ -144,7 +145,7 @@ function TemplateCard({ item }: { item: TemplateListItem }) {
       </h3>
 
       {/* Category + scope */}
-      <p style={{ ...GF, fontSize: 12, color: "#64748B", margin: "0 0 14px" }}>
+      <p style={{ ...GF, fontSize: 12, color: ON_LIGHT.slate, margin: "0 0 14px" }}>
         {TEMPLATE_CATEGORY_LABELS[item.category]} · {TEMPLATE_SCOPE_LABELS[item.scope]}
       </p>
 
@@ -171,7 +172,7 @@ function TemplateCard({ item }: { item: TemplateListItem }) {
 
 function MetaChip({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#64748B", ...GF, fontSize: 11 }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: ON_LIGHT.slate, ...GF, fontSize: 11 }}>
       {icon}
       {label}
     </span>
@@ -195,20 +196,20 @@ function TemplateRow({ item }: { item: TemplateListItem }) {
           </div>
           <div>
             <div style={{ ...GF, fontSize: 13, fontWeight: 600, color: "#0F172A" }}>{item.name}</div>
-            <div style={{ ...GF, fontSize: 11, color: "#94A3B8", marginTop: 1 }}>
+            <div style={{ ...GF, fontSize: 11, color: ON_LIGHT.muted, marginTop: 1 }}>
               {TEMPLATE_CATEGORY_LABELS[item.category]} · {TEMPLATE_SCOPE_LABELS[item.scope]}
             </div>
           </div>
         </div>
       </td>
       <td style={{ padding: "12px 16px" }}><StatusBadge status={item.status} /></td>
-      <td style={{ padding: "12px 16px", ...GF, fontSize: 12, color: "#64748B" }}>
+      <td style={{ padding: "12px 16px", ...GF, fontSize: 12, color: ON_LIGHT.slate }}>
         {item.placeholderCount} role{item.placeholderCount !== 1 ? "s" : ""}
       </td>
-      <td style={{ padding: "12px 16px", ...GF, fontSize: 12, color: "#64748B" }}>
+      <td style={{ padding: "12px 16px", ...GF, fontSize: 12, color: ON_LIGHT.slate }}>
         {item.usageCount > 0 ? `${item.usageCount}× used` : "Unused"}
       </td>
-      <td style={{ padding: "12px 16px", ...GF, fontSize: 12, color: "#94A3B8" }}>
+      <td style={{ padding: "12px 16px", ...GF, fontSize: 12, color: ON_LIGHT.muted }}>
         {item.lastUsedDate ? new Date(item.lastUsedDate).toLocaleDateString() : "—"}
       </td>
       <td style={{ padding: "12px 16px" }}>
@@ -301,6 +302,8 @@ function TemplatesInner() {
   const items          = listResult?.items ?? [];
   const total          = listResult?.total ?? 0;
   const hasFilters     = !!(state.query.status || state.query.scope || state.query.category);
+  const hasQuery = !!state.query.q?.trim();
+  const isFiltered = hasQuery || hasFilters;
 
   const removeFilter = useCallback((key: string) => {
     if (key === "status")   updateQuery({ status: undefined });
@@ -309,7 +312,7 @@ function TemplatesInner() {
   }, [updateQuery]);
 
   return (
-    <div style={{ background: "#F8FAFC", minHeight: "100%", ...GF }}>
+    <div className="template-library" style={{ background: "#F8FAFC", minHeight: "100%", ...GF }}>
       {/* Header */}
       <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: isNarrow ? "16px 16px" : "20px 24px" }}>
         {/* Each full-bleed band centres its content in the same column as the
@@ -330,7 +333,7 @@ function TemplatesInner() {
             <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: "#0F172A", margin: 0, letterSpacing: "-0.02em" }}>
               Templates
             </h1>
-            <p style={{ ...GF, fontSize: 13, color: "#64748B", margin: "4px 0 0" }}>
+            <p style={{ ...GF, fontSize: 13, color: ON_LIGHT.slate, margin: "4px 0 0" }}>
               Reusable document workflows for your team
             </p>
           </div>
@@ -379,7 +382,7 @@ function TemplatesInner() {
             <p style={{ fontSize: 13, fontWeight: 700, color: "#0F172A", margin: "0 0 3px" }}>
               Showing example templates
             </p>
-            <p style={{ fontSize: 12.5, color: "#64748B", margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 12.5, color: ON_LIGHT.slate, margin: 0, lineHeight: 1.6 }}>
               These are samples, not your workspace&apos;s own. Open a workspace to
               see the templates your team has saved and to create new ones.
             </p>
@@ -412,14 +415,11 @@ function TemplatesInner() {
                 : `Across ${String(READY_MADE_CATEGORIES.length)} purposes — Recruitment, Sales, Procurement, Finance and more — with roles and signing order already set up.`}
             </span>
           </span>
-          <span style={{ ...GF, display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 700, color: AZURE, flexShrink: 0 }}>
+          <span style={{ ...GF, display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 700, color: ON_LIGHT.azure, flexShrink: 0 }}>
             {isNarrow ? null : "Browse"} <ArrowRight size={14} />
           </span>
         </Link>
-        <style>{`.tpl-ready-banner { transition: box-shadow .15s, border-color .15s; } .tpl-ready-banner:hover, .tpl-ready-banner:focus-visible { border-color: ${AZURE}; box-shadow: 0 2px 10px rgba(0,120,212,0.12); outline: none; }`}</style>
-
-        {/* 093. Where the chatbot would be used, while it is locked. */}
-        {chatLocked && <ChatbotShowcase variant="templates" />}
+        <style>{`.tpl-ready-banner { transition: box-shadow .15s, border-color .15s; } .tpl-ready-banner:focus-visible { outline: 2px solid ${AZURE}; outline-offset: 2px; } @media (hover: hover) and (pointer: fine) { .tpl-ready-banner:hover { border-color: ${AZURE}; box-shadow: 0 2px 10px rgba(0,120,212,0.12); } }`}</style>
 
         {/* One view: "My Templates", every template whatever its status.
             The seven views (All, Workspace, My Templates, Drafts, Recently
@@ -430,7 +430,7 @@ function TemplatesInner() {
             behind them exists. */}
         <div style={{ marginTop: 16, borderBottom: "1px solid #E2E8F0", marginBottom: -1 }}>
           <h2 style={{
-            ...GF, display: "inline-block", margin: 0, fontSize: 13, fontWeight: 700, color: AZURE,
+            ...GF, display: "inline-block", margin: 0, fontSize: 13, fontWeight: 700, color: ON_LIGHT.azure,
             borderBottom: `2px solid ${AZURE}`, padding: "8px 14px", marginBottom: -1,
           }}>
             My Templates
@@ -441,12 +441,13 @@ function TemplatesInner() {
 
       {/* Toolbar */}
       <div style={{ background: "white", borderBottom: "1px solid #F1F5F9", padding: isNarrow ? "12px 16px" : "12px 24px" }}>
-      <CenteredColumn style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <CenteredColumn className="tpl-toolbar" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         {/* Search */}
         <div style={{ position: "relative", flex: 1, minWidth: isNarrow ? 0 : 200, maxWidth: isNarrow ? "100%" : 340 }}>
-          <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#94A3B8" }} />
+          <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: ON_LIGHT.muted }} />
           <input
             type="search"
+            aria-label="Search templates"
             value={localQ}
             onChange={e => handleSearch(e.target.value)}
             placeholder="Search templates…"
@@ -470,6 +471,8 @@ function TemplatesInner() {
         {/* Filter toggle */}
         <button
           onClick={() => setShowFilters(p => !p)}
+          aria-expanded={showFilters}
+          aria-controls="template-filters"
           style={{
             display:     "inline-flex",
             alignItems:  "center",
@@ -479,7 +482,7 @@ function TemplatesInner() {
             border:      `1px solid ${showFilters || hasFilters ? AZURE : "#E2E8F0"}`,
             borderRadius:8,
             background:  showFilters || hasFilters ? "#EEF4FB" : "white",
-            color:       showFilters || hasFilters ? AZURE : "#64748B",
+            color:       showFilters || hasFilters ? ON_LIGHT.azure : "#64748B",
             ...GF,
             fontSize:    12,
             fontWeight:  600,
@@ -492,9 +495,10 @@ function TemplatesInner() {
         </button>
 
         {/* Sort */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
-          <span style={{ ...GF, fontSize: 12, color: "#64748B" }}>Sort:</span>
+        <div className="tpl-sort-controls" style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
+          <label htmlFor="template-sort" style={{ ...GF, fontSize: 12, color: "#475569" }}>Sort:</label>
           <select
+            id="template-sort"
             value={state.query.sort}
             onChange={e => updateQuery({ sort: e.target.value as TemplateSortField })}
             style={{ ...GF, fontSize: 12, color: "#0F172A", border: "1px solid #E2E8F0", borderRadius: 6, padding: "5px 8px", background: "white", cursor: "pointer" }}
@@ -504,7 +508,7 @@ function TemplatesInner() {
           <button
             onClick={() => updateQuery({ direction: state.query.direction === "asc" ? "desc" : "asc" })}
             title={state.query.direction === "asc" ? "Ascending" : "Descending"}
-            style={{ padding: "5px 8px", border: "1px solid #E2E8F0", borderRadius: 6, background: "white", cursor: "pointer", color: "#64748B", fontSize: 11 }}
+            style={{ padding: "5px 8px", border: "1px solid #E2E8F0", borderRadius: 6, background: "white", cursor: "pointer", color: ON_LIGHT.slate, fontSize: 11 }}
           >
             {state.query.direction === "asc" ? "↑" : "↓"}
           </button>
@@ -532,7 +536,7 @@ function TemplatesInner() {
 
       {/* Filter panel */}
       {showFilters && (
-        <div style={{ background: "white", borderBottom: "1px solid #F1F5F9", padding: isNarrow ? "12px 16px" : "12px 24px" }}>
+        <div id="template-filters" style={{ background: "white", borderBottom: "1px solid #F1F5F9", padding: isNarrow ? "12px 16px" : "12px 24px" }}>
         <CenteredColumn style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <FilterSelect
             label="Status"
@@ -578,9 +582,9 @@ function TemplatesInner() {
         />
 
         {/* Result count */}
-        {!listLoading && listResult && (
-          <p style={{ ...GF, fontSize: 12, color: "#94A3B8", marginBottom: 14 }}>
-            {total === 0 ? "No templates found" : `${total} template${total !== 1 ? "s" : ""}`}
+        {!listLoading && listResult && total > 0 && (
+          <p style={{ ...GF, fontSize: 12, color: ON_LIGHT.muted, marginBottom: 14 }}>
+            {`${total.toLocaleString()} template${total !== 1 ? "s" : ""}`}
           </p>
         )}
 
@@ -614,7 +618,7 @@ function TemplatesInner() {
               <thead>
                 <tr style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0" }}>
                   {["Template", "Status", "Roles", "Usage", "Last Used", ""].map(h => (
-                    <th key={h} style={{ ...GF, fontSize: 11, fontWeight: 700, color: "#64748B", textAlign: "left", padding: "10px 16px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
+                    <th key={h} style={{ ...GF, fontSize: 11, fontWeight: 700, color: ON_LIGHT.slate, textAlign: "left", padding: "10px 16px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -629,14 +633,14 @@ function TemplatesInner() {
         {!listLoading && items.length === 0 && !state.listError && (
           <EmptyStateLayout
             icon={<LayoutTemplate size={24} />}
-            title={state.query.q ? `No results for "${state.query.q}"` : "No templates yet"}
+            title={hasQuery ? `No results for "${state.query.q}"` : hasFilters ? "No templates match these filters" : "No templates yet"}
             description={
-              state.query.q
-                ? "Try a different search term or clear the search to see all templates."
+              isFiltered
+                ? "Try a different search or clear the filters to see your templates."
                 : "Create your first template to build reusable signing workflows for your team."
             }
             action={
-              !state.query.q ? (
+              !isFiltered ? (
                 <Link
                   to="/app/templates/new"
                   style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 20px", background: AZURE, color: "white", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 700, textDecoration: "none" }}
@@ -645,8 +649,8 @@ function TemplatesInner() {
                   Create Template
                 </Link>
               ) : (
-                <button onClick={() => { setLocalQ(""); updateQuery({ q: "" }); }} style={{ ...GF, fontSize: 13, color: AZURE, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
-                  Clear search
+                <button onClick={() => { if (searchTimeout.current) clearTimeout(searchTimeout.current); setLocalQ(""); updateQuery({ q: "", status: undefined, scope: undefined, category: undefined }); }} style={{ ...GF, fontSize: 13, color: ON_LIGHT.azure, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                  Clear search and filters
                 </button>
               )
             }
@@ -663,7 +667,7 @@ function TemplatesInner() {
             >
               ← Previous
             </button>
-            <span style={{ ...GF, fontSize: 12, color: "#64748B" }}>Page {listResult.page} of {listResult.pageCount}</span>
+            <span style={{ ...GF, fontSize: 12, color: ON_LIGHT.slate }}>Page {listResult.page} of {listResult.pageCount}</span>
             <button
               disabled={listResult.page >= listResult.pageCount}
               onClick={() => updateQuery({ page: listResult.page + 1 })}
@@ -675,6 +679,21 @@ function TemplatesInner() {
         )}
       </CenteredColumn>
       </div>
+      {chatLocked && <CenteredColumn style={{ padding: "0 24px 24px" }}><ChatbotShowcase variant="templates" /></CenteredColumn>}
+      <style>{`
+        .tpl-toolbar button:focus-visible, .tpl-toolbar input:focus-visible, .tpl-toolbar select:focus-visible {
+          outline: 2px solid #0063B1 !important; outline-offset: 3px;
+        }
+        @media (max-width: 640px), (pointer: coarse) {
+          .template-library button, .template-library select, .template-library input { min-height: 44px; touch-action: manipulation; }
+          .tpl-sort-controls { flex-wrap: wrap; margin-left: 0 !important; }
+          .tpl-sort-controls button { min-width: 44px; }
+        }
+        @media (max-width: 640px) { .tpl-sort-controls { width: 100%; } }
+        @media (pointer: coarse) {
+          .template-library input, .template-library select { font-size: 16px !important; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -685,10 +704,12 @@ function FilterSelect({ label, value, onChange, options }: {
   onChange: (v: string) => void;
   options: [string, string][];
 }) {
+  const id = useId();
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-      <label style={{ ...GF, fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</label>
+      <label htmlFor={id} style={{ ...GF, fontSize: 11, fontWeight: 600, color: ON_LIGHT.slate, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</label>
       <select
+        id={id}
         value={value}
         onChange={e => onChange(e.target.value)}
         style={{ ...GF, fontSize: 12, color: "#0F172A", border: "1px solid #E2E8F0", borderRadius: 6, padding: "5px 8px", background: "white", cursor: "pointer" }}

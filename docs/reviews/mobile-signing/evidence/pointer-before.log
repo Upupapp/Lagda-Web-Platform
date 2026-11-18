@@ -1,0 +1,87 @@
+
+ RUN  v3.2.4 C:/Users/paulg/OneDrive/Documents/ChatGPT/LAGDA
+
+ ❯ src/app/components/recipient/__tests__/SignatureCapture.test.tsx (30 tests | 1 failed) 3769ms
+   ✓ the three ways to sign > offers Draw, Type and Upload 74ms
+   ✓ the three ways to sign > starts on Draw, because that is the one the product was missing 10ms
+   ✓ typing a signature letter by letter, with the value fed back > keeps the field while the name is typed, and the signature is the whole name  365ms
+   ✓ typing a signature letter by letter, with the value fed back > lets the signer correct a mistake without the field vanishing  369ms
+   ✓ typing a signature letter by letter, with the value fed back > does the same for initials 140ms
+   ✓ typing a signature letter by letter, with the value fed back > shows the adopted signature, with Change, when the sheet is opened again 7ms
+   ✓ typing a signature letter by letter, with the value fed back > leaving Type for another way to sign ends the typing and clears it 273ms
+   ✓ typed signatures > emits the typed member of the union 261ms
+   ✓ typed signatures > always sends style 0, because the renderer draws all four the same 110ms
+   ✓ typed signatures > trims, so what is stored is what gets drawn 262ms
+   ✓ typed signatures > emits null for whitespace only, rather than an empty signature 172ms
+   ✓ typed signatures > previews in the face the document is actually drawn with 189ms
+   ✓ typed signatures > bounds the input at the server's typed length 44ms
+   ✓ drawn signatures > emits RAW base64, never a data URL 62ms
+   ✓ drawn signatures > ignores a second touch, including its release, until the active finger lifts 157ms
+   × drawn signatures > does not treat a right mouse click as an adopted signature 66ms
+     → expected "spy" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st spy call:
+
+    Array [
+      Object {
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+        "method": "drawn",
+        "provenance": "drawn-live",
+      },
+    ]
+
+
+Number of calls: 1
+
+   ✓ drawn signatures > does not let a touch drag scroll the page instead of drawing 4ms
+   ✓ drawn signatures > labels the pad for assistive technology 5ms
+   ✓ switching modes > clears the adopted value 264ms
+   ✓ switching modes > does not clear when the same mode is re-selected 248ms
+   ✓ changing a signature already adopted > shows what was adopted instead of an empty pad 17ms
+   ✓ changing a signature already adopted > says the signature can still be changed 14ms
+   ✓ changing a signature already adopted > shows a DRAWN signature as the image it is 4ms
+   ✓ changing a signature already adopted > reveals the picker on Change 64ms
+   ✓ changing a signature already adopted > restores the typed text so a change starts from what is there 58ms
+   ✓ changing a signature already adopted > clears the adopted value on Remove 62ms
+   ✓ changing a signature already adopted > offers no Change or Remove when nothing is adopted yet 12ms
+   ✓ wording follows the purpose > says initials, not signature, for an initials field 66ms
+   ✓ reporting how a mark was made > says a typed signature was typed here 264ms
+   ✓ reporting how a mark was made > distinguishes an upload from a drawing 124ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/app/components/recipient/__tests__/SignatureCapture.test.tsx > drawn signatures > does not treat a right mouse click as an adopted signature
+AssertionError: expected "spy" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st spy call:
+
+    Array [
+      Object {
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+        "method": "drawn",
+        "provenance": "drawn-live",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/app/components/recipient/__tests__/SignatureCapture.test.tsx:296:26
+    294|       { keys: "[/MouseRight]", target: canvas },
+    295|     ]);
+    296|     expect(onChange).not.toHaveBeenCalled();
+       |                          ^
+    297|   });
+    298|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 29 passed (30)
+   Start at  20:22:25
+   Duration  26.49s (transform 1.04s, setup 6.40s, collect 3.18s, tests 3.77s, environment 12.25s, prepare 576ms)

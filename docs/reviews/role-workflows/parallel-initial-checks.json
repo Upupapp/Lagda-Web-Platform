@@ -1,0 +1,15 @@
+{
+  "scenario": "parallel",
+  "stage": "initial",
+  "requestState": "sent",
+  "states": [
+    "active",
+    "active",
+    "active"
+  ],
+  "completedCount": 0,
+  "requiredCount": 3,
+  "invitationCount": 3,
+  "deniedChecks": [],
+  "completedPdfUnavailable": true
+}

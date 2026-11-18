@@ -14,6 +14,7 @@
 
 import React from "react";
 import { Outlet, Link } from "react-router";
+import { useFlowViewport } from "../hooks/useFlowViewport";
 import { USE_REAL_BACKEND } from "../services/backend-flag";
 import { ShieldCheck, ArrowLeft } from "lucide-react";
 import lagdaHeaderLogo from "../assets/brand/LagdaLogoPrimaryHorizontalFullColor.png";
@@ -26,8 +27,9 @@ export function RecipientLayout({ documentsLink = true }: {
    */
   documentsLink?: boolean;
 } = {}) {
+  useFlowViewport();
   return (
-    <div
+    <div className="recipient-flow"
       style={{
         minHeight:   "100dvh",
         background:  "#F5F7FA",
@@ -117,7 +119,7 @@ export function RecipientLayout({ documentsLink = true }: {
             display: "inline-flex", alignItems: "center", gap: 6,
             fontFamily: "'Geist', sans-serif", fontSize: 13, fontWeight: 600,
             color: "#0078D4", textDecoration: "none",
-            minHeight: 28,
+            minHeight: 44,
           }}
         >
           <ArrowLeft size={15} aria-hidden />

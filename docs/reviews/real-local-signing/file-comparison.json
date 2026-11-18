@@ -1,0 +1,18 @@
+[
+  {
+    "case": "completed",
+    "verificationId": "LAGDA-VER-2026-GFmNSzM3RJ",
+    "matches": true,
+    "digestAlgorithm": "sha-256",
+    "authoritativeDigest": "886e6f16fb3fee56969dc2defc19e36bcf2d7a4378b0c73b7eba4a70efac6ea5",
+    "uploadedDigest": "886e6f16fb3fee56969dc2defc19e36bcf2d7a4378b0c73b7eba4a70efac6ea5"
+  },
+  {
+    "case": "unsigned-source",
+    "verificationId": "LAGDA-VER-2026-GFmNSzM3RJ",
+    "matches": false,
+    "digestAlgorithm": "sha-256",
+    "authoritativeDigest": "886e6f16fb3fee56969dc2defc19e36bcf2d7a4378b0c73b7eba4a70efac6ea5",
+    "uploadedDigest": "cc4ebccb83aada7d1ab6352d49c3884029674a55a0c1711498c426ef568f9b9b"
+  }
+]

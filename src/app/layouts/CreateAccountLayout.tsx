@@ -50,7 +50,7 @@ export function CreateAccountLayout({ children }: { children: ReactNode }) {
       <style>{`
 				.create-account-shell { min-height: 100vh; background: #f8fbff; color: #07111f; font-family: 'Geist', sans-serif; padding: 24px clamp(20px, 5vw, 72px); }
 				.create-account-frame { max-width: 1080px; min-height: calc(100vh - 48px); margin: 0 auto; }
-				.create-account-back { display: inline-flex; align-items: center; gap: 8px; color: #0078d4; font-size: 12px; font-weight: 700; text-decoration: none; }
+				.create-account-back { display: inline-flex; align-items: center; gap: 8px; color: #0063b1; font-size: 12px; font-weight: 700; text-decoration: none; }
 				.create-account-back span { font-size: 18px; line-height: 0; }
 				.create-account-main { display: flex; justify-content: center; padding: 36px 0; }
 				.create-account-card { width: 100%; box-sizing: border-box; background: #ffffff; border: 1px solid #dbeafe; border-radius: 18px; padding: 36px 48px 42px; box-shadow: 0 18px 50px rgba(7,17,31,0.08); }
@@ -62,7 +62,7 @@ export function CreateAccountLayout({ children }: { children: ReactNode }) {
 				.create-account-footer p { max-width: 680px; margin: 0; line-height: 1.55; }
 				.create-account-footer-description { color: #334155; font-size: 12px; }
 				.create-account-footer-product { color: #64748b; font-weight: 600; }
-				.create-account-footer-copyright { color: #94a3b8; font-size: 10px; }
+				.create-account-footer-copyright { color: #5b6776; font-size: 10px; }
 				.create-account-back:focus-visible { outline: 2px solid #0078d4; outline-offset: 4px; border-radius: 4px; }
 				@media (max-width: 640px) {
 					.create-account-shell { padding: 16px; }

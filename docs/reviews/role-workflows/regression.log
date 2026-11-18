@@ -1,0 +1,345 @@
+
+ RUN  v3.2.4 C:/Users/paulg/OneDrive/Documents/ChatGPT/LAGDA
+
+stdout | src/app/pages/platform/documents/__tests__/DocumentsCompletedCards.test.tsx
+Warning: Please use the `legacy` build in Node.js environments.
+
+stdout | src/app/pages/platform/documents/__tests__/DocumentsCorrespondence.test.tsx
+Warning: Please use the `legacy` build in Node.js environments.
+
+stderr | src/app/pages/platform/documents/__tests__/DocumentsCompletedCards.test.tsx > Documents › Completed > is the last section of Records, after Declined and Cancelled
+Warning: An update to DocumentsPageRealMode inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at DocumentsPageRealMode (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\documents\DocumentsPage.tsx:4245:57)
+    at DocumentsPage (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\documents\DocumentsPage.tsx:5318:67)
+    at Router (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9335:13)
+    at MemoryRouter (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9251:3)
+Warning: An update to DocumentsPageRealMode inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at DocumentsPageRealMode (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\documents\DocumentsPage.tsx:4245:57)
+    at DocumentsPage (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\documents\DocumentsPage.tsx:5318:67)
+    at Router (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9335:13)
+    at MemoryRouter (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9251:3)
+Warning: An update to DocumentsPageRealMode inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at DocumentsPageRealMode (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\documents\DocumentsPage.tsx:4245:57)
+    at DocumentsPage (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\documents\DocumentsPage.tsx:5318:67)
+    at Router (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9335:13)
+    at MemoryRouter (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9251:3)
+
+stderr | src/app/pages/platform/documents/__tests__/DocumentsCompletedCards.test.tsx > Documents › Completed > is the last section of Records, after Declined and Cancelled
+Warning: An update to DocumentsPageRealMode inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at DocumentsPageRealMode (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\documents\DocumentsPage.tsx:4245:57)
+    at DocumentsPage (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\documents\DocumentsPage.tsx:5318:67)
+    at Router (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9335:13)
+    at MemoryRouter (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9251:3)
+
+stderr | src/app/pages/platform/documents/__tests__/DocumentsCompletedCards.test.tsx > Documents › Completed > is the last section of Records, after Declined and Cancelled
+Warning: An update to DocumentsPageRealMode inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at DocumentsPageRealMode (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\documents\DocumentsPage.tsx:4245:57)
+    at DocumentsPage (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\documents\DocumentsPage.tsx:5318:67)
+    at Router (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9335:13)
+    at MemoryRouter (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9251:3)
+
+ ✓ src/app/pages/platform/documents/__tests__/DocumentsCorrespondence.test.tsx (9 tests) 515ms
+ ✓ src/app/pages/platform/documents/__tests__/DocumentsCompletedCards.test.tsx (7 tests) 885ms
+   ✓ Documents › Completed > keeps the other actions in a menu that opens, moves by keyboard, closes on Esc and outside click  341ms
+stderr | src/app/components/dashboard/__tests__/RealDashboard.test.tsx > with signing requests > gives a Free person their Free pass instead of the banner
+Error: Could not parse CSS stylesheet
+    at exports.createStylesheet (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\helpers\stylesheets.js:37:21)
+    at HTMLStyleElementImpl._updateAStyleBlock (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLStyleElement-impl.js:68:5)
+    at HTMLStyleElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLStyleElement-impl.js:19:12)
+    at HTMLElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Node-impl.js:263:15)
+    at HTMLElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Element-impl.js:98:11)
+    at HTMLElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Node-impl.js:263:15)
+    at HTMLElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Element-impl.js:98:11)
+    at HTMLDivElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Node-impl.js:263:15)
+    at HTMLDivElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Element-impl.js:98:11)
+    at HTMLDivElementImpl._insert (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Node-impl.js:837:14)
+.fp-card { position: relative; overflow: hidden; margin: 20px 0 8px; border-radius: 22px; color: #E8EEF9;
+  background:
+    radial-gradient(1200px 400px at -10% -40%, rgba(47,140,240,0.35), transparent 60%),
+    radial-gradient(700px 360px at 110% 120%, rgba(202,138,4,0.22), transparent 60%),
+    linear-gradient(135deg, #0B1B3A 0%, #10275A 55%, #0E2150 100%);
+  box-shadow: 0 1px 2px rgba(7,17,31,0.08), 0 24px 48px -28px rgba(7,17,31,0.7); font-family: 'Geist', sans-serif; }
+.fp-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.35;
+  background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 28px 28px; mask-image: linear-gradient(90deg, #000 0%, transparent 70%); -webkit-mask-image: linear-gradient(90deg, #000 0%, transparent 70%); }
+.fp-glow { position: absolute; width: 260px; height: 260px; right: 34%; top: -140px; border-radius: 50%; background: rgba(250,204,21,0.12); filter: blur(40px); pointer-events: none; }
+.fp-grid { position: relative; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 28px; padding: 26px 28px; }
+.fp-main { min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+.fp-who { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fp-avatar { line-height: 0; border-radius: 50%; box-shadow: 0 0 0 3px rgba(255,255,255,0.18); }
+.fp-who-text { display: grid; gap: 2px; min-width: 0; }
+.fp-hello { font-size: 17px; font-weight: 700; color: #FFFFFF; }
+.fp-edit { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; color: #A9BCDD; text-decoration: none; }
+.fp-edit:hover { color: #FFFFFF; }
+.fp-pass { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11.5px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; color: #3B2A00; background: linear-gradient(135deg, #FDE68A, #F5C542); padding: 6px 12px 6px 10px; border-radius: 999px;
+  box-shadow: 0 6px 16px -8px rgba(245,197,66,0.8); }
+.fp-status { display: flex; align-items: center; gap: 18px; }
+.fp-meter { position: relative; width: 84px; height: 84px; flex-shrink: 0; }
+.fp-meter-track { fill: none; stroke: rgba(255,255,255,0.14); stroke-width: 8; }
+.fp-meter-fill { fill: none; stroke: #F5C542; stroke-width: 8; stroke-linecap: round; transition: stroke-dasharray 600ms ease; }
+.fp-meter-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
+.fp-meter-text strong { font-size: 26px; font-weight: 800; color: #FFFFFF; }
+.fp-meter-text span { font-size: 11px; color: #A9BCDD; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.08em; }
+.fp-status-text { min-width: 0; }
+.fp-title { margin: 0; font-size: 24px; line-height: 1.2; font-weight: 800; color: #FFFFFF; letter-spacing: -0.01em; }
+.fp-lead { margin: 6px 0 0; font-size: 14.5px; line-height: 1.55; color: #C7D4EA; max-width: 52ch; }
+.fp-facts { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; flex-wrap: wrap; }
+.fp-facts li { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #DCE6F7; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 6px 12px; }
+.fp-hosted { margin: 0; font-size: 13px; color: #BFE3C9; background: rgba(22,163,74,0.14); border: 1px solid rgba(74,222,128,0.25); border-radius: 10px; padding: 8px 12px; }
+.fp-foot { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 14px 28px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+.fp-cta { display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 22px; border-radius: 12px; background: #FFFFFF; color: #0B1F4B; font-weight: 800; font-size: 15px; text-decoration: none;
+  box-shadow: 0 10px 24px -12px rgba(255,255,255,0.6); transition: transform 150ms ease, box-shadow 150ms ease; }
+.fp-cta:hover { transform: translateY(-1px); box-shadow: 0 14px 28px -12px rgba(255,255,255,0.7); }
+.fp-cta:focus-visible, .fp-tile:focus-visible, .fp-edit:focus-visible, .fp-pending a:focus-visible { outline: 3px solid #F5C542; outline-offset: 3px; }
+.fp-note { font-size: 12px; color: #8FA3C7; }
+.fp-side { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.fp-side-head { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #8FA3C7; }
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); backdrop-filter: blur(6px); transition: transform 150ms ease, border-color 150ms ease, background 150ms ease; }
+.fp-pending { display: flex; gap: 14px; align-items: flex-start; padding: 18px; border-radius: 16px; background: rgba(245,197,66,0.12); border: 1px solid rgba(245,197,66,0.4); color: #FDE68A; height: 100%; box-sizing: border-box; }
+.fp-pending strong { display: block; font-size: 16px; color: #FFFFFF; }
+.fp-pending p { margin: 6px 0 10px; font-size: 13.5px; line-height: 1.55; color: #C7D4EA; }
+.fp-pending a { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; color: #FDE68A; text-decoration: none; }
+@media (max-width: 1100px) {
+  .fp-grid { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+}
+@media (max-width: 640px) {
+  .fp-card { border-radius: 18px; margin-top: 14px; }
+  .fp-grid { padding: 20px 16px; }
+  .fp-pass { margin-left: 0; }
+  .fp-status { align-items: flex-start; gap: 14px; }
+  .fp-meter { width: 72px; height: 72px; }
+  .fp-meter svg { width: 72px; height: 72px; }
+  .fp-meter-text strong { font-size: 22px; }
+  .fp-title { font-size: 20px; }
+  .fp-lead { font-size: 13.5px; }
+  .fp-cta { width: 100%; justify-content: center; box-sizing: border-box; }
+  .fp-foot { padding: 14px 16px 16px; flex-direction: column; align-items: stretch; gap: 10px; }
+  .fp-note { text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fp-cta, .fp-tile, .fp-meter-fill { transition: none; }
+  .fp-cta:hover, .fp-tile:hover { transform: none; }
+}
+
+
+stderr | src/app/components/dashboard/__tests__/RealDashboard.test.tsx > with signing requests > tells a Free person when the free document is used, and shows a waiting request
+Error: Could not parse CSS stylesheet
+    at exports.createStylesheet (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\helpers\stylesheets.js:37:21)
+    at HTMLStyleElementImpl._updateAStyleBlock (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLStyleElement-impl.js:68:5)
+    at HTMLStyleElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLStyleElement-impl.js:19:12)
+    at HTMLElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Node-impl.js:263:15)
+    at HTMLElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Element-impl.js:98:11)
+    at HTMLElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Node-impl.js:263:15)
+    at HTMLElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Element-impl.js:98:11)
+    at HTMLDivElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Node-impl.js:263:15)
+    at HTMLDivElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Element-impl.js:98:11)
+    at HTMLDivElementImpl._insert (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Node-impl.js:837:14)
+.fp-card { position: relative; overflow: hidden; margin: 20px 0 8px; border-radius: 22px; color: #E8EEF9;
+  background:
+    radial-gradient(1200px 400px at -10% -40%, rgba(47,140,240,0.35), transparent 60%),
+    radial-gradient(700px 360px at 110% 120%, rgba(202,138,4,0.22), transparent 60%),
+    linear-gradient(135deg, #0B1B3A 0%, #10275A 55%, #0E2150 100%);
+  box-shadow: 0 1px 2px rgba(7,17,31,0.08), 0 24px 48px -28px rgba(7,17,31,0.7); font-family: 'Geist', sans-serif; }
+.fp-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.35;
+  background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 28px 28px; mask-image: linear-gradient(90deg, #000 0%, transparent 70%); -webkit-mask-image: linear-gradient(90deg, #000 0%, transparent 70%); }
+.fp-glow { position: absolute; width: 260px; height: 260px; right: 34%; top: -140px; border-radius: 50%; background: rgba(250,204,21,0.12); filter: blur(40px); pointer-events: none; }
+.fp-grid { position: relative; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 28px; padding: 26px 28px; }
+.fp-main { min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+.fp-who { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fp-avatar { line-height: 0; border-radius: 50%; box-shadow: 0 0 0 3px rgba(255,255,255,0.18); }
+.fp-who-text { display: grid; gap: 2px; min-width: 0; }
+.fp-hello { font-size: 17px; font-weight: 700; color: #FFFFFF; }
+.fp-edit { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; color: #A9BCDD; text-decoration: none; }
+.fp-edit:hover { color: #FFFFFF; }
+.fp-pass { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11.5px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; color: #3B2A00; background: linear-gradient(135deg, #FDE68A, #F5C542); padding: 6px 12px 6px 10px; border-radius: 999px;
+  box-shadow: 0 6px 16px -8px rgba(245,197,66,0.8); }
+.fp-status { display: flex; align-items: center; gap: 18px; }
+.fp-meter { position: relative; width: 84px; height: 84px; flex-shrink: 0; }
+.fp-meter-track { fill: none; stroke: rgba(255,255,255,0.14); stroke-width: 8; }
+.fp-meter-fill { fill: none; stroke: #F5C542; stroke-width: 8; stroke-linecap: round; transition: stroke-dasharray 600ms ease; }
+.fp-meter-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
+.fp-meter-text strong { font-size: 26px; font-weight: 800; color: #FFFFFF; }
+.fp-meter-text span { font-size: 11px; color: #A9BCDD; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.08em; }
+.fp-status-text { min-width: 0; }
+.fp-title { margin: 0; font-size: 24px; line-height: 1.2; font-weight: 800; color: #FFFFFF; letter-spacing: -0.01em; }
+.fp-lead { margin: 6px 0 0; font-size: 14.5px; line-height: 1.55; color: #C7D4EA; max-width: 52ch; }
+.fp-facts { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; flex-wrap: wrap; }
+.fp-facts li { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #DCE6F7; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 6px 12px; }
+.fp-hosted { margin: 0; font-size: 13px; color: #BFE3C9; background: rgba(22,163,74,0.14); border: 1px solid rgba(74,222,128,0.25); border-radius: 10px; padding: 8px 12px; }
+.fp-foot { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 14px 28px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+.fp-cta { display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 22px; border-radius: 12px; background: #FFFFFF; color: #0B1F4B; font-weight: 800; font-size: 15px; text-decoration: none;
+  box-shadow: 0 10px 24px -12px rgba(255,255,255,0.6); transition: transform 150ms ease, box-shadow 150ms ease; }
+.fp-cta:hover { transform: translateY(-1px); box-shadow: 0 14px 28px -12px rgba(255,255,255,0.7); }
+.fp-cta:focus-visible, .fp-tile:focus-visible, .fp-edit:focus-visible, .fp-pending a:focus-visible { outline: 3px solid #F5C542; outline-offset: 3px; }
+.fp-note { font-size: 12px; color: #8FA3C7; }
+.fp-side { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.fp-side-head { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #8FA3C7; }
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); backdrop-filter: blur(6px); transition: transform 150ms ease, border-color 150ms ease, background 150ms ease; }
+.fp-pending { display: flex; gap: 14px; align-items: flex-start; padding: 18px; border-radius: 16px; background: rgba(245,197,66,0.12); border: 1px solid rgba(245,197,66,0.4); color: #FDE68A; height: 100%; box-sizing: border-box; }
+.fp-pending strong { display: block; font-size: 16px; color: #FFFFFF; }
+.fp-pending p { margin: 6px 0 10px; font-size: 13.5px; line-height: 1.55; color: #C7D4EA; }
+.fp-pending a { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; color: #FDE68A; text-decoration: none; }
+@media (max-width: 1100px) {
+  .fp-grid { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+}
+@media (max-width: 640px) {
+  .fp-card { border-radius: 18px; margin-top: 14px; }
+  .fp-grid { padding: 20px 16px; }
+  .fp-pass { margin-left: 0; }
+  .fp-status { align-items: flex-start; gap: 14px; }
+  .fp-meter { width: 72px; height: 72px; }
+  .fp-meter svg { width: 72px; height: 72px; }
+  .fp-meter-text strong { font-size: 22px; }
+  .fp-title { font-size: 20px; }
+  .fp-lead { font-size: 13.5px; }
+  .fp-cta { width: 100%; justify-content: center; box-sizing: border-box; }
+  .fp-foot { padding: 14px 16px 16px; flex-direction: column; align-items: stretch; gap: 10px; }
+  .fp-note { text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fp-cta, .fp-tile, .fp-meter-fill { transition: none; }
+  .fp-cta:hover, .fp-tile:hover { transform: none; }
+}
+
+
+stderr | src/app/components/dashboard/__tests__/RealDashboard.test.tsx > edge states > puts a Free account's document action before optional upgrades
+Error: Could not parse CSS stylesheet
+    at exports.createStylesheet (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\helpers\stylesheets.js:37:21)
+    at HTMLStyleElementImpl._updateAStyleBlock (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLStyleElement-impl.js:68:5)
+    at HTMLStyleElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLStyleElement-impl.js:19:12)
+    at HTMLElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Node-impl.js:263:15)
+    at HTMLElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Element-impl.js:98:11)
+    at HTMLElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Node-impl.js:263:15)
+    at HTMLElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Element-impl.js:98:11)
+    at HTMLDivElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Node-impl.js:263:15)
+    at HTMLDivElementImpl._attach (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Element-impl.js:98:11)
+    at HTMLDivElementImpl._insert (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\Node-impl.js:837:14)
+.fp-card { position: relative; overflow: hidden; margin: 20px 0 8px; border-radius: 22px; color: #E8EEF9;
+  background:
+    radial-gradient(1200px 400px at -10% -40%, rgba(47,140,240,0.35), transparent 60%),
+    radial-gradient(700px 360px at 110% 120%, rgba(202,138,4,0.22), transparent 60%),
+    linear-gradient(135deg, #0B1B3A 0%, #10275A 55%, #0E2150 100%);
+  box-shadow: 0 1px 2px rgba(7,17,31,0.08), 0 24px 48px -28px rgba(7,17,31,0.7); font-family: 'Geist', sans-serif; }
+.fp-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.35;
+  background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 28px 28px; mask-image: linear-gradient(90deg, #000 0%, transparent 70%); -webkit-mask-image: linear-gradient(90deg, #000 0%, transparent 70%); }
+.fp-glow { position: absolute; width: 260px; height: 260px; right: 34%; top: -140px; border-radius: 50%; background: rgba(250,204,21,0.12); filter: blur(40px); pointer-events: none; }
+.fp-grid { position: relative; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 28px; padding: 26px 28px; }
+.fp-main { min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+.fp-who { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fp-avatar { line-height: 0; border-radius: 50%; box-shadow: 0 0 0 3px rgba(255,255,255,0.18); }
+.fp-who-text { display: grid; gap: 2px; min-width: 0; }
+.fp-hello { font-size: 17px; font-weight: 700; color: #FFFFFF; }
+.fp-edit { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; color: #A9BCDD; text-decoration: none; }
+.fp-edit:hover { color: #FFFFFF; }
+.fp-pass { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11.5px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; color: #3B2A00; background: linear-gradient(135deg, #FDE68A, #F5C542); padding: 6px 12px 6px 10px; border-radius: 999px;
+  box-shadow: 0 6px 16px -8px rgba(245,197,66,0.8); }
+.fp-status { display: flex; align-items: center; gap: 18px; }
+.fp-meter { position: relative; width: 84px; height: 84px; flex-shrink: 0; }
+.fp-meter-track { fill: none; stroke: rgba(255,255,255,0.14); stroke-width: 8; }
+.fp-meter-fill { fill: none; stroke: #F5C542; stroke-width: 8; stroke-linecap: round; transition: stroke-dasharray 600ms ease; }
+.fp-meter-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
+.fp-meter-text strong { font-size: 26px; font-weight: 800; color: #FFFFFF; }
+.fp-meter-text span { font-size: 11px; color: #A9BCDD; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.08em; }
+.fp-status-text { min-width: 0; }
+.fp-title { margin: 0; font-size: 24px; line-height: 1.2; font-weight: 800; color: #FFFFFF; letter-spacing: -0.01em; }
+.fp-lead { margin: 6px 0 0; font-size: 14.5px; line-height: 1.55; color: #C7D4EA; max-width: 52ch; }
+.fp-facts { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; flex-wrap: wrap; }
+.fp-facts li { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #DCE6F7; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 6px 12px; }
+.fp-hosted { margin: 0; font-size: 13px; color: #BFE3C9; background: rgba(22,163,74,0.14); border: 1px solid rgba(74,222,128,0.25); border-radius: 10px; padding: 8px 12px; }
+.fp-foot { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 14px 28px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+.fp-cta { display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 22px; border-radius: 12px; background: #FFFFFF; color: #0B1F4B; font-weight: 800; font-size: 15px; text-decoration: none;
+  box-shadow: 0 10px 24px -12px rgba(255,255,255,0.6); transition: transform 150ms ease, box-shadow 150ms ease; }
+.fp-cta:hover { transform: translateY(-1px); box-shadow: 0 14px 28px -12px rgba(255,255,255,0.7); }
+.fp-cta:focus-visible, .fp-tile:focus-visible, .fp-edit:focus-visible, .fp-pending a:focus-visible { outline: 3px solid #F5C542; outline-offset: 3px; }
+.fp-note { font-size: 12px; color: #8FA3C7; }
+.fp-side { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.fp-side-head { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #8FA3C7; }
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); backdrop-filter: blur(6px); transition: transform 150ms ease, border-color 150ms ease, background 150ms ease; }
+.fp-pending { display: flex; gap: 14px; align-items: flex-start; padding: 18px; border-radius: 16px; background: rgba(245,197,66,0.12); border: 1px solid rgba(245,197,66,0.4); color: #FDE68A; height: 100%; box-sizing: border-box; }
+.fp-pending strong { display: block; font-size: 16px; color: #FFFFFF; }
+.fp-pending p { margin: 6px 0 10px; font-size: 13.5px; line-height: 1.55; color: #C7D4EA; }
+.fp-pending a { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; color: #FDE68A; text-decoration: none; }
+@media (max-width: 1100px) {
+  .fp-grid { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+}
+@media (max-width: 640px) {
+  .fp-card { border-radius: 18px; margin-top: 14px; }
+  .fp-grid { padding: 20px 16px; }
+  .fp-pass { margin-left: 0; }
+  .fp-status { align-items: flex-start; gap: 14px; }
+  .fp-meter { width: 72px; height: 72px; }
+  .fp-meter svg { width: 72px; height: 72px; }
+  .fp-meter-text strong { font-size: 22px; }
+  .fp-title { font-size: 20px; }
+  .fp-lead { font-size: 13.5px; }
+  .fp-cta { width: 100%; justify-content: center; box-sizing: border-box; }
+  .fp-foot { padding: 14px 16px 16px; flex-direction: column; align-items: stretch; gap: 10px; }
+  .fp-note { text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fp-cta, .fp-tile, .fp-meter-fill { transition: none; }
+  .fp-cta:hover, .fp-tile:hover { transform: none; }
+}
+
+
+ ✓ src/app/components/dashboard/__tests__/RealDashboard.test.tsx (18 tests) 587ms
+ ✓ src/app/pages/platform/prepare/__tests__/RoutingStep.backend.test.tsx (6 tests) 197ms
+ ✓ src/app/pages/platform/shared-documents/__tests__/SharedDocumentsPage.test.tsx (20 tests) 2879ms
+   ✓ Shared By Me > opens View people with access (the people list) and Add more (contacts or the form) from the menu  371ms
+   ✓ Shared With Me > shows participants and the audit trail from the details endpoint  337ms
+   ✓ Shared With Me > removes my access only after Continue  528ms
+
+ Test Files  5 passed (5)
+      Tests  60 passed (60)
+   Start at  19:55:53
+   Duration  11.24s (transform 1.53s, setup 4.12s, collect 10.17s, tests 5.06s, environment 1.61s, prepare 270ms)

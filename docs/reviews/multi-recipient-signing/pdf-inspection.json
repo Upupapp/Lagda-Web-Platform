@@ -1,0 +1,34 @@
+[
+  {
+    "mode": "sequential",
+    "pageCount": 2,
+    "sourceTextPreservedOnPages": [
+      1,
+      2
+    ],
+    "signatureNames": [
+      "LAGDA Multi QA Signer 1",
+      "LAGDA Multi QA Signer 2",
+      "LAGDA Multi QA Signer 3"
+    ],
+    "typedSignatureAndPrintedNamePresentForAll": true,
+    "signatureFieldsDoNotOverlap": true,
+    "sha256": "bde987fee60f426a109ac6648bae7c775858975d7f06bab3cf89ac2f79bd25e9"
+  },
+  {
+    "mode": "parallel",
+    "pageCount": 2,
+    "sourceTextPreservedOnPages": [
+      1,
+      2
+    ],
+    "signatureNames": [
+      "LAGDA Multi QA Signer 1",
+      "LAGDA Multi QA Signer 2",
+      "LAGDA Multi QA Signer 3"
+    ],
+    "typedSignatureAndPrintedNamePresentForAll": true,
+    "signatureFieldsDoNotOverlap": true,
+    "sha256": "07e9f4abf90c0dcc1c15fb2b57c737b2f1782d8fe2979fe446858467fa93e707"
+  }
+]

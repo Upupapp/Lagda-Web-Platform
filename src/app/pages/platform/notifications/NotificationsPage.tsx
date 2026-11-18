@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../../utils/on-light";
 // In-App Notifications and Alerts Center — list page.
 // Route: /app/notifications
 // Command 28. Frontend demonstration only. No real delivery, persistence, or sync.
@@ -31,11 +32,11 @@ const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
 const NAVY  = "#07111F";
 const AZURE = "#0078D4";
-const SLATE = "#64748B";
-const SILVER= "#8A9BAE";
-const GREEN = "#16A34A";
-const RED   = "#DC2626";
-const AMBER = "#D97706";
+const SLATE = ON_LIGHT.slate;
+const SILVER= ON_LIGHT.muted;
+const GREEN = "#166534";
+const RED   = "#B91C1C";
+const AMBER = ON_LIGHT.gold;
 
 // ── Severity helpers ──────────────────────────────────────────────────────────
 function severityColor(s: NotificationRecord["severity"]): string {
@@ -43,7 +44,7 @@ function severityColor(s: NotificationRecord["severity"]): string {
     case "critical": return RED;
     case "warning":  return AMBER;
     case "success":  return GREEN;
-    default:         return AZURE;
+    default:         return ON_LIGHT.azure;
   }
 }
 
@@ -181,7 +182,7 @@ function NotifCard({ notification: n, onMarkRead, onMarkUnread, onDismiss, onRes
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 3 }}>
           {isUnread && (
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: AZURE, flexShrink: 0, marginTop: 5 }} aria-label="Unread" />
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: AZURE, flexShrink: 0, marginTop: 5 }} aria-hidden="true" />
           )}
           <p style={{
             ...GF, fontSize: 13, fontWeight: isUnread ? 600 : 400,
@@ -193,7 +194,7 @@ function NotifCard({ notification: n, onMarkRead, onMarkUnread, onDismiss, onRes
               style={{ color: "inherit", textDecoration: "none" }}
               className="notif-title-link"
             >
-              {n.title}
+              {isUnread && <span className="sr-only">Unread: </span>}{n.title}
             </Link>
           </p>
           <span style={{ ...GM, fontSize: 10, color: SILVER, flexShrink: 0, marginTop: 2 }}>
@@ -220,7 +221,7 @@ function NotifCard({ notification: n, onMarkRead, onMarkUnread, onDismiss, onRes
           {n.hasAction && n.actionPath && !isDismissed && (
             <Link
               to={n.actionPath}
-              style={{ display: "flex", alignItems: "center", gap: 3, ...GF, fontSize: 11, color: AZURE, textDecoration: "none", marginLeft: "auto" }}
+              style={{ display: "flex", alignItems: "center", gap: 3, ...GF, fontSize: 11, color: ON_LIGHT.azure, textDecoration: "none", marginLeft: "auto" }}
               className="notif-action-link"
             >
               {n.actionLabel ?? "View"} <ChevronRight size={11} aria-hidden />
@@ -437,7 +438,7 @@ export function NotificationsPage() {
                 onClick={() => setView(v)}
                 style={{
                   ...GF, fontSize: 12, fontWeight: isActive ? 600 : 400,
-                  color: isActive ? AZURE : SLATE,
+                  color: isActive ? ON_LIGHT.azure : SLATE,
                   background: "none", border: "none", borderBottom: `2px solid ${isActive ? AZURE : "transparent"}`,
                   padding: "10px 12px", cursor: "pointer", whiteSpace: "nowrap",
                   display: "flex", alignItems: "center", gap: 5,
@@ -510,7 +511,7 @@ export function NotificationsPage() {
           <p style={{ ...GF, fontSize: 12, color: SLATE, margin: 0 }}>
             Control which notifications you receive.
           </p>
-          <Link to="/app/settings/notifications" style={{ ...GF, fontSize: 12, color: AZURE, textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }} className="notif-pref-link">
+          <Link to="/app/settings/notifications" style={{ ...GF, fontSize: 12, color: ON_LIGHT.azure, textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }} className="notif-pref-link">
             Notification Preferences <ChevronRight size={12} aria-hidden />
           </Link>
         </div>
@@ -518,18 +519,18 @@ export function NotificationsPage() {
 
       <style>{`
         .notif-search:focus { border-color: #0078D4 !important; box-shadow: 0 0 0 3px rgba(0,120,212,0.1); }
-        .notif-mark-all-btn:hover { background: #F1F5F9 !important; }
+        @media (hover: hover) and (pointer: fine) { .notif-mark-all-btn:hover { background: #F1F5F9 !important; } }
         .notif-mark-all-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
         .notif-tab:focus-visible { outline: 2px solid #0078D4; outline-offset: -2px; }
         .notif-tablist { scrollbar-width: none; }
         .notif-tablist::-webkit-scrollbar { display: none; }
         .notif-card:last-child { border-bottom: none !important; }
-        .notif-card:hover { background: rgba(0,120,212,0.02) !important; }
-        .notif-ctrl-btn:hover { color: #0078D4 !important; background: rgba(0,120,212,0.08) !important; }
+        @media (hover: hover) and (pointer: fine) { .notif-card:hover { background: rgba(0,120,212,0.02) !important; } }
+        @media (hover: hover) and (pointer: fine) { .notif-ctrl-btn:hover { color: #0078D4 !important; background: rgba(0,120,212,0.08) !important; } }
         .notif-ctrl-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
-        .notif-title-link:hover { color: #0078D4 !important; }
-        .notif-action-link:hover { text-decoration: underline !important; }
-        .notif-pref-link:hover { text-decoration: underline !important; }
+        @media (hover: hover) and (pointer: fine) { .notif-title-link:hover { color: #0078D4 !important; } }
+        @media (hover: hover) and (pointer: fine) { .notif-action-link:hover { text-decoration: underline !important; } }
+        @media (hover: hover) and (pointer: fine) { .notif-pref-link:hover { text-decoration: underline !important; } }
       `}</style>
     </div>
   );

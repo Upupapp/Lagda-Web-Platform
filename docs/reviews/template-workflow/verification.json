@@ -1,0 +1,94 @@
+{
+  "passed": true,
+  "noProductionAccess": true,
+  "sourceTemplateUnchanged": true,
+  "sourceSha256": "fb18c9781de0216b6349df21d09226b6c60533b6e7c6229f79e781ad96bc0173",
+  "uses": [
+    {
+      "index": 1,
+      "documentId": "doc_3cc8e7887a8a42b9868cb24e7e295b08",
+      "signingRequestId": "sr_60eda379f4954150bc19dfe9b45a7c08",
+      "completed": true,
+      "sha256": "66d06c22d7461fda497b5622a974cb0ae46c230a03597a6e4718d38f41f76e4b",
+      "pdfBytes": 944882,
+      "recipientDownloadMatches": true,
+      "verificationDigestMatches": true,
+      "auditEntries": 7,
+      "sourceSha256": "fb18c9781de0216b6349df21d09226b6c60533b6e7c6229f79e781ad96bc0173",
+      "templateFieldsUnchanged": true,
+      "fieldGeometryPreserved": true,
+      "instantiateRetrySameDocument": true,
+      "signatureRetrySameSubmission": true,
+      "recipientIsolationChecked": true,
+      "unrelatedRecipientGrantStatus": 401
+    },
+    {
+      "index": 2,
+      "documentId": "doc_b01a47787178499cbda57d9f2b21121e",
+      "signingRequestId": "sr_042e20ea82544bfaa3fa9a10bca6b9a0",
+      "completed": true,
+      "sha256": "25cfecc3ff28912531841a2162e935776f5e5102991a164b96a766c1ba47d882",
+      "pdfBytes": 944881,
+      "recipientDownloadMatches": true,
+      "verificationDigestMatches": true,
+      "auditEntries": 7,
+      "sourceSha256": "fb18c9781de0216b6349df21d09226b6c60533b6e7c6229f79e781ad96bc0173",
+      "templateFieldsUnchanged": true,
+      "fieldGeometryPreserved": true,
+      "instantiateRetrySameDocument": true,
+      "signatureRetrySameSubmission": true,
+      "recipientIsolationChecked": true,
+      "unrelatedRecipientGrantStatus": 401
+    }
+  ],
+  "anonymousTemplateDenied": true,
+  "completedAt": "2026-11-18T13:57:02.967Z",
+  "date": "2026-11-18",
+  "frontend": {
+    "head": "5934a8b",
+    "branch": "feat/emil-screen-sprints",
+    "existingLocalChangesPreserved": true
+  },
+  "backend": {
+    "head": "cb3c3b0",
+    "sourceChanges": false
+  },
+  "templateId": "wft_d95c654099b048a19f7f44cb71aedfee",
+  "sourceDocumentId": "doc_2bb0a7f1d8fb4b9e8002ec3fd2350c60",
+  "templateName": "Template E2E QA 2026-11-18T13-48-26-939Z",
+  "mockedApiResponses": false,
+  "applicationFixesNeeded": false,
+  "physicalDeviceTested": false,
+  "crossFileChecks": [
+    {
+      "verificationForUse": 1,
+      "fileFromUse": 2,
+      "matches": false
+    },
+    {
+      "verificationForUse": 2,
+      "fileFromUse": 1,
+      "matches": false
+    }
+  ],
+  "pdfInspection": [
+    {
+      "use": 1,
+      "pages": 1,
+      "sourceTextPreserved": true,
+      "expectedSignatureText": "LAGDA Multi QA Signer 1",
+      "expectedSignaturePresent": true,
+      "otherRecipientSignatureAbsent": true,
+      "signedPdfUnmodified": true
+    },
+    {
+      "use": 2,
+      "pages": 1,
+      "sourceTextPreserved": true,
+      "expectedSignatureText": "LAGDA Multi QA Signer 2",
+      "expectedSignaturePresent": true,
+      "otherRecipientSignatureAbsent": true,
+      "signedPdfUnmodified": true
+    }
+  ]
+}

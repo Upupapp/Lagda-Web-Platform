@@ -1,0 +1,53 @@
+[
+  {
+    "tag": "worst-fields",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "More editor actions",
+          "width": 38,
+          "height": 44
+        }
+      ],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "field-validation",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "editor-page-drawer",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  }
+]

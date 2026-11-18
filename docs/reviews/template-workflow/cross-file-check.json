@@ -1,0 +1,12 @@
+[
+  {
+    "verificationForUse": 1,
+    "fileFromUse": 2,
+    "matches": false
+  },
+  {
+    "verificationForUse": 2,
+    "fileFromUse": 1,
+    "matches": false
+  }
+]

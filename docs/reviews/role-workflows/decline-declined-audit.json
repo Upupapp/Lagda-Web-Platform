@@ -1,0 +1,117 @@
+{
+  "signingRequestId": "sr_557a78f7becb4d0c9c748dcc1d775d04",
+  "state": "declined",
+  "entries": [
+    {
+      "id": "ev_672fba43510b4bd6b8c2daf3635d93f3",
+      "type": "transaction-created",
+      "eventVersion": 1,
+      "occurredAt": "2026-11-18T11:51:50.336Z",
+      "actor": {
+        "type": "workspace-user",
+        "displayName": "Workspace user"
+      },
+      "description": "Signing request created",
+      "details": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "ev_5cce56d0a8074267a228ee36603047ae",
+      "type": "transaction-sent",
+      "eventVersion": 1,
+      "occurredAt": "2026-11-18T11:51:50.358Z",
+      "actor": {
+        "type": "workspace-user",
+        "displayName": "Workspace user"
+      },
+      "description": "Request sent for signing",
+      "details": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "ev_7950f49cc4fb492caef2b9b18cf55e27",
+      "type": "recipient-activated",
+      "eventVersion": 1,
+      "occurredAt": "2026-11-18T11:51:50.358Z",
+      "actor": {
+        "type": "system",
+        "displayName": "LAGDA system"
+      },
+      "description": "LAGDA Workflow QA reviewer became eligible to review",
+      "details": {
+        "kind": "none"
+      },
+      "subject": {
+        "recipientId": "srr_9412e3ed728e4b89bab061d077f79bdf",
+        "displayName": "LAGDA Workflow QA reviewer"
+      }
+    },
+    {
+      "id": "ev_c66a39e483454651aa0de4bf97c443b9",
+      "type": "recipient-activated",
+      "eventVersion": 1,
+      "occurredAt": "2026-11-18T11:51:50.358Z",
+      "actor": {
+        "type": "system",
+        "displayName": "LAGDA system"
+      },
+      "description": "LAGDA Workflow QA approver became eligible to approve",
+      "details": {
+        "kind": "none"
+      },
+      "subject": {
+        "recipientId": "srr_0164559c4f484684b2c256796e79b5ea",
+        "displayName": "LAGDA Workflow QA approver"
+      }
+    },
+    {
+      "id": "ev_8f70a2842d3947cc8a2cb6275df70cd2",
+      "type": "document-viewed",
+      "eventVersion": 1,
+      "occurredAt": "2026-11-18T11:53:01.986Z",
+      "actor": {
+        "type": "recipient",
+        "displayName": "LAGDA Workflow QA approver",
+        "recipientId": "srr_0164559c4f484684b2c256796e79b5ea"
+      },
+      "description": "Recipient entered the signing ceremony",
+      "details": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "ev_ca820523daad450f9ba5b7de94eb7584",
+      "type": "consent-accepted",
+      "eventVersion": 1,
+      "occurredAt": "2026-11-18T11:53:04.864Z",
+      "actor": {
+        "type": "recipient",
+        "displayName": "LAGDA Workflow QA approver",
+        "recipientId": "srr_0164559c4f484684b2c256796e79b5ea"
+      },
+      "description": "Recipient accepted electronic-signature consent",
+      "details": {
+        "kind": "consent",
+        "consentType": "electronic-records-and-signature",
+        "consentVersion": "v0-demonstration"
+      }
+    },
+    {
+      "id": "ev_ad547f6891864ec48b39a624522a2d3a",
+      "type": "participant-declined",
+      "eventVersion": 1,
+      "occurredAt": "2026-11-18T11:53:06.457Z",
+      "actor": {
+        "type": "recipient",
+        "displayName": "LAGDA Workflow QA approver",
+        "recipientId": "srr_0164559c4f484684b2c256796e79b5ea"
+      },
+      "description": "Recipient declined to sign",
+      "details": {
+        "kind": "none"
+      }
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { useFlowViewport } from "../../../hooks/useFlowViewport";
 // /app/templates/:templateId/author — Author a document from scratch (071).
 //
 // The alternative to uploading a file, and the ONLY way a template gets a
@@ -264,6 +265,7 @@ function AuthorEditorInner({ template, onReload }: { template: DocumentTemplate;
   const typingRef = useRef(false);
 
   const editor = useEditor({
+    editorProps: { attributes: { role: "textbox", "aria-label": "Template document content", "aria-multiline": "true" } },
     extensions: flowDocumentExtensions(),
     content: flowDocumentToJSON(template.content),
     onUpdate: () => {
@@ -532,6 +534,7 @@ function AuthorEditorInner({ template, onReload }: { template: DocumentTemplate;
         : statusPill.text.startsWith("Offline") ? <CloudOff size={size} aria-hidden />
           : <AlertCircle size={size} aria-hidden />;
 
+  useFlowViewport();
   const ribbonVisible = editor !== null && (!isNarrow || ribbonOpen);
   // 093. The LAGDA Chatbot is part of the paid plans.
   const chatAllowed = useWorkspaceAllows("personal") !== false;
@@ -549,7 +552,7 @@ function AuthorEditorInner({ template, onReload }: { template: DocumentTemplate;
     : `calc(${String(fabBottom)}px + env(safe-area-inset-bottom, 0px))`;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100dvh", background: "#ffffff", ...GF, overflow: "hidden" }}>
+    <div className="template-task" style={{ display: "flex", flexDirection: "column", height: "100dvh", background: "#ffffff", ...GF, overflow: "hidden" }}>
       <style>{EDITOR_CSS}</style>
       <style>{CHATBOT_CSS}</style>
 

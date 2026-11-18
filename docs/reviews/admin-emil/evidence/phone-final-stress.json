@@ -1,0 +1,16 @@
+[
+  {
+    "screen": "missing-name-member-panel",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "screen": "new-team-dialog",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "checks": "search reset, Unicode, missing-name detail, dialog focus trap / Escape / restore, 320px enlarged root text",
+    "passed": true
+  }
+]

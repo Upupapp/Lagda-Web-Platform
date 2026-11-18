@@ -1,0 +1,128 @@
+[
+  {
+    "mode": "demo",
+    "section": "people",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "worst",
+    "section": "people",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "worst",
+    "section": "activity",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "empty",
+    "section": "people",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "one",
+    "section": "people",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "huge",
+    "section": "people",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "demo",
+    "section": "people",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "worst",
+    "section": "people",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "worst",
+    "section": "activity",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "empty",
+    "section": "people",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "one",
+    "section": "people",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "huge",
+    "section": "people",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "demo",
+    "section": "people",
+    "width": 320,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "worst",
+    "section": "people",
+    "width": 320,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "worst",
+    "section": "activity",
+    "width": 320,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "empty",
+    "section": "people",
+    "width": 320,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "one",
+    "section": "people",
+    "width": 320,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "mode": "huge",
+    "section": "people",
+    "width": 320,
+    "overflow": false,
+    "violations": []
+  }
+]

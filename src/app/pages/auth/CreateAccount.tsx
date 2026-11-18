@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../utils/on-light";
 // C13 update — adds password + confirm password fields.
 // On mock success: sets pendingUser in OnboardingContext, navigates to /verify-email.
 // Password is NEVER logged or stored.
@@ -381,7 +382,7 @@ export function CreateAccount() {
             }}
           >
             <span
-              style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700 }}
+              style={{ color: ON_LIGHT.azure, ...GM, fontSize: 10, fontWeight: 700 }}
             >
               SELECTED PLAN
             </span>
@@ -468,7 +469,7 @@ export function CreateAccount() {
           <button
             onClick={() => setStatus("idle")}
             style={{
-              color: "#0078D4",
+              color: ON_LIGHT.azure,
               ...GF,
               fontSize: 12,
               background: "none",
@@ -709,7 +710,7 @@ export function CreateAccount() {
             {confirm.length > 0 && matchOk && (
               <p
                 style={{
-                  color: "#0078D4",
+                  color: ON_LIGHT.azure,
                   ...GF,
                   fontSize: 12,
                   margin: "4px 0 0",
@@ -753,14 +754,14 @@ export function CreateAccount() {
               I agree to LAGDA's{" "}
               <Link
                 to="/legal/terms"
-                style={{ color: "#0078D4", textDecoration: "none" }}
+                style={{ color: ON_LIGHT.azure, textDecoration: "none" }}
               >
                 Terms of Service
               </Link>{" "}
               and{" "}
               <Link
                 to="/legal/privacy"
-                style={{ color: "#0078D4", textDecoration: "none" }}
+                style={{ color: ON_LIGHT.azure, textDecoration: "none" }}
               >
                 Privacy Policy
               </Link>
@@ -833,7 +834,7 @@ export function CreateAccount() {
         <Link
           to={`/sign-in?returnTo=${encodeURIComponent(returnTo)}`}
           style={{
-            color: "#0078D4",
+            color: ON_LIGHT.azure,
             ...GF,
             fontSize: 13,
             textDecoration: "none",

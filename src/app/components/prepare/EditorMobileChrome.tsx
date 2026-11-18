@@ -1,3 +1,5 @@
+import { useModalFocus } from "../../hooks/useModalFocus";
+import { ON_LIGHT } from "../../utils/on-light";
 // The field editor's two side panels, on a phone.
 //
 // ── The arithmetic that forced this ────────────────────────────────────────
@@ -23,38 +25,19 @@
 // Both trap focus while open and return it on close: they sit over the
 // canvas, and a keyboard that walks behind them is a keyboard lost.
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { Z } from "../../utils/z-index";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY = "#07111F";
-const SILVER = "#8A9BAE";
+const SILVER = ON_LIGHT.muted;
 
 /** Closes on Escape, and restores focus to whatever opened it. */
 function useDismiss(open: boolean, onClose: () => void) {
-  const previouslyFocused = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    previouslyFocused.current = document.activeElement as HTMLElement | null;
-
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { event.stopPropagation(); onClose(); }
-    };
-    document.addEventListener("keydown", onKey);
-
-    const body = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = body;
-      const el = previouslyFocused.current;
-      previouslyFocused.current = null;
-      if (el && document.contains(el)) { try { el.focus(); } catch { /* gone */ } }
-    };
-  }, [open, onClose]);
+  const ref = useRef<HTMLDivElement>(null);
+  useModalFocus(ref, onClose, false, open);
+  return ref;
 }
 
 function Scrim({ onClose }: { onClose: () => void }) {
@@ -97,13 +80,14 @@ function Header({ title, onClose }: { title: string; onClose: () => void }) {
 export function EditorDrawer({ open, title, onClose, children }: {
   open: boolean; title: string; onClose: () => void; children: ReactNode;
 }) {
-  useDismiss(open, onClose);
+  const panelRef = useDismiss(open, onClose);
   if (!open) return null;
 
   return (
     <>
       <Scrim onClose={onClose} />
       <div
+        ref={panelRef} tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={title}
@@ -132,19 +116,20 @@ export function EditorDrawer({ open, title, onClose, children }: {
 export function EditorSheet({ open, title, onClose, children }: {
   open: boolean; title: string; onClose: () => void; children: ReactNode;
 }) {
-  useDismiss(open, onClose);
+  const panelRef = useDismiss(open, onClose);
   if (!open) return null;
 
   return (
     <>
       <Scrim onClose={onClose} />
       <div
+        ref={panelRef} tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={title}
         style={{
           position: "fixed", left: 0, right: 0, bottom: 0, zIndex: Z.drawer,
-          maxHeight: "70vh", background: "#FFFFFF",
+          maxHeight: "70dvh", background: "#FFFFFF",
           borderTopLeftRadius: 16, borderTopRightRadius: 16,
           display: "flex", flexDirection: "column",
           boxShadow: "0 -6px 28px rgba(7,17,31,0.22)",

@@ -1,0 +1,98 @@
+{
+  "mode": "parallel",
+  "title": "Multi parallel QA 2026-11-18T11-32-33-746Z",
+  "startedAt": "2026-11-18T11:32:33.746Z",
+  "workspaceId": "ws_c5824282ea614104ad7c3e6821903e93",
+  "sourceSha256": "cc4ebccb83aada7d1ab6352d49c3884029674a55a0c1711498c426ef568f9b9b",
+  "documentId": "doc_3448e36038124f2980f20627346b0ec0",
+  "signingRequestId": "sr_80137c24d4a544d4a915e1ffa1dfad33",
+  "sentAt": "2026-11-18T11:34:03.904Z",
+  "recipients": [
+    {
+      "recipientId": "srr_b8b4313b2d144cf4a3c24db5aeaf2571",
+      "name": "LAGDA Multi QA Signer 1",
+      "email": "multi.signer.1.20261118@example.test",
+      "organization": null,
+      "type": "signer",
+      "isRequired": true,
+      "orderIndex": 0,
+      "routingOrder": 1
+    },
+    {
+      "recipientId": "srr_242a844c08d54654ac8baa2c709727db",
+      "name": "LAGDA Multi QA Signer 2",
+      "email": "multi.signer.2.20261118@example.test",
+      "organization": null,
+      "type": "signer",
+      "isRequired": true,
+      "orderIndex": 1,
+      "routingOrder": 1
+    },
+    {
+      "recipientId": "srr_b73b858b58044569adb03dfc83a5d849",
+      "name": "LAGDA Multi QA Signer 3",
+      "email": "multi.signer.3.20261118@example.test",
+      "organization": null,
+      "type": "signer",
+      "isRequired": true,
+      "orderIndex": 2,
+      "routingOrder": 1
+    }
+  ],
+  "fields": [
+    {
+      "fieldId": "srf_bc9beb62df6a4afcb42b200de9d7fda2",
+      "type": "signature-block",
+      "pageNumber": 2,
+      "rect": {
+        "x": 0.09,
+        "y": 0.855,
+        "width": 0.253333,
+        "height": 0.095
+      },
+      "required": true,
+      "label": "Signature over Name",
+      "layer": 1,
+      "recipientId": "srr_b8b4313b2d144cf4a3c24db5aeaf2571",
+      "staticValue": null
+    },
+    {
+      "fieldId": "srf_f80685a0dfe444d98170eaf73cf97ba4",
+      "type": "signature-block",
+      "pageNumber": 2,
+      "rect": {
+        "x": 0.373333,
+        "y": 0.855,
+        "width": 0.253333,
+        "height": 0.095
+      },
+      "required": true,
+      "label": "Signature over Name",
+      "layer": 2,
+      "recipientId": "srr_242a844c08d54654ac8baa2c709727db",
+      "staticValue": null
+    },
+    {
+      "fieldId": "srf_f9aea62362c244be8386879375558913",
+      "type": "signature-block",
+      "pageNumber": 2,
+      "rect": {
+        "x": 0.656667,
+        "y": 0.855,
+        "width": 0.253333,
+        "height": 0.095
+      },
+      "required": true,
+      "label": "Signature over Name",
+      "layer": 3,
+      "recipientId": "srr_b73b858b58044569adb03dfc83a5d849",
+      "staticValue": null
+    }
+  ],
+  "finalSha256": "07e9f4abf90c0dcc1c15fb2b57c737b2f1782d8fe2979fe446858467fa93e707",
+  "finalBytes": 622434,
+  "verificationId": "LAGDA-VER-2026-RJGigf8syQ",
+  "completed": true,
+  "auditEntries": 15,
+  "completedAt": "2026-11-18T11:38:55.573Z"
+}

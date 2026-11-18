@@ -1,0 +1,32 @@
+[
+  {
+    "scenario": "gate",
+    "pages": 2,
+    "sourceTextPreserved": true,
+    "approverStamp": "APPROVED",
+    "reviewerStamp": "REVIEWED",
+    "oneTypedSigner": true,
+    "fieldsDoNotOverlap": true,
+    "sha256": "5bd18c677ab1e7641a213212053b2b770eb8149d26822b0c8e3ae2a1828f16f0"
+  },
+  {
+    "scenario": "parallel",
+    "pages": 2,
+    "sourceTextPreserved": true,
+    "approverStamp": "APPROVED",
+    "reviewerStamp": "REVIEWED",
+    "oneTypedSigner": true,
+    "fieldsDoNotOverlap": true,
+    "sha256": "14d15ae991abb6fe33315c883cfb7d6c32613ed7aba61e81329cea701392dea6"
+  },
+  {
+    "scenario": "skip",
+    "pages": 2,
+    "sourceTextPreserved": true,
+    "approverStamp": "SKIPPED",
+    "reviewerStamp": "REVIEWED",
+    "oneTypedSigner": true,
+    "fieldsDoNotOverlap": true,
+    "sha256": "8371b851adefb65489e0c07b083d6b9de232f9ebb9ca9759aa30aeaa8ea69340"
+  }
+]

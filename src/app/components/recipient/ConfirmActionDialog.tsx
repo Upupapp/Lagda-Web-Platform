@@ -14,6 +14,7 @@
 import { useEffect, useId, useRef } from "react";
 import { ShieldCheck } from "lucide-react";
 import { Z } from "../../utils/z-index";
+import { useModalFocus } from "../../hooks/useModalFocus";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY = "#07111F";
@@ -38,36 +39,13 @@ export function ConfirmActionDialog({ copy, documentTitle, busy, onContinue, onC
   const titleId = useId();
   const bodyId = useId();
   const cancelRef = useRef<HTMLButtonElement>(null);
-  const continueRef = useRef<HTMLButtonElement>(null);
-
-  // Focus goes to Cancel on open and back to whatever opened the dialog on close.
-  useEffect(() => {
-    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    cancelRef.current?.focus();
-    return () => { opener?.focus(); };
-  }, []);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        if (!busy) onCancel();
-        return;
-      }
-      // Two controls, so the trap is a swap between them.
-      if (e.key === "Tab") {
-        e.preventDefault();
-        const next = document.activeElement === cancelRef.current ? continueRef.current : cancelRef.current;
-        next?.focus();
-      }
-    };
-    window.addEventListener("keydown", onKey, true);
-    return () => { window.removeEventListener("keydown", onKey, true); };
-  }, [busy, onCancel]);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalFocus(panelRef, onCancel, busy);
+  useEffect(() => { cancelRef.current?.focus(); }, []);
 
   return (
     <div
-      data-testid="confirm-action-scrim"
+      data-testid="confirm-action-scrim" className="recipient-confirm-layer"
       onClick={e => { if (e.target === e.currentTarget && !busy) onCancel(); }}
       style={{
         position: "fixed", inset: 0, zIndex: Z.modal,
@@ -77,6 +55,7 @@ export function ConfirmActionDialog({ copy, documentTitle, busy, onContinue, onC
       }}
     >
       <div
+        ref={panelRef} tabIndex={-1}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -130,7 +109,6 @@ export function ConfirmActionDialog({ copy, documentTitle, busy, onContinue, onC
             Cancel
           </button>
           <button
-            ref={continueRef}
             type="button"
             onClick={onContinue}
             disabled={busy}

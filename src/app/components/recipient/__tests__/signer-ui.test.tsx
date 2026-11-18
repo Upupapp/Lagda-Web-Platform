@@ -6,7 +6,7 @@
 // a step rail that never marks the current step, fails in a way no assertion
 // elsewhere would notice.
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import { ShieldCheck, Ban } from "lucide-react";
 import {
@@ -242,4 +242,27 @@ describe("tokens", () => {
     expect(T.danger).toBe("#C0392B");
     expect(T.success).toBe("#1E7F4F");
   });
+});
+
+
+describe("keyboard reading of signing progress", () => {
+  it("makes the horizontally scrolling phone rail focusable", () => {
+    atWidth(390, <StepRail current="sign" />);
+    const rail = screen.getByRole("list", { name: "Signing progress" });
+    expect(rail).toHaveAttribute("tabindex", "0");
+    rail.focus();
+    expect(rail).toHaveFocus();
+  });
+});
+
+it("keeps progress spacing correct when rotating out of the phone layout", () => {
+  const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+  atWidth(390, <StepRail current="sign" />);
+  const rail = screen.getByRole("list", { name: "Signing progress" });
+  expect(rail.style.paddingBottom).toBe("2px");
+  act(() => { window.innerWidth = 844; window.dispatchEvent(new Event("resize")); });
+  expect(rail.style.paddingBottom).toBe("0px");
+  expect(rail.style.rowGap).toBe("6px");
+  expect(rail.style.columnGap).toBe("8px");
+  expect(error).not.toHaveBeenCalled();
 });

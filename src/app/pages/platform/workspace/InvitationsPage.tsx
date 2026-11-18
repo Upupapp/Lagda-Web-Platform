@@ -13,7 +13,7 @@
 // If the invitation is not in this workspace but the notice names another
 // workspace this account belongs to, that workspace is opened first.
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import { useLiveRefresh } from "../../../services/live/use-live-refresh";
 import { useSearchParams } from "react-router";
 import { usePlatform } from "../../../context/PlatformContext";
@@ -62,6 +62,8 @@ const INVITE_ROLE_OPTIONS = USE_REAL_BACKEND
   : SYSTEM_ROLES;
 
 export function InviteForm({ onDone }: { onDone: () => void }) {
+  const emailInputId = useId();
+  const roleInputId = useId();
   const { asyncSendInvitation, asyncLoadInvitations } = useWorkspaceAdmin();
   const [email, setEmail] = useState("");
   const [roleId, setRoleId] = useState<string>(
@@ -93,14 +95,14 @@ export function InviteForm({ onDone }: { onDone: () => void }) {
       <h2 style={{ ...GF, fontSize: 14, fontWeight: 700, color: NAVY, margin: "0 0 16px" }}>Invite a member</h2>
       <form onSubmit={handleSubmit} style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
         <div style={{ flex: "1 1 220px", minWidth: 160 }}>
-          <label style={{ ...GM, fontSize: 10, color: SLATE, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 5 }}>Email address</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="colleague@example.com"
+          <label htmlFor={emailInputId} style={{ ...GM, fontSize: 10, color: SLATE, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 5 }}>Email address</label>
+          <input id={emailInputId} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="colleague@example.com"
             required aria-required="true"
             style={{ ...GF, fontSize: 13, padding: "9px 12px", border: `1.5px solid ${error ? "#EF4444" : "#D1D9E0"}`, borderRadius: 8, width: "100%", outline: "none", boxSizing: "border-box" }} />
         </div>
         <div style={{ flex: "0 0 200px", minWidth: 160 }}>
-          <label style={{ ...GM, fontSize: 10, color: SLATE, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 5 }}>Role</label>
-          <select value={roleId} onChange={e => setRoleId(e.target.value)}
+          <label htmlFor={roleInputId} style={{ ...GM, fontSize: 10, color: SLATE, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 5 }}>Role</label>
+          <select id={roleInputId} value={roleId} onChange={e => setRoleId(e.target.value)}
             style={{ ...GF, fontSize: 13, padding: "9px 12px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", width: "100%", cursor: "pointer" }}>
             {INVITE_ROLE_OPTIONS.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>

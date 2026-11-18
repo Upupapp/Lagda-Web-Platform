@@ -245,7 +245,10 @@ class MockFieldEditorService {
     }
 
     // Unassigned fields
-    const nonSenderFields = fields.filter(f => f.type !== "sender-text");
+    // A template variable is already filled by the sender, with no recipient.
+    // Empty static text still needs a target/value and must not bypass validation.
+    const nonSenderFields = fields.filter(f => f.type !== "sender-text"
+      && !(f.staticValue !== undefined && f.staticValue !== null && f.staticValue.trim() !== ""));
     const unassigned      = nonSenderFields.filter(f => f.participantId === null);
     unassigned.forEach(f => {
       errors.push({ id: id(), severity: "error", code: "UNASSIGNED_FIELD",

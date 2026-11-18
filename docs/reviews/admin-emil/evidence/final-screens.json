@@ -1,0 +1,149 @@
+[
+  {
+    "tag": "overview",
+    "width": 1440,
+    "url": "/app/workspace",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "people",
+    "width": 1440,
+    "url": "/app/workspace/people",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "activity",
+    "width": 1440,
+    "url": "/app/workspace/activity",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "settings",
+    "width": 1440,
+    "url": "/app/workspace/settings",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "roles",
+    "width": 1440,
+    "url": "/app/workspace/settings/roles",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "branding",
+    "width": 1440,
+    "url": "/app/workspace/settings/branding",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "usage",
+    "width": 1440,
+    "url": "/app/workspace/settings/usage",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "overview",
+    "width": 390,
+    "url": "/app/workspace",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "people",
+    "width": 390,
+    "url": "/app/workspace/people",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "activity",
+    "width": 390,
+    "url": "/app/workspace/activity",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "settings",
+    "width": 390,
+    "url": "/app/workspace/settings",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "roles",
+    "width": 390,
+    "url": "/app/workspace/settings/roles",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "branding",
+    "width": 390,
+    "url": "/app/workspace/settings/branding",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "usage",
+    "width": 390,
+    "url": "/app/workspace/settings/usage",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "overview",
+    "width": 320,
+    "url": "/app/workspace",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "people",
+    "width": 320,
+    "url": "/app/workspace/people",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "activity",
+    "width": 320,
+    "url": "/app/workspace/activity",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "settings",
+    "width": 320,
+    "url": "/app/workspace/settings",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "roles",
+    "width": 320,
+    "url": "/app/workspace/settings/roles",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "branding",
+    "width": 320,
+    "url": "/app/workspace/settings/branding",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "usage",
+    "width": 320,
+    "url": "/app/workspace/settings/usage",
+    "overflow": false,
+    "violations": []
+  }
+]

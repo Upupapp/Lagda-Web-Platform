@@ -1,0 +1,27 @@
+{
+  "scenario": "gate",
+  "selectedInOriginalUI": "Any one participant completes",
+  "beforeScreenshot": "gate-routing.png",
+  "afterReviewerCompletion": {
+    "scenario": "gate",
+    "stage": "after-review",
+    "requestState": "partially-completed",
+    "states": [
+      "active",
+      "signed",
+      "waiting"
+    ],
+    "completedCount": 1,
+    "requiredCount": 3,
+    "invitationCount": 2,
+    "deniedChecks": [
+      {
+        "role": "signer",
+        "continueStatus": 404,
+        "error": "SIGNING_UNAVAILABLE"
+      }
+    ],
+    "completedPdfUnavailable": true
+  },
+  "resolution": "Real UI now uses all required participants, matching the existing backend."
+}

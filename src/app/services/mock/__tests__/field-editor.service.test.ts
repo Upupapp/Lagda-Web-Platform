@@ -171,4 +171,36 @@ describe("MockFieldEditorService", () => {
     fieldEditorService.clearSession(draftId);
     expect(fieldEditorService.getSession(draftId)).toBeNull();
   });
+  it.each(["Northwind QA", "0", "no"])("accepts sender-filled template text %s without assigning it to a recipient", (value) => {
+    const doc = fieldEditorService.getSession(draftId)!.documents[0]!;
+    fieldEditorService.addField(draftId, {
+      type: "signature", documentId: doc.id, pageId: doc.pages[0]!.id,
+      rect: { x: 0.1, y: 0.7, width: 0.3, height: 0.05 }, participantId: "pax_1",
+      label: "Signer", required: true, demonstrationOnly: false,
+    });
+    fieldEditorService.addField(draftId, {
+      type: "text", documentId: doc.id, pageId: doc.pages[0]!.id,
+      rect: { x: 0.1, y: 0.2, width: 0.4, height: 0.05 }, participantId: null, staticValue: value,
+      label: "Template value", required: true, demonstrationOnly: false,
+    });
+    const result = fieldEditorService.validateFieldPlacement(draftId, draft({ id: draftId }));
+    expect(result.errors).toEqual([]);
+    expect(result.readyToContinue).toBe(true);
+    expect(result.unassignedCount).toBe(0);
+    expect(result.participantCoverage[0]!.fieldCount).toBe(1);
+  });
+
+  it.each([undefined, null, "", "   "])("keeps unfilled recipient text blocked when staticValue is %s", (value) => {
+    const doc = fieldEditorService.getSession(draftId)!.documents[0]!;
+    fieldEditorService.addField(draftId, {
+      type: "text", documentId: doc.id, pageId: doc.pages[0]!.id,
+      rect: { x: 0.1, y: 0.2, width: 0.4, height: 0.05 }, participantId: null,
+      ...(value === undefined ? {} : { staticValue: value }), label: "Unassigned", required: true, demonstrationOnly: false,
+    });
+    const result = fieldEditorService.validateFieldPlacement(draftId, draft({ id: draftId }));
+    expect(result.errors.some(issue => issue.code === "UNASSIGNED_FIELD")).toBe(true);
+    expect(result.errors.some(issue => issue.code === "SIGNER_MISSING_SIGNATURE")).toBe(true);
+    expect(result.readyToContinue).toBe(false);
+  });
+
 });

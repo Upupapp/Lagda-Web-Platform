@@ -1,9 +1,11 @@
+import { ON_LIGHT } from "../../../utils/on-light";
 // Routing — configure how participants are sequenced.
 // Routing groups are created automatically from the routing mode or
 // manually by the user. Participants are assigned to groups here.
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
 
 import React, { useEffect, useCallback } from "react";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { Route } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
 import { stepEyebrow,
@@ -28,7 +30,7 @@ import { useHighlightTarget, htmlHighlightId } from "../../../hooks/useHighlight
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
-const SILVER = "#8A9BAE";
+const SILVER = ON_LIGHT.muted;
 const GOLD   = "#C9960C";
 
 const ROUTING_MODES: { id: RoutingMode; label: string }[] = [
@@ -308,6 +310,10 @@ function GroupCard({
           <span style={{ ...GF, fontSize: 12, fontWeight: 600, color: SILVER, flexShrink: 0 }}>
             Complete when:
           </span>
+          {USE_REAL_BACKEND ? (
+            <span style={{ ...GF, fontSize: 13, color: NAVY }}>All required participants must complete</span>
+          ) : (
+            <>
           <label style={{ ...GF, display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer", color: NAVY }}>
             <input
               type="radio"
@@ -330,6 +336,8 @@ function GroupCard({
             />
             Any one participant completes
           </label>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -419,6 +427,12 @@ export function RoutingStep() {
       );
     }
 
+    // Only routingOrder reaches the current backend. It waits for every
+    // required participant; an old/demo "any" group must not promise quorum.
+    if (USE_REAL_BACKEND) {
+      nextGroups = nextGroups.map(g => ({ ...g, requiredCompletionRule: "all" }));
+    }
+
     if (JSON.stringify(nextGroups) !== JSON.stringify(current.groups)) {
       updateRouting({ ...current, groups: nextGroups });
     }
@@ -489,7 +503,7 @@ export function RoutingStep() {
         <StepBanner
           icon={Route}
           eyebrow={stepEyebrow("routing")}
-          title="Routing"
+          title="Order"
           description="Choose how participants are sequenced and whether they act simultaneously or one at a time."
           meta="Waiting on participants"
         />
@@ -530,10 +544,10 @@ export function RoutingStep() {
       <StepIssueList issues={routeErrors} severity="error" />
       <StepIssueList issues={routeWarnings} severity="warning" />
 
-      {/* Routing mode selector */}
+      {/* Order mode selector */}
       <fieldset style={{ border: "none", margin: "0 0 28px", padding: 0 }}>
         <legend style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 12 }}>
-          Routing mode
+          Order mode
         </legend>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {ROUTING_MODES.map(m => {
@@ -580,23 +594,7 @@ export function RoutingStep() {
         </div>
       </fieldset>
 
-      {/* ── Approval-Based: what it does and does not mean ──────────────────
-          ⚠️ DRAFT WORDING — PENDING PRODUCT / LEGAL SIGN-OFF. ⚠️
-
-          Not final copy. It is here because shipping the mode with NO
-          explanation is the worse option: "Approval-Based" reads like a
-          distinct approval of record, and it is not one.
-
-          What the system actually does is ORDER the steps — an approver or
-          reviewer is asked first, and signing opens once they are done. There
-          is no separate "approved" state, no approval table, and no audit
-          entry that says "X approved this". The backend's recipient states are
-          waiting / active / signed / declined, with no `approved` among them,
-          and the workflow engine never branches on recipient type.
-
-          So this notice must keep saying, in whatever words legal settles on,
-          that this is SEQUENCING and not a legal or audit record of approval.
-          Do not quietly delete it; replace it with the approved wording. */}
+      {/* Explain ordering and recorded decisions without implying legal certification. */}
       {approverNotFirst && (
         <div role="note" data-testid="approver-order-note" style={{
           ...GF, marginBottom: 24, padding: "12px 16px", borderRadius: 10, fontSize: 13, lineHeight: 1.55,
@@ -617,14 +615,18 @@ export function RoutingStep() {
           role="note"
         >
           <p style={{ fontSize: 13, fontWeight: 700, color: NAVY, margin: "0 0 4px" }}>
-            This controls the order people are asked — not a formal approval
+            {USE_REAL_BACKEND ? "Approval and review before signing" : "This controls the order people are asked — not a formal approval"}
           </p>
           <p style={{ fontSize: 12.5, color: SILVER, margin: 0, lineHeight: 1.6 }}>
-            Approvers and reviewers are asked first; signing opens only once they have
+            {USE_REAL_BACKEND ? (
+              <>Every required approver and reviewer must finish before signing opens. Approval, review and skip decisions are recorded in the audit trail. An approver may approve or skip; skipping lets the request continue. Declining ends the request for everyone. This records workflow decisions and does not certify the document’s legal validity.</>
+            ) : (
+              <>Approvers and reviewers are asked first; signing opens only once they have
             finished. Their completion is recorded the same way any other participant's
             is — LAGDA does not record a separate legal or audit approval, and does not
             certify that the document was “approved”. If you need a formal approval on
-            record, capture it in the document itself.
+            record, capture it in the document itself.</>
+            )}
           </p>
         </div>
       )}
@@ -632,7 +634,7 @@ export function RoutingStep() {
       {/* Routing groups */}
       <div>
         <div style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 12 }}>
-          Routing steps
+          Order steps
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {routing.groups.map((g, idx) => (
@@ -669,7 +671,7 @@ export function RoutingStep() {
               borderRadius: 8,
               border: `1px dashed ${AZURE}`,
               background: "#F0F7FF",
-              color: AZURE,
+              color: ON_LIGHT.azure,
               fontSize: 13,
               fontWeight: 600,
               cursor: "pointer",
@@ -685,7 +687,7 @@ export function RoutingStep() {
   );
 
   const rail = (
-    <RailCard title="Routing preview">
+    <RailCard title="Order preview">
       <div style={{ ...GF, fontSize: 12, color: "#4B5E70", marginBottom: 12 }}>
         Mode: <strong style={{ color: NAVY }}>{currentModeLabel}</strong>
       </div>
@@ -698,7 +700,7 @@ export function RoutingStep() {
                 Step {g.stepNumber}: {g.label}
               </div>
               <div style={{ ...GF, fontSize: 11, color: SILVER, marginTop: 2 }}>
-                {g.requiredCompletionRule === "all" ? "All must complete" : "Any one completes"}
+                {USE_REAL_BACKEND ? "All required participants must complete" : g.requiredCompletionRule === "all" ? "All must complete" : "Any one completes"}
               </div>
               {assigned.length === 0 ? (
                 <div style={{ ...GF, fontSize: 11, color: SILVER, marginTop: 4 }}>No one assigned</div>
@@ -722,7 +724,7 @@ export function RoutingStep() {
       <StepBanner
         icon={Route}
         eyebrow={stepEyebrow("routing")}
-        title="Routing"
+        title="Order"
         description="Choose how participants are sequenced and whether they act simultaneously or one at a time."
         meta={currentModeLabel}
       />

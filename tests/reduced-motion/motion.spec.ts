@@ -259,11 +259,11 @@ test.describe("reduced motion", () => {
     await expect(page.locator("#plat-main")).toBeVisible();
     await expect(page.getByRole("button", { name: "Refresh dashboard" })).toBeEnabled();
 
-    // The route-entrance animation is switched OFF, not merely shortened. The
-    // wrapper carries `.lagda-page-enter` on every /app route.
+    // Route entrances no longer animate. Check the actual content wrapper
+    // so removing the old animation class cannot bypass this assertion.
     expect(
-      await animationNameOf(page, ".lagda-page-enter"),
-      ".lagda-page-enter must resolve to animation:none under reduced motion",
+      await animationNameOf(page, ".lagda-page-content"),
+      ".lagda-page-content must resolve to animation:none under reduced motion",
     ).toBe("none");
 
     expect(consoleErrors, "console errors on /app/dashboard").toEqual([]);
@@ -287,8 +287,8 @@ test.describe("reduced motion", () => {
     await expect(search).toHaveValue("frontend demonstration batch");
 
     expect(
-      await animationNameOf(page, ".lagda-page-enter"),
-      ".lagda-page-enter must resolve to animation:none under reduced motion",
+      await animationNameOf(page, ".lagda-page-content"),
+      ".lagda-page-content must resolve to animation:none under reduced motion",
     ).toBe("none");
 
     expect(consoleErrors, "console errors on /app/bulk-send").toEqual([]);

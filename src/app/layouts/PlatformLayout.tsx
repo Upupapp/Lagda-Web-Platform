@@ -4,6 +4,7 @@
 // Mobile (<768px): top bar, bottom bar + slide-in drawer (MobileNav).
 // Tablet (768-1023px): same as mobile.
 
+import { useFlowViewport } from "../hooks/useFlowViewport";
 import { useWorkspaceBrandingSync } from "../hooks/useWorkspaceBrandingSync";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Outlet, Navigate, useLocation } from "react-router";
@@ -180,6 +181,7 @@ function pageKeyFor(pathname: string): string {
 
 // ── Platform shell ────────────────────────────────────────────────────────────
 export function PlatformLayout() {
+  useFlowViewport();
   const { sessionStatus, workspaceStatus } = usePlatform();
   // 082. The current workspace's saved branding, kept current on its badge.
   useWorkspaceBrandingSync();
@@ -209,6 +211,22 @@ export function PlatformLayout() {
     return <Navigate to={buildSignInUrl(location.pathname + location.search)} replace />;
   }
 
+  // Recipient account binding needs an authenticated identity and a fresh
+  // password, not membership in a sender workspace. Keep the handoff usable
+  // for a newly verified recipient (or someone who left their last workspace).
+  // Auth guards above still preserve returnTo; the backend validates the
+  // handoff, password and addressed account. Do not mount workspace navigation
+  // or apply workspace setup/load gates to this account-only confirmation.
+  if (location.pathname === "/app/link-signing") {
+    return (
+      <main className="recipient-flow" style={{ minHeight: "100dvh", background: "#F8FAFC" }}>
+        <Suspense fallback={<PlatformPageLoader />}>
+          <Outlet />
+        </Suspense>
+      </main>
+    );
+  }
+
   // Identity is proven; workspace access is a separate backend fact (see
   // PlatformContext's WorkspaceStatus). Mock-backend builds always resolve
   // straight to "ready", so these branches are inert there.
@@ -228,7 +246,7 @@ export function PlatformLayout() {
           moment anything locks body scroll, leaving long pages (Edit Contact)
           with their lower half unreachable. `dvh` so a phone's collapsing
           address bar cannot hide the bottom of the page. */}
-      <div style={{ display: "flex", height: "100dvh", background: "#F8FAFC" }}>
+      <div className="platform-shell" style={{ display: "flex", height: "100dvh", background: "#F8FAFC" }}>
         {/* ── Desktop sidebar (hidden <768px via CSS) ─────────────── */}
         <div className="platform-desktop-nav" aria-hidden={undefined}>
           <PlatformSidebar />
@@ -287,7 +305,7 @@ export function PlatformLayout() {
             className="platform-main"
           >
             <Suspense fallback={<PlatformPageLoader />}>
-              <div key={pageKeyFor(location.pathname)} className="lagda-page-enter">
+              <div key={pageKeyFor(location.pathname)} className="lagda-page-content">
                 <Outlet />
               </div>
             </Suspense>
@@ -307,7 +325,7 @@ export function PlatformLayout() {
             .platform-desktop-nav    { display: none  !important; }
             .platform-mobile-nav     { display: block !important; }
             .platform-desktop-header { display: none  !important; }
-            .platform-main           { padding-top: 56px !important; }
+            .platform-main           { padding-top: calc(56px + env(safe-area-inset-top, 0px)) !important; }
             /* Room for the bottom bar (MobileNav). On the column, not on
                main, so a page's own sticky footer rests above the bar. */
             .platform-content-column { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); box-sizing: border-box; }

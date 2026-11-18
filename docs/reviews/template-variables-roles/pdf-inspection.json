@@ -1,0 +1,38 @@
+[
+  {
+    "mode": "sequential",
+    "pages": 1,
+    "sourceTextPreserved": true,
+    "variableValues": {
+      "client_name": "Northwind QA Services",
+      "case_notes": "Sequential QA only.\nNo commercial obligation.",
+      "effective_date": "2026-11-18",
+      "fee_amount": "1250.50",
+      "consent_flag": "yes"
+    },
+    "allFiveValuesPresent": true,
+    "approvalStampPresent": true,
+    "reviewStampPresent": true,
+    "signerSignaturePresent": true,
+    "allRecipientNamesPresent": true,
+    "downloadUnmodified": true
+  },
+  {
+    "mode": "parallel",
+    "pages": 1,
+    "sourceTextPreserved": true,
+    "variableValues": {
+      "client_name": "QA Reuse Company",
+      "case_notes": "Parallel QA only.\nIndependent variable values.",
+      "effective_date": "2026-11-19",
+      "fee_amount": "0",
+      "consent_flag": "no"
+    },
+    "allFiveValuesPresent": true,
+    "approvalStampPresent": true,
+    "reviewStampPresent": true,
+    "signerSignaturePresent": true,
+    "allRecipientNamesPresent": true,
+    "downloadUnmodified": true
+  }
+]

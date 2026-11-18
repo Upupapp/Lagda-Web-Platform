@@ -75,11 +75,11 @@ export const PREPARATION_STEPS: {
   blurb: string;
 }[] = [
   { id: "upload",         label: "Documents",      shortLabel: "Docs",     route: "/app/prepare/upload",         icon: "FileText",   blurb: "The file everyone will sign" },
-  { id: "participants",   label: "Signers",        shortLabel: "Signers",  route: "/app/prepare/participants",   icon: "Users",      blurb: "Who needs to sign it" },
-  { id: "routing",        label: "Order",          shortLabel: "Order",    route: "/app/prepare/routing",        icon: "ListOrdered", blurb: "What order they sign in" },
+  { id: "participants",   label: "Participants",   shortLabel: "People",  route: "/app/prepare/participants",   icon: "Users",      blurb: "Who needs to take part" },
+  { id: "routing",        label: "Order",          shortLabel: "Order",    route: "/app/prepare/routing",        icon: "ListOrdered", blurb: "When each person takes part" },
   { id: "settings",       label: "Settings",       shortLabel: "Settings", route: "/app/prepare/settings",       icon: "SlidersHorizontal", blurb: "Reminders and expiration" },
   { id: "fields",         label: "Place Fields",   shortLabel: "Fields",   route: "/app/prepare/fields",         icon: "PenLine",    blurb: "Where each signature goes" },
-  { id: "authentication", label: "Authentication", shortLabel: "Auth",     route: "/app/prepare/authentication", icon: "ShieldCheck", blurb: "How signers prove who they are" },
+  { id: "authentication", label: "Authentication", shortLabel: "Auth",     route: "/app/prepare/authentication", icon: "ShieldCheck", blurb: "How participants verify access" },
   { id: "review",         label: "Review",         shortLabel: "Review",   route: "/app/prepare/review",         icon: "ClipboardCheck", blurb: "Check everything before sending" },
   { id: "authorization",  label: "Authorization",  shortLabel: "Authorize", route: "/app/prepare/authorization", icon: "BadgeCheck", blurb: "Confirm you are authorised to send" },
 ];
@@ -662,3 +662,6 @@ export function isAuthMethodAvailableForParticipant(
 export function stepEyebrow(id: PreparationStepId): string {
   return `Step ${PREPARATION_STEPS.findIndex(s => s.id === id) + 1} of ${PREPARATION_STEPS.length}`;
 }
+
+/** Current worker delivery: completed copies are opened from the app, not new bearer-link emails. */
+export const COMPLETED_DOCUMENT_ACCESS_NOTE = "When everyone has finished, eligible participants can open the completed document in LAGDA under Records. No separate download-link email is sent.";

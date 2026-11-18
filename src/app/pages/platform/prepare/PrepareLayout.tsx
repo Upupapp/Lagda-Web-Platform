@@ -1,3 +1,5 @@
+import { useModalFocus } from "../../../hooks/useModalFocus";
+import { ON_LIGHT } from "../../../utils/on-light";
 // Wizard shell for /app/prepare/*.
 // Wraps all preparation steps with a stepper sidebar (desktop) / top bar (mobile),
 // Previous/Continue navigation, Discard dialog, and unsaved-change handling.
@@ -9,6 +11,7 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import { isContinueBlocked } from "./continue-gate";
 import { useAuthorizeSend } from "./use-authorize-send";
 import { Outlet, Navigate, useNavigate, useLocation } from "react-router";
+import { useFlowViewport } from "../../../hooks/useFlowViewport";
 import { PrepareProvider, usePrepare } from "../../../context/PrepareContext";
 import { usePlatform } from "../../../context/PlatformContext";
 import { PREPARATION_STEPS } from "../../../models/prepare";
@@ -50,7 +53,7 @@ import {
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
-const SILVER = "#8A9BAE";
+const SILVER = ON_LIGHT.muted;
 
 // ── Stepper step state → visual style ────────────────────────────────────────
 
@@ -98,18 +101,14 @@ export function DiscardDialog({
 }) {
   // "Keep editing" is focused first: Enter must never be what deletes.
   const keepRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    keepRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); onCancel(); } };
-    window.addEventListener("keydown", onKey, true);
-    return () => { window.removeEventListener("keydown", onKey, true); opener?.focus(); };
-  }, [onCancel]);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalFocus(dialogRef, onCancel);
 
   return (
     <div
       role="dialog"
       aria-modal="true"
+      ref={dialogRef} tabIndex={-1}
       aria-labelledby="discard-dialog-title"
       data-testid="discard-dialog"
       style={{
@@ -259,7 +258,7 @@ function StepperCards({
   const slide = (dir: -1 | 1) => {
     const strip = stripRef.current;
     if (!strip) return;
-    strip.scrollBy({ left: dir * Math.max(120, strip.clientWidth * 0.75), behavior: "smooth" });
+    strip.scrollBy({ left: dir * Math.max(120, strip.clientWidth * 0.75), behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   };
 
   // Keep the current card in view. The strip scrolls when eight cards do not
@@ -332,7 +331,7 @@ function StepperCards({
                 <span style={{
                   display: "block", fontSize: 12.5,
                   fontWeight: isActive ? 700 : 600,
-                  color: locked ? SILVER : isActive ? AZURE : NAVY,
+                  color: locked ? SILVER : isActive ? ON_LIGHT.azure : NAVY,
                 }}>
                   {idx + 1}. {step.label}
                 </span>
@@ -410,7 +409,7 @@ const LAYOUT_STYLES = `
        min-height the document itself grew to fit tall step content instead,
        taking .prep-nav-bar's Previous/Continue bar down the page with it —
        the opposite of "sticks to the screen". */
-    height: 100vh;
+    height: 100dvh;
     background: #FFFFFF;
     font-family: 'Geist', sans-serif;
     overflow: hidden;
@@ -440,7 +439,10 @@ const LAYOUT_STYLES = `
     box-shadow: 0 4px 12px -4px rgba(7,17,31,0.35);
     transition: background 120ms ease, border-color 120ms ease;
   }
-  .prep-strip-arrow:hover { background: #EBF4FC; border-color: ${AZURE}; }
+  @media (hover: hover) and (pointer: fine) {
+    .prep-strip-arrow:hover { background: #EBF4FC; border-color: ${AZURE}; }
+    .prep-review-issue:hover { filter: brightness(0.97); }
+  }
   .prep-strip-arrow:focus-visible { outline: 3px solid rgba(0,120,212,0.45); outline-offset: 2px; }
   .prep-strip-arrow-left { left: 6px; }
   .prep-strip-arrow-right { right: 6px; }
@@ -485,8 +487,8 @@ const LAYOUT_STYLES = `
     z-index: 1;
     box-shadow: 0 -2px 8px rgba(7,17,31,0.04);
   }
-  .prep-step-row:not(:disabled):hover {
-    background: rgba(0,120,212,0.06) !important;
+  @media (hover: hover) and (pointer: fine) {
+    .prep-step-row:not(:disabled):hover { background: rgba(0,120,212,0.06) !important; }
   }
   .prep-step-row:disabled {
     cursor: default;
@@ -509,6 +511,7 @@ const LAYOUT_STYLES = `
 `;
 
 export function PrepareLayout() {
+  useFlowViewport();
   const navigate  = useNavigate();
   const location  = useLocation();
   const {
@@ -789,7 +792,7 @@ export function PrepareLayout() {
           </div>
 
           {/* Step content */}
-          <main className="prep-step-area" id="prep-main-content">
+          <main className="prep-step-area" id="prep-main-content" tabIndex={activeStepId === "authorization" ? 0 : -1} aria-label="Document preparation">
             <Outlet />
           </main>
 

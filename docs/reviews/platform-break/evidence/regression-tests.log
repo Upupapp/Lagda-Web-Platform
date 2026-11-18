@@ -1,0 +1,517 @@
+
+ RUN  v3.2.4 C:/Users/paulg/OneDrive/Documents/ChatGPT/LAGDA
+
+ ✓ src/app/components/recipient/__tests__/IdentityCheckStep.handoff.test.tsx (36 tests) 9453ms
+   ✓ where it is offered > comes after the camera and the upload on Your face when there is a camera  347ms
+   ✓ where it is offered > is the first choice on Your face when this computer has no camera  326ms
+   ✓ where it is offered > is not offered on a touch device, which is already a phone  340ms
+   ✓ where it is offered > lets go of a camera that answers after the phone was chosen instead  499ms
+   ✓ the code > never prints the link, and copies it on request  437ms
+   ✓ the code > gets a new code on request, and watches the new one  401ms
+   ✓ the code > goes back to doing it on this computer, with what was already chosen  416ms
+   ✓ how the phone is getting on > waits, sees the phone connect, and carries on by itself when the phone passes  327ms
+   ✓ how the phone is getting on > says how many attempts are left when the phone's try fails, and offers a new code or this computer  326ms
+   ✓ how the phone is getting on > offers a new code when the server says this one has expired  344ms
+   ✓ how the phone is getting on > expires the code by its own clock when the time runs out  308ms
+   ✓ when the status is read > stops while the tab is hidden, and looks again at once when it comes back  499ms
+   ✓ when the status is read > stops for good on unmount  344ms
+ ✓ src/app/components/recipient/__tests__/IdentityCheckStep.test.tsx (37 tests) 13090ms
+   ✓ your ID > refuses a file that is not an image, and one over 8 MB  311ms
+   ✓ your ID > shows a preview with the name and size, and lets it be replaced or removed  390ms
+   ✓ your ID > asks for the back as optional, and not at all for a passport  344ms
+   ✓ your ID > offers Take a photo on a touch device, using the rear camera  402ms
+   ✓ your ID > offers no Take a photo, and no capture hint, on a desktop  309ms
+   ✓ your face > does not touch the camera until Use my camera is pressed  353ms
+   ✓ your face > gives the three prompts one at a time, takes one frame, and stops the camera  533ms
+   ✓ your face > stops the camera on Cancel  433ms
+   ✓ your face > stops the camera on unmount  397ms
+   ✓ your face > stops the camera when the stage changes  467ms
+   ✓ your face > stops the camera when the tab is hidden, and when the page is put away  481ms
+   ✓ your face > stops a camera that answers after the participant has left  432ms
+   ✓ your face > says so when the camera is refused, and still offers the upload  396ms
+   ✓ your face > offers only the upload where there is no camera to ask  433ms
+   ✓ the result > sends the kind of ID, how the selfie was taken and the agreement, and nothing of the pictures  464ms
+   ✓ the result > records a camera capture as such  526ms
+   ✓ the result > shows Checking while the answer is on its way, and cannot be sent twice  482ms
+   ✓ the result > never words a test-mode result as a pass, and Continue re-reads the ceremony  531ms
+   ✓ the result > says Identity check passed only for a real check, with no test controls anywhere  467ms
+   ✓ the result > says how many attempts are left after a failure, and tries again with the same ID  673ms
+   ✓ the result > says 1 attempt left in the singular  461ms
+   ✓ the result > explains a plain refusal on the same screen and lets them try again  453ms
+   ✓ locked > locks when the last attempt fails  467ms
+   ✓ locked > locks when the server says the allowance is spent  461ms
+   ✓ locked > re-reads the ceremony when the sender allowed another way meanwhile  463ms
+   ✓ test mode > carries the banner on every stage  454ms
+ ✓ src/app/pages/recipient/__tests__/RealSigningPage.identity-handoff.test.tsx (4 tests) 9886ms
+   ✓ handing the identity check to a phone > asks for nothing until the participant presses for it, and then on their signing session  3270ms
+   ✓ handing the identity check to a phone > moves on to consent when the phone passes, re-reading the ceremony without entering it again  3200ms
+   ✓ handing the identity check to a phone > shows the locked stage when the phone used the last attempt  3214ms
+ ✓ src/app/components/prepare/__tests__/participant-identity.test.tsx (12 tests) 8762ms
+   ✓ typing an email > fills the name from the account, locks it, and says where it came from  808ms
+   ✓ typing an email > leaves the name open and asks for it when no account uses the address  1087ms
+   ✓ typing an email > never blocks the form when the check cannot be made  1083ms
+   ✓ typing an email > does not ask about a half-typed address, and asks nothing with no workspace  1869ms
+   ✓ the Edit button > unlocks the name for this document, and Use account name puts it back  1146ms
+   ✓ the Edit button > sits inside the field, so the form is no wider and nothing beside it moves  803ms
+   ✓ a participant saved earlier > keeps the name it was saved with, shown as edited when the account's differs  530ms
+   ✓ choosing a person > offers Contacts, My team and Other teams, and fills name and email from a team member without a second check  910ms
+   ✓ choosing a person > finds a person by team name, and stays a contacts list when the directory is refused  306ms
+ ✓ src/app/pages/recipient/__tests__/IdentityHandoffPage.test.tsx (25 tests) 8081ms
+   ✓ arriving from the QR code > reads correctly in live mode: no test banner, no simulated result  425ms
+   ✓ the check on the phone > passes: says to return to the computer, and offers no way into the document  463ms
+   ✓ the check on the phone > sends testOutcome only in test mode, and never words a simulated result as a pass  528ms
+   ✓ the check on the phone > fails, says how many attempts are left, and passes on the next try  676ms
+   ✓ the check on the phone > locks when the last attempt fails, with nothing to re-read and no promise about this link  494ms
+   ✓ the check on the phone > locks when the server says the allowance is spent  482ms
+   ✓ the check on the phone > explains an ID the server will not take, on the same screen  475ms
+   ✓ a link that ends while they are working > says so when the attempt is refused because the link is over  475ms
+   ✓ a link that ends while they are working > says so when the check is no longer wanted (identity_check_not_required)  449ms
+   ✓ a link that ends while they are working > says so when the check is no longer wanted (identity_check_unavailable)  496ms
+   ✓ a link that ends while they are working > says so when the ten minutes run out part-way through  1521ms
+   ✓ a link that ends while they are working > does not turn Done into an ended link when the time runs out afterwards  465ms
+   ✓ the camera on the phone > is asked for only on the participant's press, and let go when the page goes away  426ms
+ ✓ src/app/pages/recipient/__tests__/RealSigningPage.identity-hosted.test.tsx (20 tests) 7451ms
+   ✓ the hosted identity check on the signing page > moves on to consent after a pass, re-reading the ceremony without entering it again  6035ms
+stdout | src/app/pages/platform/prepare/__tests__/FieldsPage.render.test.tsx
+Warning: Please use the `legacy` build in Node.js environments.
+
+stderr | src/app/pages/platform/prepare/__tests__/FieldsPage.render.test.tsx > FieldsPage (full editor render) > places a field by clicking a palette type then the canvas
+Warning: Received NaN for the `value` attribute. If this is expected, cast the value to a string.
+    at input
+    at label
+    at div
+    at div
+    at div
+    at div
+    at FieldPropertiesPanel (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\prepare\FieldsPage.tsx:1420:33)
+    at div
+    at div
+    at div
+    at FieldsPageInner (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\prepare\FieldsPage.tsx:3461:57)
+    at FieldEditorProvider (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\context\FieldEditorContext.tsx:249:32)
+    at FieldsPage
+    at Router (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9335:13)
+    at MemoryRouter (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9251:3)
+
+ ✓ src/app/pages/recipient/__tests__/RealSigningPage.identity-check.test.tsx (32 tests) 4072ms
+   ✓ when the sender asked for an identity check > continues to consent after the check, re-reading the ceremony without entering it again  560ms
+   ✓ when the sender asked for an identity check > says Identity check passed for a real check  447ms
+   ✓ when the sender asked for an identity check > says how many attempts are left when it is not passed  548ms
+   ✓ when the sender asked for an identity check > moves on when the sender allowed another way while they were trying  479ms
+   ✓ when the sender asked for an identity check > says so when the ceremony cannot be re-read after the check  541ms
+ ✓ src/app/pages/platform/prepare/__tests__/FieldsPage.render.test.tsx (19 tests) 6498ms
+   ✓ FieldsPage (full editor render) > places a field, copies it, and undoes the placement  354ms
+   ✓ FieldsPage (full editor render) > lists a placed field and deletes it from the List view  371ms
+   ✓ FieldsPage (full editor render) > exercises the Field Properties panel's controls end to end  1302ms
+   ✓ FieldsPage (full editor render) > filters the field list by participant, type, and unassigned-only  726ms
+   ✓ FieldsPage (full editor render) > copies and pastes a field with Ctrl+C and Ctrl+V  407ms
+   ✓ FieldsPage (full editor render) > undoes with Ctrl+Z and redoes with Ctrl+Y  585ms
+   ✓ FieldsPage (full editor render) > deletes the selection with the Delete key, and Ctrl+Z brings it back  362ms
+   ✓ FieldsPage (full editor render) > leaves the canvas alone when Ctrl+A is pressed inside the Label box  376ms
+ ✓ src/app/components/recipient/__tests__/SignatureCapture.test.tsx (28 tests) 3557ms
+   ✓ typing a signature letter by letter, with the value fed back > keeps the field while the name is typed, and the signature is the whole name  340ms
+   ✓ typing a signature letter by letter, with the value fed back > lets the signer correct a mistake without the field vanishing  383ms
+ ✓ src/app/pages/platform/contacts/__tests__/ContactGroups.test.tsx (15 tests) 3243ms
+   ✓ creating a group with its first members > marks the contacts who accepted, selects them in one tap, and adds them as the group is created  373ms
+   ✓ creating a group with its first members > still creates the group when there is nobody to add  325ms
+   ✓ one group > adds the contacts picked, leaving out members, and offers only shareable contacts for a workspace group  405ms
+   ✓ one group > explains a refusal to add, and keeps the panel open  355ms
+   ✓ one group > renames the group, and refuses a blank name before asking the server  496ms
+ ✓ src/app/components/recipient/__tests__/IdentityCheckHosted.test.tsx (73 tests) 3083ms
+ ✓ src/app/pages/platform/prepare/__tests__/demo-build.no-server-calls.test.tsx (5 tests) 2922ms
+   ✓ the demo build makes none of the new calls > saves no title and deletes nothing on discard  324ms
+   ✓ the demo build makes none of the new calls > the Documents step shows no title note and asks the server nothing  964ms
+   ✓ the demo build makes none of the new calls > asks for no title hint and reads no drafts list  710ms
+   ✓ the demo build makes none of the new calls > Start preparation replaces the draft without a question, as before  661ms
+ ✓ src/app/pages/platform/contacts/__tests__/ContactConnections.test.tsx (8 tests) 2073ms
+   ✓ Find people > shows the one person an exact email finds, and sends then cancels a request  514ms
+   ✓ Find people > offers an external contact, prefilled, when no account is found  388ms
+   ✓ Find people > says when the address is already a contact, and refuses a half-typed email without calling the server  439ms
+   ✓ the account behind a contact > shows the profile with its photo, and invites a contact who is not in the workspace  327ms
+ ✓ src/app/components/prepare/__tests__/PreparationHelpFab.test.tsx (19 tests) 1681ms
+   ✓ PreparationHelpFab > opens when a blocked action nudges it  453ms
+stderr | src/app/pages/platform/prepare/__tests__/UploadStep.title.test.tsx > when the title is saved > asks for a save the moment a document exists, for a title typed before the upload
+Warning: An update to UploadStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at UploadStep (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\prepare\UploadStep.tsx:591:73)
+
+stderr | src/app/pages/platform/prepare/__tests__/UploadStep.title.test.tsx > what the sender is told > ties the note to the field, and keeps room for it so nothing moves
+Warning: An update to UploadStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at UploadStep (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\prepare\UploadStep.tsx:591:73)
+
+stderr | src/app/pages/platform/prepare/__tests__/UploadStep.title.test.tsx > what the sender is told > says, calmly, when the title was numbered because it already exists
+Warning: An update to UploadStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at UploadStep (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\prepare\UploadStep.tsx:591:73)
+
+stderr | src/app/pages/platform/prepare/__tests__/UploadStep.title.test.tsx > what the sender is told > drops that note once the title is something else
+Warning: An update to UploadStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at UploadStep (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\prepare\UploadStep.tsx:591:73)
+
+stderr | src/app/pages/platform/prepare/__tests__/UploadStep.title.test.tsx > what the sender is told > does not ask about a title that is already this document's own
+Warning: An update to UploadStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at UploadStep (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\prepare\UploadStep.tsx:591:73)
+
+ ✓ src/app/pages/platform/prepare/__tests__/UploadStep.title.test.tsx (12 tests) 1739ms
+   ✓ what the sender is told > says in advance, while typing, that a title is taken and what it will be saved as  528ms
+   ✓ what the sender is told > does not ask about a title that is already this document's own  718ms
+ ✓ src/app/pages/platform/prepare/__tests__/PrepareLayout.drafts.test.tsx (16 tests) 1797ms
+ ✓ src/app/pages/platform/prepare/__tests__/PrepareStepper.mobile.test.tsx (4 tests) 450ms
+ ✓ src/app/pages/platform/contacts/__tests__/ContactsDeleteEdit.test.tsx (6 tests) 1336ms
+   ✓ permanent delete > is offered only on an archived contact, and asks before it deletes  509ms
+ ✓ src/app/pages/platform/contacts/__tests__/ContactRequests.test.tsx (6 tests) 1289ms
+   ✓ Add Contact > defaults Organization to the current workspace name, and lets it be changed  315ms
+stdout | src/app/pages/platform/prepare/__tests__/ValidationPanel.test.tsx
+Warning: Please use the `legacy` build in Node.js environments.
+
+ ✓ src/app/pages/platform/prepare/__tests__/ValidationPanel.test.tsx (6 tests) 1295ms
+   ✓ ValidationPanel action wiring > wires every action button to the right editor operation  1129ms
+ ✓ src/app/pages/recipient/__tests__/RealSigningPage.identity-validity.test.tsx (9 tests) 1199ms
+   ✓ straight after a pass, on LAGDA's own screens > says a real pass counts for the next 24 hours  549ms
+   ✓ straight after a pass, on LAGDA's own screens > never calls a simulated result a verification  480ms
+stdout | src/app/pages/platform/prepare/__tests__/FieldsPage.layers.test.tsx
+Warning: Please use the `legacy` build in Node.js environments.
+
+ ✓ src/app/pages/platform/prepare/__tests__/FieldsPage.layers.test.tsx (8 tests) 1130ms
+   ✓ the canvas never paints over the properties sheet (phone) > isolates the canvas below the sheet, with the selected field and its handles inside it  314ms
+   ✓ the question-mark badges > are green when assigned, red when not, and the red note assigns in place  408ms
+ ✓ src/app/pages/platform/prepare/__tests__/FieldsPage.defaults.test.tsx (7 tests) 1163ms
+   ✓ first-arrival auto-placement > Undo removes exactly the placed fields, and a return visit never re-adds them  372ms
+ ✓ src/app/pages/platform/prepare/__tests__/AuthStep.identity-check.test.tsx (14 tests) 923ms
+ ✓ src/app/pages/platform/prepare/__tests__/PrepareEntryPage.drafts.test.tsx (12 tests) 960ms
+stderr | src/app/components/recipient/__tests__/SaveSignaturePrompt.test.tsx > SaveSignaturePrompt > stays hidden when a signature is already saved
+Warning: An update to SaveSignaturePrompt inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SaveSignaturePrompt (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\recipient\SaveSignaturePrompt.tsx:18:3)
+
+stderr | src/app/components/recipient/__tests__/SaveSignaturePrompt.test.tsx > SaveSignaturePrompt > stays hidden without a session (the list call fails)
+Warning: An update to SaveSignaturePrompt inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SaveSignaturePrompt (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\recipient\SaveSignaturePrompt.tsx:18:3)
+
+ ✓ src/app/components/recipient/__tests__/SaveSignaturePrompt.test.tsx (10 tests) 567ms
+ ✓ src/app/pages/platform/contacts/__tests__/ArchivedContacts.test.tsx (8 tests) 784ms
+ ✓ src/app/pages/platform/contacts/__tests__/ContactWorkspaceCard.teams.test.tsx (4 tests) 364ms
+ ✓ src/app/pages/platform/prepare/__tests__/SettingsStep.test.tsx (19 tests) 405ms
+ ✓ src/app/components/prepare/__tests__/ToolbarOverflow.test.tsx (9 tests) 739ms
+ ✓ src/app/pages/platform/prepare/__tests__/ConfirmationPage.final-copy.test.tsx (6 tests) 482ms
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.test.tsx > where the boxes land > places a field at the sender's normalised rect
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.test.tsx > where the boxes land > puts each field on its own page
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.test.tsx > whose fields are fillable > shows only the signer's own fields
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.test.tsx > whose fields are fillable > offers a text input for a text field, not a signature box
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.test.tsx > adopting a signature > opens the capture sheet from the box on the page
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.test.tsx > adopting a signature > opens the capture sheet from the box on the page
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\recipient\SignatureCapture.tsx:361:28
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\recipient\SignatureCapture.tsx:373:5
+    at commitHookEffectListMount (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:23189:26)
+    at commitPassiveMountOnFiber (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:24970:11)
+    at commitPassiveMountEffects_complete (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:24930:9)
+    at commitPassiveMountEffects_begin (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:24917:7)
+    at commitPassiveMountEffects (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:24905:3) undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.test.tsx > adopting a signature > shows one adopted signature in EVERY signature box
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.test.tsx > adopting a signature > renders a drawn signature as the image it is
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.test.tsx > adopting a signature > previews a typed signature in the face the server draws with
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.test.tsx > what still needs doing > counts outstanding fields, so a field on page 9 is not missed
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.test.tsx > what still needs doing > reports completion once everything is filled
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.test.tsx > what still needs doing > does not count an OPTIONAL empty text field as outstanding
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.test.tsx > capture sheet keyboard access > contains Tab, closes with Escape and restores the signature-field trigger
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.test.tsx > capture sheet keyboard access > contains Tab, closes with Escape and restores the signature-field trigger
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\recipient\SignatureCapture.tsx:361:28
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\recipient\SignatureCapture.tsx:373:5
+    at commitHookEffectListMount (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:23189:26)
+    at commitPassiveMountOnFiber (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:24970:11)
+    at commitPassiveMountEffects_complete (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:24930:9)
+    at commitPassiveMountEffects_begin (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:24917:7)
+    at commitPassiveMountEffects (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:24905:3) undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.test.tsx > capture sheet keyboard access > contains Tab, closes with Escape and restores the signature-field trigger
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\recipient\SignatureCapture.tsx:361:28
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\recipient\SignatureCapture.tsx:373:5
+    at commitHookEffectListMount (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:23189:26)
+    at commitPassiveMountOnFiber (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:24970:11)
+    at commitPassiveMountEffects_complete (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:24930:9)
+    at commitPassiveMountEffects_begin (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:24917:7)
+    at commitPassiveMountEffects (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:24905:3) undefined
+
+ ✓ src/app/components/recipient/__tests__/PositionedSigningSurface.test.tsx (12 tests) 639ms
+ ✓ src/app/components/prepare/__tests__/EditorMobileChrome.test.tsx (16 tests) 505ms
+ ✓ src/app/pages/platform/prepare/__tests__/ConfirmationPage.title.test.tsx (4 tests) 394ms
+ ✓ src/app/components/recipient/__tests__/ConfirmActionDialog.test.tsx (10 tests) 370ms
+ ✓ src/app/pages/recipient/__tests__/RealSigningPage.identity-name.test.tsx (7 tests) 329ms
+ ✓ src/app/components/recipient/__tests__/IdentityCheckHosted.name-mismatch.test.tsx (17 tests) 289ms
+ ✓ src/app/components/recipient/__tests__/IdentityCheckHosted.face.test.tsx (12 tests) 269ms
+ ✓ src/app/hooks/__tests__/useWorkspaceDialog.test.tsx (2 tests) 341ms
+ ✓ src/app/pages/recipient/__tests__/RealSigningPage.doors.test.tsx (13 tests) 301ms
+ ✓ src/app/pages/recipient/__tests__/IdentityReturnPage.test.tsx (9 tests) 196ms
+ ✓ src/app/components/recipient/__tests__/SigningEntryChoice.test.tsx (8 tests) 183ms
+ ✓ src/app/pages/platform/prepare/__tests__/ReviewStep.identity-check.test.tsx (3 tests) 190ms
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.signatureBlock.test.tsx > signature over name on the signing surface > asks only for a signature, with the signer's name already printed
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.signatureBlock.test.tsx > signature over name on the signing surface > prints the name in the formal serif at the sealed 11pt size
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.signatureBlock.test.tsx > signature over name on the signing surface > counts as done once a signature is adopted
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.signatureBlock.test.tsx > signature over name on the signing surface > opens the signature capture when tapped
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\pdf\DocumentPageSurface.tsx:176:32 undefined
+
+stderr | src/app/components/recipient/__tests__/PositionedSigningSurface.signatureBlock.test.tsx > signature over name on the signing surface > opens the signature capture when tapped
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\recipient\SignatureCapture.tsx:361:28
+    at C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\recipient\SignatureCapture.tsx:373:5
+    at commitHookEffectListMount (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:23189:26)
+    at commitPassiveMountOnFiber (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:24970:11)
+    at commitPassiveMountEffects_complete (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:24930:9)
+    at commitPassiveMountEffects_begin (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:24917:7)
+    at commitPassiveMountEffects (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-dom\cjs\react-dom.development.js:24905:3) undefined
+
+ ✓ src/app/components/recipient/__tests__/PositionedSigningSurface.signatureBlock.test.tsx (4 tests) 259ms
+ ✓ src/app/pages/platform/prepare/__tests__/ReviewStep.identity-name.test.tsx (3 tests) 204ms
+ ✓ src/app/pages/platform/prepare/__tests__/AuthStep.identity-hosted.test.tsx (5 tests) 170ms
+ ✓ src/app/components/prepare/__tests__/PrepareChrome.test.tsx (18 tests) 142ms
+ ✓ src/app/pages/platform/prepare/__tests__/ReviewStep.settings.test.tsx (5 tests) 129ms
+ ✓ src/app/components/recipient/__tests__/signer-ui.test.tsx (28 tests) 160ms
+ ✓ src/app/pages/platform/prepare/__tests__/ReviewStep.identity-hosted.test.tsx (2 tests) 115ms
+ ✓ src/app/pages/platform/prepare/__tests__/ReviewStep.continue.test.tsx (1 test) 108ms
+ ✓ src/app/pages/platform/prepare/__tests__/ConfirmationPage.multipage.test.tsx (4 tests) 127ms
+ ✓ src/app/pages/recipient/__tests__/FinalCopyPage.test.tsx (4 tests) 120ms
+ ✓ src/app/components/recipient/__tests__/IdentityCheckStep.kept-note.test.tsx (2 tests) 99ms
+ ✓ src/app/components/prepare/__tests__/IdentityCheckSection.name-note.test.tsx (4 tests) 75ms
+ ✓ src/app/pages/platform/prepare/__tests__/AuthorizationStep.test.tsx (2 tests) 70ms
+ ✓ src/app/components/prepare/__tests__/IdentityCheckSection.validity.test.tsx (5 tests) 67ms
+ ✓ src/app/pages/platform/contacts/__tests__/ContactsHeader.test.tsx (2 tests) 68ms
+ ✓ src/app/components/recipient/__tests__/signature-background.test.ts (15 tests) 42ms
+ ✓ src/app/components/prepare/__tests__/preparation-help.test.ts (17 tests) 17ms
+ ✓ src/app/pages/platform/prepare/__tests__/PrepareLayout.test.ts (8 tests) 11ms
+ ✓ src/app/pages/platform/prepare/__tests__/continue-gate.test.ts (6 tests) 8ms
+ ✓ src/app/pages/recipient/__tests__/handoff-popup.test.ts (4 tests) 6ms
+
+ Test Files  63 passed (63)
+      Tests  741 passed (741)
+   Start at  18:55:53
+   Duration  85.07s (transform 2.46s, setup 13.21s, collect 16.36s, tests 106.47s, environment 22.25s, prepare 3.48s)

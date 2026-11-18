@@ -335,3 +335,17 @@ describe("a team as a tree", () => {
   });
 });
 
+
+
+describe("search recovery", () => {
+  it("explains a no-match result and restores the teams when cleared", async () => {
+    const user = userEvent.setup();
+    show();
+    await screen.findByTestId("team-tree");
+    await user.type(screen.getByTestId("people-search"), "NoMatchingLegalDepartment");
+    expect(screen.getByRole("heading", { name: "No people or teams match your search" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Clear search" }));
+    expect(screen.queryByRole("heading", { name: "No people or teams match your search" })).toBeNull();
+    expect(screen.getByRole("region", { name: "Finance" })).toBeInTheDocument();
+  });
+});

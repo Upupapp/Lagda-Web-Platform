@@ -1,0 +1,17 @@
+[
+  {
+    "tag": "recipient-ceremony",
+    "path": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "recipient-filled",
+    "path": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "recipient-completion",
+    "path": "/sign/[redacted]",
+    "violations": []
+  }
+]

@@ -1,0 +1,128 @@
+[
+  {
+    "tag": "demo-waiting",
+    "width": 1440,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-expired",
+    "width": 1440,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-pdf-failure",
+    "width": 1440,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-waiting",
+    "width": 1440,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-expired",
+    "width": 1440,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-pdf-failure",
+    "width": 1440,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-waiting",
+    "width": 390,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-expired",
+    "width": 390,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-pdf-failure",
+    "width": 390,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-waiting",
+    "width": 390,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-expired",
+    "width": 390,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-pdf-failure",
+    "width": 390,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-waiting",
+    "width": 320,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-expired",
+    "width": 320,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-pdf-failure",
+    "width": 320,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-waiting",
+    "width": 320,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-expired",
+    "width": 320,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-pdf-failure",
+    "width": 320,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  }
+]

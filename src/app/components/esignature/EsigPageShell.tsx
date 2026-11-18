@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../utils/on-light";
 import { Link } from "react-router";
 import { EsigSubNav } from "./EsigSubNav";
 import {
@@ -37,7 +38,7 @@ export function RelatedPages({
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "48px 24px" }}>
         <p
           style={{
-            color: "#64748B",
+            color: ON_LIGHT.slate,
             ...GM,
             fontSize: 10,
             fontWeight: 700,
@@ -90,7 +91,7 @@ export function RelatedPages({
                   </p>
                   <p
                     style={{
-                      color: "#64748B",
+                      color: ON_LIGHT.slate,
                       ...GF,
                       fontSize: 13,
                       margin: 0,
@@ -102,7 +103,7 @@ export function RelatedPages({
                 </div>
                 <span
                   style={{
-                    color: "#0078D4",
+                    color: ON_LIGHT.azure,
                     ...GF,
                     fontSize: 16,
                     flexShrink: 0,
@@ -170,7 +171,7 @@ export function PageCTA({
         {sub && (
           <p
             style={{
-              color: "#64748B",
+              color: ON_LIGHT.slate,
               ...GF,
               fontSize: 16,
               lineHeight: 1.65,
@@ -266,7 +267,7 @@ export function LegalNote({ showEnotary }: { showEnotary?: boolean }) {
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <p
           style={{
-            color: "#64748B",
+            color: ON_LIGHT.slate,
             ...GF,
             fontSize: 12,
             lineHeight: 1.6,
@@ -279,7 +280,7 @@ export function LegalNote({ showEnotary }: { showEnotary?: boolean }) {
         {showEnotary && (
           <p
             style={{
-              color: "#94A3B8",
+              color: ON_LIGHT.muted,
               ...GF,
               fontSize: 12,
               lineHeight: 1.6,
@@ -334,7 +335,7 @@ export function FeatureCard({
       </p>
       <p
         style={{
-          color: "#64748B",
+          color: ON_LIGHT.slate,
           ...GF,
           fontSize: 13,
           lineHeight: 1.55,
@@ -408,7 +409,7 @@ export function PageHero({
         <div style={{ minWidth: 0 }}>
           <p
             style={{
-              color: "#0078D4",
+              color: ON_LIGHT.azure,
               ...GM,
               fontSize: 11,
               fontWeight: 700,
@@ -437,7 +438,7 @@ export function PageHero({
           </h1>
           <p
             style={{
-              color: "#64748B",
+              color: ON_LIGHT.slate,
               ...GF,
               fontSize: "clamp(15px, 2vw, 18px)",
               lineHeight: 1.65,
@@ -486,7 +487,7 @@ export function AvailBadge({
     Advanced: {
       bg: "rgba(0,120,212,0.1)",
       border: "rgba(0,120,212,0.3)",
-      color: "#0078D4",
+      color: ON_LIGHT.azure,
       label: "Plan dependent",
     },
     Enterprise: {
@@ -498,7 +499,7 @@ export function AvailBadge({
     Planned: {
       bg: "rgba(100,116,139,0.1)",
       border: "rgba(100,116,139,0.3)",
-      color: "#64748B",
+      color: ON_LIGHT.slate,
       label: "Planned",
     },
   };

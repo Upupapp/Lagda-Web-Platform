@@ -1,0 +1,22 @@
+{
+  "mode": "sequential",
+  "stage": "after-1",
+  "state": "partially-completed",
+  "signedCount": 1,
+  "requiredCount": 3,
+  "active": [
+    "multi.signer.2.20261118@example.test"
+  ],
+  "waiting": [
+    "multi.signer.3.20261118@example.test"
+  ],
+  "invitationCount": 2,
+  "checks": [
+    {
+      "signer": 3,
+      "waitingContinueStatus": 404,
+      "code": "SIGNING_UNAVAILABLE"
+    }
+  ],
+  "incompleteDownloadStatus": 404
+}

@@ -27,17 +27,17 @@ const open = () => render(<MemoryRouter><ReviewStep /></MemoryRouter>);
 beforeEach(() => { stable.draft = { id: "draft_1" }; });
 
 describe("Review: the Settings summary", () => {
-  it("says the completed document will be emailed, by default", () => {
+  it("describes current in-app completed-document access", () => {
     open();
     expect(screen.getByTestId("review-final-copy")).toHaveTextContent(
-      "Completed document: Emailed to participants when everyone has finished");
+      "Completed document: Available in LAGDA under Records");
   });
 
-  it("says so when the sender switched it off", () => {
+  it("keeps accurate access wording for old saved email settings", () => {
     stable.draft = { id: "draft_1", settings: { ...DEFAULT_PREP_SETTINGS, completion: { emailFinalCopy: false } } };
     open();
     expect(screen.getByTestId("review-final-copy")).toHaveTextContent(
-      "Completed document: Not emailed to participants");
+      "Completed document: Available in LAGDA under Records");
   });
 
   it("shows the expiration date beside it", () => {

@@ -439,6 +439,9 @@ export function DocumentArchiveViewer({
       {/* ── The reading surface ── */}
       <div
         ref={scrollRef}
+        tabIndex={0}
+        role="region"
+        aria-label="Document pages"
         onScroll={state.status === "ready" ? handleScroll : undefined}
         style={{
           flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden",

@@ -1,3 +1,5 @@
+import { personInitials } from "../../../utils/person-initials";
+import { ON_LIGHT } from "../../../utils/on-light";
 // Participants — add, edit, remove, and reorder participants.
 // PRIVACY: participant names and email addresses exist only in React context memory.
 // They are never written to localStorage, sessionStorage, or cookies.
@@ -25,8 +27,8 @@ import { useViewport } from "../../../components/system/design-system";
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
-const SILVER = "#8A9BAE";
-const GOLD   = "#C9960C";
+const SILVER = ON_LIGHT.muted;
+const GOLD   = ON_LIGHT.gold;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -36,7 +38,7 @@ function generatePaxId(): string {
 
 function roleBadgeStyle(role: PrepParticipantRole): { bg: string; color: string } {
   switch (role) {
-    case "signer":               return { bg: "#EBF4FC", color: AZURE };
+    case "signer":               return { bg: "#EBF4FC", color: ON_LIGHT.azure };
     case "approver":             return { bg: "#FFF3CD", color: "#856404" };
     case "reviewer":             return { bg: "#F0EEF8", color: "#6C4BA8" };
     case "acknowledgment-recipient": return { bg: "#E8F5E9", color: "#2E7D32" };
@@ -378,7 +380,7 @@ function ParticipantCard({
         }}
         aria-hidden="true"
       >
-        {participant.name.charAt(0).toUpperCase() || "?"}
+        {personInitials(participant.name)}
       </div>
 
       {/* Info */}
@@ -473,7 +475,7 @@ function ParticipantCard({
           border: "1px solid #D1D9E0",
           borderRadius: 6,
           background: "#FFFFFF",
-          color: AZURE,
+          color: ON_LIGHT.azure,
           cursor: "pointer",
           fontSize: 14,
           display: "flex", alignItems: "center", justifyContent: "center",
@@ -634,7 +636,7 @@ export function ParticipantsStep() {
             borderRadius: 8,
             border: `1px dashed ${AZURE}`,
             background: "#F0F7FF",
-            color: AZURE,
+            color: ON_LIGHT.azure,
             fontSize: 14,
             fontWeight: 600,
             cursor: "pointer",

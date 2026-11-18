@@ -185,7 +185,7 @@ export function MobileNav() {
       <header
         style={{
           position: "fixed", top: 0, left: 0, right: 0, zIndex: Z.shell,
-          height: 56, background: "#ffffff",
+          height: "calc(56px + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)", boxSizing: "border-box", background: "#ffffff",
           borderBottom: `1px solid ${BORDER}`,
           display: "flex", alignItems: "center",
           // The logo pinned to the very left edge and the hamburger to the
@@ -194,7 +194,7 @@ export function MobileNav() {
           // everything between them (bell, avatar) kept close to the
           // hamburger rather than centered in the free space.
           justifyContent: "space-between",
-          paddingLeft: 10, paddingRight: 6,
+          paddingLeft: "calc(10px + env(safe-area-inset-left, 0px))", paddingRight: "calc(6px + env(safe-area-inset-right, 0px))",
         }}
         aria-label="Mobile navigation bar"
       >
@@ -384,7 +384,7 @@ export function MobileNav() {
         {...({ inert: drawerOpen ? undefined : "" } as { inert?: string })}
         style={{
           position: "fixed", top: 0, left: 0, bottom: 0, zIndex: Z.drawer,
-          width: 280,
+          width: "min(280px, 100vw)", paddingTop: "env(safe-area-inset-top, 0px)", paddingBottom: "env(safe-area-inset-bottom, 0px)", boxSizing: "border-box",
           background: "#ffffff",
           borderRight: `1px solid ${BORDER}`,
           display: "flex", flexDirection: "column",
@@ -696,7 +696,8 @@ export function MobileNav() {
       )}
 
       <style>{`
-        .mobile-nav-btn:hover, .mobile-nav-btn:focus-visible { color: #0078D4 !important; background: #EAF6FF !important; }
+        @media (hover: hover) and (pointer: fine) { .mobile-nav-btn:hover { color: #0078D4 !important; background: #EAF6FF !important; } }
+        .mobile-nav-btn:focus-visible { color: #0078D4 !important; background: #EAF6FF !important; }
         .mobile-nav-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
         .mnav-bottom-link:focus-visible, .mnav-bottom-prepare:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
         .mnav-bottom-pill { transition: left 360ms cubic-bezier(0.34, 1.4, 0.64, 1), opacity 180ms ease, transform 220ms ease; }
@@ -706,7 +707,7 @@ export function MobileNav() {
         .mnav-tools-panel { transition: grid-template-rows 180ms ease, visibility 0s 180ms; }
         .mnav-tools-panel[data-open="true"] { transition: grid-template-rows 180ms ease, visibility 0s; }
         .mnav-tools-chevron { transition: transform 180ms ease; flex-shrink: 0; }
-        .mnav-tools-toggle:hover { background: #F1F5F9 !important; }
+        @media (hover: hover) and (pointer: fine) { .mnav-tools-toggle:hover { background: #F1F5F9 !important; } }
         .mnav-tools-toggle:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
         @media (prefers-reduced-motion: reduce) {
           #mobile-nav-drawer { transition: none !important; }

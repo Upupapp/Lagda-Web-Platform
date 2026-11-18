@@ -1,0 +1,32 @@
+[
+  {
+    "tag": "demo-fields",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "worst-fields",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  }
+]

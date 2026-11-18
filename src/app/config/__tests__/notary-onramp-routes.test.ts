@@ -7,7 +7,7 @@ import { resolve } from "node:path";
 import { getRouteMeta } from "../routes";
 
 const TOKEN = "a".repeat(43);
-const ROUTER = readFileSync(resolve(__dirname, "../../../router.tsx"), "utf8");
+const ROUTER = readFileSync(resolve(__dirname, "../../../router.tsx"), "utf8").replace(/\r\n/g, "\n");
 
 const PAGES: [string, string, string][] = [
   ["/app/enotary/requests", "Your Notary Requests — LAGDA eNotary", "requests\""],

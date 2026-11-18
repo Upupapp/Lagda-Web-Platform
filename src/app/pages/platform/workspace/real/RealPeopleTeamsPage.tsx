@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../../../utils/on-light";
 // /app/workspace/people with a real backend — People & Teams.
 //
 // What used to be two parts and five tabs (People › Members, Invite people,
@@ -40,6 +41,7 @@
 // re-checks every action.
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useWorkspaceDialog } from "../../../../hooks/useWorkspaceDialog";
 import { useLiveRefresh } from "../../../../services/live/use-live-refresh";
 import { useSearchParams } from "react-router";
 import {
@@ -248,10 +250,10 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
   const people = useMemo(() => {
     const map = new Map<string, Person>();
     for (const m of data?.members ?? []) {
-      if (m.userId) map.set(m.userId, { userId: m.userId, name: m.displayName, email: m.email, member: m });
+      if (m.userId) map.set(m.userId, { userId: m.userId, name: m.displayName.trim() || m.email, email: m.email, member: m });
     }
     for (const list of data?.unitMembers.values() ?? []) {
-      for (const u of list) if (!map.has(u.userId)) map.set(u.userId, { userId: u.userId, name: u.displayName, email: u.email, member: null });
+      for (const u of list) if (!map.has(u.userId)) map.set(u.userId, { userId: u.userId, name: u.displayName.trim() || u.email, email: u.email, member: null });
     }
     return map;
   }, [data]);
@@ -277,8 +279,8 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
       <button type="button" className="pt-person" data-testid={`person-${p.userId}`} onClick={() => { setOpen({ userId: p.userId, unitId }); }}>
         <MemberAvatar name={p.name} url={photo(p.userId)} size={40} />
         <span className="pt-person-text">
-          <span className="pt-person-name"><span className="pt-person-name-text">{p.name}</span>{p.userId === meId && <span className="pt-you">You</span>}</span>
-          <span className="pt-person-line">{p.line ?? p.email}</span>
+          <span className="pt-person-name"><span className="pt-person-name-text" title={p.name.trim() || p.email}>{p.name.trim() || p.email}</span>{p.userId === meId && <span className="pt-you">You</span>}</span>
+          <span className="pt-person-line" title={p.line ?? p.email}>{p.line ?? p.email}</span>
         </span>
         <ChevronRight size={16} aria-hidden className="pt-person-go" />
       </button>
@@ -289,7 +291,7 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
     if (!nodeMatches(node)) return null;
     const isNew = Date.now() - node.unit.createdAt < NEW_FOR_MS;
     const shownMembers = node.members.filter(m => matches(m.displayName, m.email) || node.unit.name.toLowerCase().includes(q));
-    const count = `${String(node.members.length)} ${node.members.length === 1 ? "person" : "people"}`;
+    const count = `${node.members.length.toLocaleString()} ${node.members.length === 1 ? "person" : "people"}`;
     const deleteBlock = node.members.length > 0
       ? `Remove the ${count} in it first`
       : node.children.length > 0 ? "Delete or move the teams inside it first" : null;
@@ -337,7 +339,7 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
         ) : shownMembers.length > 0 ? (
           <ul className="pt-people">
             {shownMembers.map(m => personButton({
-              userId: m.userId, name: m.displayName, email: m.email,
+              userId: m.userId, name: m.displayName.trim() || m.email, email: m.email,
               line: m.title ?? (people.get(m.userId)?.member ? roleLine(people.get(m.userId)!.member!) : null),
             }, node.unit.unitId))}
           </ul>
@@ -416,9 +418,9 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
       <style>{PEOPLE_TEAMS_CSS}</style>
       <div className="pt-toolbar">
         <p className="pt-summary">
-          <Users size={15} aria-hidden /> {memberCount} {memberCount === 1 ? "person" : "people"}
+          <Users size={15} aria-hidden /> {memberCount.toLocaleString()} {memberCount === 1 ? "person" : "people"}
           <span aria-hidden>·</span>
-          <Network size={15} aria-hidden /> {allTeams.length} {allTeams.length === 1 ? "team" : "teams"}
+          <Network size={15} aria-hidden /> {allTeams.length.toLocaleString()} {allTeams.length === 1 ? "team" : "teams"}
         </p>
         <label className="pt-search">
           <Search size={15} aria-hidden color={SILVER} />
@@ -435,6 +437,13 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
       </div>
       <div aria-live="polite">{notice && <p className="pt-notice" role="status">{notice}<button type="button" aria-label="Dismiss" onClick={() => { setNotice(null); }}><X size={14} /></button></p>}</div>
 
+      {q !== "" && !tree.some(nodeMatches) && !unplaced.some(m => matches(m.displayName, m.email)) && (
+        <div className="pt-team pt-blank" role="status">
+          <h3>No people or teams match your search</h3>
+          <p>Try another name or clear the search to see everyone.</p>
+          <button type="button" onClick={() => { setQuery(""); }} style={buttonStyle("secondary")}>Clear search</button>
+        </div>
+      )}
       <div className="pt-main">
         {unplaced.length > 0 && unplaced.some(m => matches(m.displayName, m.email)) && (
           <section className="pt-team pt-unplaced" aria-label="Not in a team yet" data-testid="not-in-team">
@@ -446,12 +455,12 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
               </div>
             </header>
             <ul className="pt-people">
-              {unplaced.filter(m => matches(m.displayName, m.email)).map(m => personButton({ userId: m.userId!, name: m.displayName, email: m.email, line: roleLine(m) }, null))}
+              {unplaced.filter(m => matches(m.displayName, m.email)).map(m => personButton({ userId: m.userId!, name: m.displayName.trim() || m.email, email: m.email, line: roleLine(m) }, null))}
             </ul>
           </section>
         )}
 
-        {tree.length === 0 ? (
+        {tree.length === 0 && q === "" ? (
           <div className="pt-team pt-blank">
             <Network size={28} aria-hidden color={SILVER} />
             <h3>No teams yet</h3>
@@ -516,7 +525,7 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
             {data.invitations.length === 0 ? (
               <p className="pt-empty">No one is waiting. Invite people with the button at the lower right.</p>
             ) : (
-              <ul className="pt-contact-list">
+              <ul className="pt-contact-list" tabIndex={0} aria-label="Invitations awaiting acceptance">
                 {data.invitations.map(i => (
                   <li key={i.id}>
                     <span className="pt-invited" aria-hidden><Mail size={16} /></span>
@@ -558,13 +567,21 @@ function TeamMenu({ onRename, onDelete, deleteBlockedBecause, onSubTeam }: {
   useEffect(() => {
     if (!open) return;
     const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const items = () => Array.from(ref.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? []);
+    items()[0]?.focus();
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.preventDefault(); setOpen(false); ref.current?.querySelector<HTMLButtonElement>('[aria-haspopup="menu"]')?.focus(); }
+      if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key) || !ref.current?.contains(e.target as Node)) return;
+      e.preventDefault(); const enabled = items(); const index = enabled.indexOf(document.activeElement as HTMLButtonElement);
+      const next = e.key === "Home" ? 0 : e.key === "End" ? enabled.length - 1 : (index + (e.key === "ArrowDown" ? 1 : -1) + enabled.length) % enabled.length;
+      enabled[next]?.focus();
+    };
     document.addEventListener("mousedown", close);
     document.addEventListener("keydown", key);
     return () => { document.removeEventListener("mousedown", close); document.removeEventListener("keydown", key); };
   }, [open]);
   const item = (label: string, icon: ReactNode, run?: () => void) => run && (
-    <button type="button" role="menuitem" onClick={() => { setOpen(false); run(); }}>{icon}{label}</button>
+    <button type="button" role="menuitem" onClick={() => { ref.current?.querySelector<HTMLButtonElement>('[aria-haspopup="menu"]')?.focus(); setOpen(false); run(); }}>{icon}{label}</button>
   );
   return (
     <div className="pt-menu" ref={ref}>
@@ -624,11 +641,8 @@ function MemberPanel({ workspaceId, person, unitId, branding, teams, teamsOfPers
   // looking — the page's notice sits behind the overlay.
   const [saved, setSaved] = useState<string | null>(null);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !busy) onClose(); };
-    document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("keydown", onKey); };
-  }, [busy, onClose]);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useWorkspaceDialog(panelRef, onClose, busy);
 
   const run = async (work: () => Promise<void>, message: string, close = false) => {
     setBusy(true);
@@ -675,7 +689,7 @@ function MemberPanel({ workspaceId, person, unitId, branding, teams, teamsOfPers
 
   return (
     <div className="pt-scrim" onMouseDown={e => { if (e.target === e.currentTarget && !busy) onClose(); }} style={{ zIndex: Z.modal }}>
-      <div role="dialog" aria-modal="true" aria-label={`${person.name}'s details`} data-testid="member-panel"
+      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`${person.name}'s details`} data-testid="member-panel"
         className="pt-panel">
         <div className="pt-panel-band" style={{ backgroundImage: brandGradient(branding.primaryColor) }} data-testid="member-panel-band">
           <BrandWaves />
@@ -1108,11 +1122,11 @@ const PEOPLE_TEAMS_CSS = `
 .pt-action { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 0 14px;
   font-family: 'Geist', sans-serif; font-size: 13.5px; font-weight: 600; color: ${NAVY}; background: #FFFFFF; border: 1px solid #D1D9E0;
   border-radius: 10px; cursor: pointer; white-space: nowrap; transition: border-color 120ms ease, background 120ms ease, color 120ms ease; }
-.pt-action:hover { border-color: ${AZURE}; color: ${AZURE}; }
+@media (hover: hover) and (pointer: fine) { .pt-action:hover { border-color: ${AZURE}; color: ${AZURE}; } }
 .pt-action:focus-visible { outline: 3px solid rgba(0,120,212,0.4); outline-offset: 2px; }
 .pt-action[aria-pressed="true"] { background: #EBF4FC; border-color: ${AZURE}; color: ${AZURE}; }
 .pt-action-primary { background: ${AZURE}; border-color: ${AZURE}; color: #FFFFFF; box-shadow: 0 6px 16px -8px rgba(0,120,212,0.7); }
-.pt-action-primary:hover { background: #0A6BC0; color: #FFFFFF; }
+@media (hover: hover) and (pointer: fine) { .pt-action-primary:hover { background: #0A6BC0; color: #FFFFFF; } }
 .pt-action-count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #DC2626; color: #FFFFFF; font-size: 11px; font-weight: 800;
   display: inline-flex; align-items: center; justify-content: center; }
 
@@ -1157,7 +1171,7 @@ const PEOPLE_TEAMS_CSS = `
 .pt-view button:focus-visible { outline: 3px solid rgba(0,120,212,0.4); outline-offset: 1px; }
 .pt-mini { display: inline-flex; align-items: center; gap: 6px; font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 600; color: ${NAVY};
   background: #FFFFFF; border: 1px solid #D1D9E0; border-radius: 9px; min-height: 34px; padding: 0 11px; cursor: pointer; white-space: nowrap; }
-.pt-mini:hover:not(:disabled) { border-color: ${AZURE}; color: ${AZURE}; }
+@media (hover: hover) and (pointer: fine) { .pt-mini:hover:not(:disabled) { border-color: ${AZURE}; color: ${AZURE}; } }
 .pt-mini:disabled { opacity: 0.55; cursor: default; }
 .pt-icon-only { padding: 0; width: 34px; justify-content: center; }
 .pt-menu { position: relative; }
@@ -1165,7 +1179,7 @@ const PEOPLE_TEAMS_CSS = `
   border-radius: 10px; box-shadow: 0 12px 28px -8px rgba(7,17,31,0.25); padding: 4px; display: flex; flex-direction: column; }
 .pt-menu-list button { display: flex; align-items: flex-start; gap: 8px; font-family: 'Geist', sans-serif; font-size: 13px; color: ${NAVY}; background: none; border: none;
   text-align: left; padding: 9px 10px; border-radius: 7px; cursor: pointer; }
-.pt-menu-list button:hover:not(:disabled) { background: #F1F5F9; }
+@media (hover: hover) and (pointer: fine) { .pt-menu-list button:hover:not(:disabled) { background: #F1F5F9; } }
 .pt-menu-list button svg { margin-top: 2px; flex-shrink: 0; }
 .pt-menu-danger { color: #B42318 !important; }
 .pt-menu-disabled { color: #94A3B8 !important; cursor: not-allowed !important; }
@@ -1174,8 +1188,8 @@ const PEOPLE_TEAMS_CSS = `
 .pt-people { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(210px, 100%), 1fr)); gap: 8px; }
 .pt-people > li { min-width: 0; }
 .pt-person { width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; background: #FFFFFF; border: 1px solid ${BORDER}; border-radius: 12px;
-  padding: 8px 10px; cursor: pointer; min-height: 58px; box-sizing: border-box; transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease; }
-.pt-person:hover { border-color: #93C5FD; box-shadow: 0 8px 18px -12px rgba(0,120,212,0.7); transform: translateY(-1px); }
+  padding: 8px 10px; cursor: pointer; min-height: 58px; box-sizing: border-box; transition: border-color 120ms ease, box-shadow 120ms ease; }
+@media (hover: hover) and (pointer: fine) { .pt-person:hover { border-color: #93C5FD; box-shadow: 0 8px 18px -12px rgba(0,120,212,0.7); } }
 .pt-person:focus-visible { outline: 3px solid rgba(0,120,212,0.4); outline-offset: 2px; }
 .pt-person-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .pt-person-name { font-family: 'Geist', sans-serif; font-size: 13.5px; font-weight: 700; color: ${NAVY}; display: flex; align-items: center; gap: 6px; min-width: 0; }
@@ -1195,7 +1209,7 @@ const PEOPLE_TEAMS_CSS = `
 .pt-contact-list { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: min(460px, 50dvh); overflow-y: auto; }
 .pt-contact-list li { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid #F1F5F9; }
 .pt-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-.pt-chip { font-family: 'Geist', sans-serif; font-size: 12px; font-weight: 600; padding: 4px 11px; border-radius: 999px; background: #F0F7FF; color: ${AZURE}; border: 1px solid #BAD7F5; white-space: nowrap; }
+.pt-chip { max-width: 100%; overflow-wrap: anywhere; box-sizing: border-box; font-family: 'Geist', sans-serif; font-size: 12px; font-weight: 600; padding: 4px 11px; border-radius: 999px; background: #F0F7FF; color: ${ON_LIGHT.azure}; border: 1px solid #BAD7F5; white-space: normal; }
 .pt-chip-muted { background: #F8FAFC; color: ${SLATE}; border-color: ${BORDER}; }
 
 /* A person's panel: the Home dashboard's two-toned banner, their face over it. */
@@ -1225,7 +1239,7 @@ const PEOPLE_TEAMS_CSS = `
 .pt-danger h3 { color: #991B1B; }
 .pt-carousel { display: flex; align-items: center; gap: 10px; border-top: 1px solid #F0F2F5; padding-top: 14px; margin-top: 14px; }
 .pt-carousel-arrow { width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px; border: 1px solid #D1D9E0; background: #FFFFFF; color: ${NAVY}; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
-.pt-carousel-arrow:hover:not(:disabled) { background: #F1F5F9; }
+@media (hover: hover) and (pointer: fine) { .pt-carousel-arrow:hover:not(:disabled) { background: #F1F5F9; } }
 .pt-carousel-arrow:disabled { opacity: 0.5; cursor: not-allowed; }
 .pt-carousel-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; }
 .pt-carousel-title { font-family: 'Geist', sans-serif; font-size: 14px; font-weight: 800; color: ${NAVY}; text-transform: uppercase; letter-spacing: 0.05em; overflow-wrap: anywhere; }

@@ -1,3 +1,4 @@
+import { useWorkspaceDialog } from "../../../hooks/useWorkspaceDialog";
 // "Invite people" — one button at the lower right, one panel.
 //
 // Inviting used to be spread over the Workspace's People part: an "Invite
@@ -13,7 +14,7 @@
 // and never moves anything else on the page. Only on Business, and only for
 // people allowed to invite or to answer requests.
 
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useLiveRefresh } from "../../../services/live/use-live-refresh";
 import { UserPlus, Mail, Link2, Inbox, X } from "lucide-react";
 import { useWorkspaceAccess } from "../../../hooks/useWorkspaceAccess";
@@ -65,12 +66,8 @@ export function InvitePeopleToggle({ workspaceId, onChanged, initialTab, openOnA
   useEffect(() => { refreshPending(); }, [refreshPending]);
   useLiveRefresh(refreshPending, { topics: ["invitations", "members"] });
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("keydown", onKey); };
-  }, [open]);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useWorkspaceDialog(panelRef, () => { setOpen(false); }, false, open);
 
   if (!allowed.any) return null;
   const tabs: { id: PanelTab; label: string; icon: typeof Mail; show: boolean; count?: number }[] = [
@@ -105,7 +102,7 @@ export function InvitePeopleToggle({ workspaceId, onChanged, initialTab, openOnA
         <div onMouseDown={e => { if (e.target === e.currentTarget) setOpen(false); }}
           style={{ position: "fixed", inset: 0, zIndex: Z.modal, background: "rgba(7,17,31,0.5)", display: "flex",
             justifyContent: isNarrow ? "stretch" : "flex-end", alignItems: isNarrow ? "flex-end" : "stretch" }}>
-          <div role="dialog" aria-modal="true" aria-labelledby={titleId} data-testid="invite-people-panel"
+          <div ref={panelRef} tabIndex={-1} className="ws-admin-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} data-testid="invite-people-panel"
             style={{
               background: "#F8FAFC", width: isNarrow ? "100%" : "min(640px, 100vw)", maxHeight: isNarrow ? "92dvh" : "100dvh",
               height: isNarrow ? "auto" : "100dvh", display: "flex", flexDirection: "column", boxSizing: "border-box",

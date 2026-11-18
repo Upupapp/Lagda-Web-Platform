@@ -34,6 +34,7 @@ import { RoleDetailPage } from "../RoleDetailPage";
 import { WorkspaceSettingsPage } from "../WorkspaceSettingsPage";
 import { ActivityPage } from "../ActivityPage";
 import { MemberDetailPage } from "../MemberDetailPage";
+import { mockWorkspaceAdminService } from "../../../../services/mock/workspace-admin.service";
 import { EMPTY_ACTIVITY_MESSAGE } from "../real/RealActivityPage";
 import { ROLE_CAPABILITIES } from "../../../../models/workspace-role-policy";
 import { resetWorkspaceBrandingStore, setWorkspaceBrandingSnapshot } from "../../../../hooks/workspace-branding-store";
@@ -85,6 +86,9 @@ let activityStatus = 200;
 const calls: { method: string; url: string; path: string; body: unknown }[] = [];
 
 beforeEach(() => {
+  // Legacy member wrappers also load demo role metadata. Avoid its artificial
+  // timer resolving after this real-backend test environment is torn down.
+  vi.spyOn(mockWorkspaceAdminService, "listRoles").mockResolvedValue([]);
   calls.length = 0;
   platform.role = "owner";
   platform.currentWorkspace = { id: "ws_1", name: "Reyes Law Office" };

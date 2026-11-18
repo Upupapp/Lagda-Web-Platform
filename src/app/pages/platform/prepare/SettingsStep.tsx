@@ -1,5 +1,6 @@
-// Settings — reminders, expiration, and whether participants are emailed the
-// completed document.
+import { ON_LIGHT } from "../../../utils/on-light";
+// Settings — reminders, expiration and completed-document access.
+// The current worker intentionally does not email final-copy links.
 //
 // Every control here reaches the server. Five that did not were removed: an
 // invitation subject, a personal note, a per-document sender name, "notify me
@@ -15,7 +16,7 @@ import { usePlatform } from "../../../context/PlatformContext";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { todayInManila } from "../../../services/prepare/deadline";
 import { stepEyebrow,
-  DEFAULT_PREP_SETTINGS, emailsFinalCopy, draftReminders, describeDraftReminders,
+  DEFAULT_PREP_SETTINGS, COMPLETED_DOCUMENT_ACCESS_NOTE, emailsFinalCopy, draftReminders, describeDraftReminders,
 } from "../../../models/prepare";
 import { REMINDER_RULE } from "../../../components/documents/signing-progress-copy";
 import { StepBanner, StepTwoColumn, RailCard, StepIssueList } from "../../../components/prepare/StepBanner";
@@ -23,7 +24,7 @@ import { StepBanner, StepTwoColumn, RailCard, StepIssueList } from "../../../com
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
-const SILVER = "#8A9BAE";
+const SILVER = ON_LIGHT.muted;
 const GOLD   = "#C9960C";
 
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
@@ -302,16 +303,19 @@ export function SettingsStep() {
           subtitle="What happens when all required participants have completed their actions."
         />
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {/* The server's `shareFinalCopy`. Off withholds the email and its
-              download link, nothing else: a participant can still open the
-              completed document from their own account. */}
-          <Toggle
-            id="email-final-copy"
+          {USE_REAL_BACKEND ? (
+            <p data-testid="completed-document-access" style={{ ...GF, fontSize: 13, color: ON_LIGHT.slate, lineHeight: 1.6, margin: 0 }}>
+              {COMPLETED_DOCUMENT_ACCESS_NOTE}
+            </p>
+          ) : (
+            <Toggle
+              id="email-final-copy"
             label="Email participants the completed document"
             description="When everyone has finished, each participant is emailed a link to download the completed document. The link works for 30 days. Viewers are not sent one. Switch this off for a sensitive document: participants can still open it in LAGDA under Records."
             checked={sendsCopy}
             onChange={v => updateCompletion({ emailFinalCopy: v })}
           />
+          )}
         </div>
       </div>
 
@@ -327,7 +331,7 @@ export function SettingsStep() {
   );
 
   const completionFlags: { id: string; label: string; on: boolean }[] = [
-    { id: "final-copy", label: "Completed document emailed to participants", on: sendsCopy },
+    { id: "final-copy", label: USE_REAL_BACKEND ? "Completed document available in Records" : "Completed document emailed to participants", on: USE_REAL_BACKEND || sendsCopy },
   ];
 
   const rail = (
@@ -361,7 +365,7 @@ export function SettingsStep() {
   const expirySummary = settings.expiration.enabled && settings.expiration.expiresAt
     ? "Expiration set"
     : "No expiration";
-  const copySummary = sendsCopy ? "Completed copy emailed" : "Completed copy not emailed";
+  const copySummary = USE_REAL_BACKEND ? "Completed copy in Records" : sendsCopy ? "Completed copy emailed" : "Completed copy not emailed";
 
   return (
     <div style={GF}>
@@ -369,7 +373,7 @@ export function SettingsStep() {
         icon={SlidersHorizontal}
         eyebrow={stepEyebrow("settings")}
         title="Settings"
-        description="Choose when participants are reminded, set an optional expiration date, and choose whether participants are emailed the completed document."
+        description={USE_REAL_BACKEND ? "Choose when participants are reminded and set an optional expiration date. Completed copies are available in LAGDA under Records." : "Choose when participants are reminded, set an optional expiration date, and choose whether participants are emailed the completed document."}
         meta={`${reminderSummary} · ${expirySummary} · ${copySummary}`}
       />
       <StepTwoColumn main={main} rail={rail} />

@@ -227,34 +227,34 @@ export function ProfilePage() {
 
         {/* Identity */}
         <SSection title="Personal Information">
-          <SField label="Full name" required help="Your legal or preferred name used across the platform.">
+          <SField htmlFor="full-name" label="Full name" required help="Your legal or preferred name used across the platform.">
             <input id="full-name" type="text" autoComplete="name" value={form.fullName ?? ""} onChange={e => update("fullName", e.target.value)}
               style={{ ...INPUT_STYLE, borderColor: validErr.fullName ? "#DC2626" : "#D1D9E0" }}
-              aria-describedby={validErr.fullName ? "full-name-err" : undefined} aria-invalid={!!validErr.fullName} required />
+              aria-describedby={`full-name-help${validErr.fullName ? " full-name-err" : ""}`} aria-invalid={!!validErr.fullName} required />
             {validErr.fullName && <div id="full-name-err" role="alert" style={{ ...GF, fontSize: 12, color: "#DC2626", marginTop: 4 }}>{validErr.fullName}</div>}
           </SField>
 
-          <SField label="Display name" help="Shown in notifications and the platform header. Defaults to full name.">
-            <input type="text" autoComplete="nickname" value={form.displayName ?? ""} onChange={e => update("displayName", e.target.value)} style={INPUT_STYLE} />
+          <SField htmlFor="display-name" label="Display name" help="Shown in notifications and the platform header. Defaults to full name.">
+            <input id="display-name" aria-describedby="display-name-help" type="text" autoComplete="nickname" value={form.displayName ?? ""} onChange={e => update("displayName", e.target.value)} style={INPUT_STYLE} />
           </SField>
 
-          <SField label="Primary email" help="Read-only. Contact support to change your account email.">
-            <input type="email" value={profile?.email ?? ""} readOnly disabled style={{ ...INPUT_STYLE, background: "#F8FAFC", color: SLATE }} />
+          <SField htmlFor="primary-email" label="Primary email" help="Read-only. Contact support to change your account email.">
+            <input id="primary-email" aria-describedby="primary-email-help" type="email" value={profile?.email ?? ""} readOnly disabled style={{ ...INPUT_STYLE, background: "#F8FAFC", color: SLATE }} />
           </SField>
 
-          <SField label="Job title" help="Your role within your organization. Shown under your name in the account menu.">
-            <input type="text" autoComplete="organization-title" value={form.jobTitle ?? ""} onChange={e => update("jobTitle", e.target.value)} style={INPUT_STYLE} />
+          <SField htmlFor="job-title" label="Job title" help="Your role within your organization. Shown under your name in the account menu.">
+            <input id="job-title" aria-describedby="job-title-help" type="text" autoComplete="organization-title" value={form.jobTitle ?? ""} onChange={e => update("jobTitle", e.target.value)} style={INPUT_STYLE} />
           </SField>
 
-          <SField label="Department" help="Team or department within your organization. Shown under your name in the account menu.">
-            <input type="text" autoComplete="organization" value={form.department ?? ""} onChange={e => update("department", e.target.value)} style={INPUT_STYLE} />
+          <SField htmlFor="department" label="Department" help="Team or department within your organization. Shown under your name in the account menu.">
+            <input id="department" aria-describedby="department-help" type="text" autoComplete="organization" value={form.department ?? ""} onChange={e => update("department", e.target.value)} style={INPUT_STYLE} />
           </SField>
         </SSection>
 
         {/* Sender */}
         <SSection title="Sender Display">
-          <SField label="Preferred sender name" help="Shown to recipients when you send documents for signing. Defaults to your full name.">
-            <input type="text" value={form.preferredSenderName ?? ""} onChange={e => update("preferredSenderName", e.target.value)} style={INPUT_STYLE} />
+          <SField htmlFor="sender-name" label="Preferred sender name" help="Shown to recipients when you send documents for signing. Defaults to your full name.">
+            <input id="sender-name" aria-describedby="sender-name-help" type="text" value={form.preferredSenderName ?? ""} onChange={e => update("preferredSenderName", e.target.value)} style={INPUT_STYLE} />
           </SField>
         </SSection>
 

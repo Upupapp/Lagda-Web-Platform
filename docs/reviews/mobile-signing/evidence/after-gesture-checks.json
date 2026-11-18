@@ -1,0 +1,52 @@
+[
+  {
+    "test": "drawing survives width change",
+    "before": {
+      "width": 327,
+      "height": 150,
+      "ink": 174,
+      "right": 0
+    },
+    "after": {
+      "width": 260,
+      "height": 150,
+      "ink": 148,
+      "right": 0
+    },
+    "pass": true
+  },
+  {
+    "test": "secondary touch cannot add a signature stroke",
+    "pixels": {
+      "width": 327,
+      "height": 150,
+      "ink": 171,
+      "right": 0
+    },
+    "pass": true
+  },
+  {
+    "test": "approver confirmation short-screen actions reachable",
+    "initial": {
+      "top": 16,
+      "bottom": 374,
+      "height": 358,
+      "scrollHeight": 375,
+      "clientHeight": 358
+    },
+    "pass": true,
+    "backgroundScrollLocked": true
+  },
+  {
+    "test": "reviewer confirmation short-screen actions reachable",
+    "initial": {
+      "top": 16,
+      "bottom": 374,
+      "height": 358,
+      "scrollHeight": 397,
+      "clientHeight": 358
+    },
+    "pass": true,
+    "backgroundScrollLocked": true
+  }
+]

@@ -1,0 +1,46 @@
+{
+  "mode": "parallel",
+  "title": "Mobile drawn signature QA 2026-11-18T12-31-21-339Z",
+  "startedAt": "2026-11-18T12:31:21.349Z",
+  "workspaceId": "ws_c5824282ea614104ad7c3e6821903e93",
+  "sourceSha256": "cc4ebccb83aada7d1ab6352d49c3884029674a55a0c1711498c426ef568f9b9b",
+  "documentId": "doc_9017c14687d84b868e7c9344e2d62f32",
+  "signingRequestId": "sr_f21467d921a54cd0b1ae4c402b28b8eb",
+  "sentAt": "2026-11-18T12:31:39.097Z",
+  "recipients": [
+    {
+      "recipientId": "srr_3e890bfb23504ef793e62b19026300b8",
+      "name": "LAGDA Multi QA Signer 1",
+      "email": "multi.signer.1.20261118@example.test",
+      "organization": null,
+      "type": "signer",
+      "isRequired": true,
+      "orderIndex": 0,
+      "routingOrder": 1
+    }
+  ],
+  "fields": [
+    {
+      "fieldId": "srf_12f0e99d0caa4a278938b0f28448e3dc",
+      "type": "signature-block",
+      "pageNumber": 2,
+      "rect": {
+        "x": 0.332,
+        "y": 0.855,
+        "width": 0.336,
+        "height": 0.095
+      },
+      "required": true,
+      "label": "Signature over Name",
+      "layer": 1,
+      "recipientId": "srr_3e890bfb23504ef793e62b19026300b8",
+      "staticValue": null
+    }
+  ],
+  "finalSha256": "6f681454e5fd091d21a76592dbb7c59ac7c5a6f54937f33c24d7876a36f92952",
+  "finalBytes": 299638,
+  "verificationId": "LAGDA-VER-2026-XdRMUC4UBN",
+  "completed": true,
+  "auditEntries": 7,
+  "completedAt": "2026-11-18T12:32:35.705Z"
+}

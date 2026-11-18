@@ -101,7 +101,7 @@ async function waitForSettled(page: Page): Promise<void> {
     .toBe(true);
 
   await page.waitForFunction(() => {
-    const wrapper = document.querySelector(".lagda-page-enter");
+    const wrapper = document.querySelector(".lagda-page-content");
     if (!wrapper) return true;
     return wrapper.getAnimations().every((a) => a.playState === "finished");
   });

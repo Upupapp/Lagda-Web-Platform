@@ -107,10 +107,20 @@ for (const { name, Component, title } of SURFACES) {
 }
 
 describe("the sheet specifically", () => {
-  it("leaves the canvas visible behind it", () => {
+  it("leaves the canvas visible using the dynamic viewport height", () => {
     // The point of editing a field is seeing where it lands. A full-height
     // sheet would cover the thing being changed.
     render(<EditorSheet open title="Field properties" onClose={vi.fn()}><p>body</p></EditorSheet>);
-    expect(screen.getByRole("dialog").style.maxHeight).toBe("70vh");
+    expect(screen.getByRole("dialog").style.maxHeight).toBe("70dvh");
   });
+});
+
+
+it("contains keyboard focus inside an editor sheet", async () => {
+  const user = userEvent.setup();
+  render(<EditorSheet open title="Validation" onClose={vi.fn()}><button>Last action</button></EditorSheet>);
+  const dialog = screen.getByRole("dialog", { name: "Validation" });
+  screen.getByRole("button", { name: "Last action" }).focus();
+  await user.tab();
+  expect(dialog).toContainElement(document.activeElement as HTMLElement);
 });

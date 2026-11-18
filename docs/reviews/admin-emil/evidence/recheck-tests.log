@@ -1,0 +1,18 @@
+
+ RUN  v3.2.4 C:/Users/paulg/OneDrive/Documents/ChatGPT/LAGDA
+
+ ✓ src/app/hooks/__tests__/useWorkspaceDialog.test.tsx (2 tests) 370ms
+ ✓ src/app/utils/__tests__/person-initials.test.ts (8 tests) 11ms
+ ✓ src/app/pages/platform/workspace/__tests__/PeopleTeams.realmode.test.tsx (16 tests) 5649ms
+   ✓ the team tree > re-orders the page when a sort is chosen, and remembers it  393ms
+   ✓ a person's panel > shows one section at a time, Team first, with arrows and dots to move between them  356ms
+   ✓ a person's panel > keeps Remove as the panel's footer on every section  386ms
+   ✓ contacts into a team > adds a contact who is a member straight in, and invites one who is not  1271ms
+   ✓ contacts into a team > invites a contact who is not a member yet  1178ms
+   ✓ deleting a team, and the panels beside the title > offers Delete only for an empty team, saying why otherwise  342ms
+   ✓ search recovery > explains a no-match result and restores the teams when cleared  518ms
+
+ Test Files  3 passed (3)
+      Tests  26 passed (26)
+   Start at  18:42:40
+   Duration  42.91s (transform 2.56s, setup 14.58s, collect 11.45s, tests 6.03s, environment 40.91s, prepare 2.47s)

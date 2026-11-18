@@ -1,0 +1,21 @@
+{
+  "scenario": "skip",
+  "stage": "after-skip",
+  "requestState": "partially-completed",
+  "states": [
+    "skipped",
+    "active",
+    "waiting"
+  ],
+  "completedCount": 1,
+  "requiredCount": 3,
+  "invitationCount": 2,
+  "deniedChecks": [
+    {
+      "role": "signer",
+      "continueStatus": 404,
+      "error": "SIGNING_UNAVAILABLE"
+    }
+  ],
+  "completedPdfUnavailable": true
+}

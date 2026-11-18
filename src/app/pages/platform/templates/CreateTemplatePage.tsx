@@ -1,8 +1,9 @@
+import { ON_LIGHT } from "../../../utils/on-light";
 // /app/templates/new — Create template from blank, draft, transaction, or example.
 // Inline styles only. No backend. demonstrationOnly.
 
 import { useReadyMade } from "../../../hooks/useReadyMade";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router";
 import {
   LayoutTemplate, FileText, FolderOpen, Copy,
@@ -61,6 +62,14 @@ const COLUMN = CONTENT_MAX_WIDTH.form;
 // only once the column can give each card ~210px; two before that, never an
 // uneven three-and-one.
 const SOURCE_GRID_CSS = `
+.ct-new-template-modal input:not([type="checkbox"]), .ct-new-template-modal select { max-width: 100%; min-width: 0; box-sizing: border-box; }
+.ct-new-template-modal input:focus-visible, .ct-new-template-modal select:focus-visible, .ct-new-template-modal button:focus-visible {
+  outline: 2px solid #0063B1 !important; outline-offset: 3px;
+}
+@media (pointer: coarse) {
+  .ct-new-template-modal input:not([type="checkbox"]), .ct-new-template-modal select { min-height: 44px; font-size: 16px !important; }
+}
+
 .ct-sources { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: stretch; }
 .ct-source { flex: 1 1 230px; max-width: 300px; min-width: 0; }
 @media (min-width: 768px) {
@@ -207,10 +216,11 @@ function BlankForm({ onCreated, onCancel, isNarrow }: {
     >
     <div style={{ maxWidth: 520, marginTop: 24 }}>
       <div style={{ marginBottom: 18 }}>
-        <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#64748B", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        <label htmlFor="new-template-name" style={{ ...GF, fontSize: 12, fontWeight: 600, color: ON_LIGHT.slate, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
           Template Name <span style={{ color: RED }}>*</span>
         </label>
         <input
+          id="new-template-name"
           type="text"
           value={name}
           onChange={e => { setName(e.target.value); setError(null); }}
@@ -238,10 +248,11 @@ function BlankForm({ onCreated, onCancel, isNarrow }: {
       </div>
 
       <div style={{ marginBottom: 24 }}>
-        <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#64748B", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        <label htmlFor="new-template-category" style={{ ...GF, fontSize: 12, fontWeight: 600, color: ON_LIGHT.slate, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
           Category
         </label>
         <select
+          id="new-template-category"
           value={category}
           onChange={e => setCategory(e.target.value as TemplateCategory)}
           style={{ ...GF, fontSize: 13, color: "#0F172A", border: "1px solid #E2E8F0", borderRadius: 8, padding: "10px 14px", background: "white", cursor: "pointer", width: "100%" }}
@@ -255,10 +266,11 @@ function BlankForm({ onCreated, onCancel, isNarrow }: {
       {canSave && (
         <>
           <div style={{ marginBottom: 20 }}>
-            <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#64748B", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <label htmlFor="new-template-routing" style={{ ...GF, fontSize: 12, fontWeight: 600, color: ON_LIGHT.slate, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Routing Mode
             </label>
             <select
+              id="new-template-routing"
               value={routingMode}
               onChange={e => setRoutingMode(e.target.value as RoutingMode)}
               style={{ ...GF, fontSize: 13, color: "#0F172A", border: "1px solid #E2E8F0", borderRadius: 8, padding: "10px 14px", background: "white", cursor: "pointer", width: "100%" }}
@@ -270,10 +282,10 @@ function BlankForm({ onCreated, onCancel, isNarrow }: {
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#64748B", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: ON_LIGHT.slate, display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Roles <span style={{ color: RED }}>*</span>
             </label>
-            <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: "0 0 10px", lineHeight: 1.5 }}>
+            <p style={{ ...GF, fontSize: 12, color: ON_LIGHT.muted, margin: "0 0 10px", lineHeight: 1.5 }}>
               Name the roles, not the people. You choose who fills each one every time you use this template.
             </p>
 
@@ -281,7 +293,7 @@ function BlankForm({ onCreated, onCancel, isNarrow }: {
               {slots.map((sl, idx) => (
                 <div key={sl.id} style={{ border: "1px solid #E2E8F0", borderRadius: 10, padding: "12px 14px", background: "white" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                    <span style={{ ...GF, fontSize: 11, fontWeight: 700, color: "#94A3B8" }}>
+                    <span style={{ ...GF, fontSize: 11, fontWeight: 700, color: ON_LIGHT.muted }}>
                       STEP {sl.routingStep}
                     </span>
                     {slots.length > 1 && (
@@ -294,6 +306,7 @@ function BlankForm({ onCreated, onCancel, isNarrow }: {
                     )}
                   </div>
                   <input
+                    aria-label={`Role ${idx + 1} name`}
                     type="text"
                     value={sl.label}
                     onChange={e => { patchSlot(sl.id, { label: e.target.value }); setError(null); }}
@@ -302,6 +315,7 @@ function BlankForm({ onCreated, onCancel, isNarrow }: {
                   />
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                     <select
+                      aria-label={`Role ${idx + 1} type`}
                       value={sl.role}
                       onChange={e => patchSlot(sl.id, { role: e.target.value as PrepParticipantRole })}
                       style={{ ...GF, fontSize: 12.5, color: "#0F172A", border: "1px solid #E2E8F0", borderRadius: 8, padding: "8px 10px", background: "white", cursor: "pointer" }}
@@ -311,6 +325,7 @@ function BlankForm({ onCreated, onCancel, isNarrow }: {
                       ))}
                     </select>
                     <select
+                      aria-label={`Role ${idx + 1} routing step`}
                       value={String(sl.routingStep)}
                       onChange={e => patchSlot(sl.id, { routingStep: Number(e.target.value) })}
                       style={{ ...GF, fontSize: 12.5, color: "#0F172A", border: "1px solid #E2E8F0", borderRadius: 8, padding: "8px 10px", background: "white", cursor: "pointer" }}
@@ -340,7 +355,7 @@ function BlankForm({ onCreated, onCancel, isNarrow }: {
                       on a required member). They are still asked; the document
                       simply never waits. */}
                   {!sl.required && (
-                    <p style={{ ...GF, fontSize: 11.5, color: "#94A3B8", margin: "6px 0 0 21px", lineHeight: 1.5 }}>
+                    <p style={{ ...GF, fontSize: 11.5, color: ON_LIGHT.muted, margin: "6px 0 0 21px", lineHeight: 1.5 }}>
                       They will still receive the document at the same time as
                       the next step — it just will not wait for them.
                     </p>
@@ -351,7 +366,7 @@ function BlankForm({ onCreated, onCancel, isNarrow }: {
 
             <button
               onClick={addSlot}
-              style={{ ...GF, marginTop: 10, fontSize: 13, fontWeight: 600, color: AZURE, background: "none", border: "1px dashed #C8E1F5", borderRadius: 8, padding: "9px 14px", cursor: "pointer", width: "100%" }}
+              style={{ ...GF, marginTop: 10, fontSize: 13, fontWeight: 600, color: ON_LIGHT.azure, background: "none", border: "1px dashed #C8E1F5", borderRadius: 8, padding: "9px 14px", cursor: "pointer", width: "100%" }}
             >
               + Add a role
             </button>
@@ -421,11 +436,42 @@ function BlankForm({ onCreated, onCancel, isNarrow }: {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export function CreateTemplatePage() {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const sourceRef = useRef<HTMLButtonElement>(null);
   // 093. The ready-made counts come from the server's catalogue.
   useReadyMade();
   usePageMeta();
   const navigate = useNavigate();
   const [selected, setSelected] = useState<string | null>(null);
+  useEffect(() => {
+    if (selected !== "blank") return;
+    const panel = modalRef.current;
+    if (!panel) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const controls = () => Array.from(panel.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex="0"]',
+    )).filter(el => el.getClientRects().length > 0);
+    panel.querySelector<HTMLInputElement>("#new-template-name")?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); setSelected(null); }
+      if (event.key !== "Tab") return;
+      const items = controls();
+      const first = items[0], last = items[items.length - 1];
+      if (!first || !last) return;
+      if (event.shiftKey && (document.activeElement === first || !panel.contains(document.activeElement))) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !panel.contains(document.activeElement))) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previousOverflow;
+      if (sourceRef.current?.isConnected) sourceRef.current.focus();
+    };
+  }, [selected]);
   const { isNarrow } = useViewport();
 
   return (
@@ -433,7 +479,7 @@ export function CreateTemplatePage() {
       {/* Header */}
       <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: "18px 24px" }}>
       <CenteredColumn max={COLUMN} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <Link to="/app/templates" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#64748B", textDecoration: "none", ...GF, fontSize: 13 }}>
+        <Link to="/app/templates" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: ON_LIGHT.slate, textDecoration: "none", ...GF, fontSize: 13 }}>
           <ChevronLeft size={15} />
           Templates
         </Link>
@@ -447,7 +493,7 @@ export function CreateTemplatePage() {
         <h2 style={{ ...GF, fontSize: 20, fontWeight: 800, color: "#0F172A", margin: "0 0 6px", letterSpacing: "-0.02em" }}>
           Create a New Template
         </h2>
-        <p style={{ ...GF, fontSize: 13, color: "#64748B", margin: "0 0 24px" }}>
+        <p style={{ ...GF, fontSize: 13, color: ON_LIGHT.slate, margin: "0 0 24px" }}>
           Choose how you'd like to start building your new template.
         </p>
 
@@ -483,7 +529,7 @@ export function CreateTemplatePage() {
                   borderRadius: 999, padding: "2px 9px", whiteSpace: "nowrap",
                 }}>{c.label}</span>
               ))}
-              <span style={{ ...GF, fontSize: 11, color: "#64748B", padding: "2px 2px" }}>
+              <span style={{ ...GF, fontSize: 11, color: ON_LIGHT.slate, padding: "2px 2px" }}>
                 +{Math.max(0, READY_MADE_CATEGORIES.length - (isNarrow ? 3 : 6))} more
               </span>
             </span>
@@ -497,7 +543,7 @@ export function CreateTemplatePage() {
             Browse templates <ArrowRight size={14} />
           </span>
         </Link>
-        <style>{`.ct-ready-card { transition: box-shadow .15s; } .ct-ready-card:hover, .ct-ready-card:focus-visible { box-shadow: 0 4px 16px rgba(0,120,212,0.18); outline: none; }`}</style>
+        <style>{`.ct-ready-card { transition: box-shadow .15s; } .ct-ready-card:focus-visible { outline: 2px solid #0063B1; outline-offset: 2px; } @media (hover: hover) and (pointer: fine) { .ct-ready-card:hover { box-shadow: 0 4px 16px rgba(0,120,212,0.18); } }`}</style>
 
         {/* Source selection */}
         {/* A phone keeps the centred flex-wrap (one card per row). From a
@@ -510,6 +556,7 @@ export function CreateTemplatePage() {
           {SOURCES.map(s => (
             <button
               key={s.id}
+              ref={s.id === "blank" ? sourceRef : undefined}
               onClick={() => s.available && setSelected(s.id)}
               disabled={!s.available}
               aria-pressed={selected === s.id}
@@ -530,20 +577,20 @@ export function CreateTemplatePage() {
               <div style={{ marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                 {s.icon}
                 {"comingSoon" in s && s.comingSoon && (
-                  <span style={{ ...GF, fontSize: 10, fontWeight: 700, color: "#64748B", background: "#E2E8F0", borderRadius: 999, padding: "2px 8px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                  <span style={{ ...GF, fontSize: 10, fontWeight: 700, color: ON_LIGHT.slate, background: "#E2E8F0", borderRadius: 999, padding: "2px 8px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                     Coming soon
                   </span>
                 )}
               </div>
               <div style={{ ...GF, fontSize: 13, fontWeight: 700, color: "#0F172A", marginBottom: 5 }}>{s.label}</div>
-              <div style={{ ...GF, fontSize: 12, color: "#64748B", lineHeight: 1.5 }}>{s.description}</div>
+              <div style={{ ...GF, fontSize: 12, color: ON_LIGHT.slate, lineHeight: 1.5 }}>{s.description}</div>
               {"note" in s && !s.available && (
-                <div style={{ ...GF, fontSize: 11, color: "#94A3B8", marginTop: 8, fontStyle: "italic" }}>{s.note}</div>
+                <div style={{ ...GF, fontSize: 11, color: ON_LIGHT.muted, marginTop: 8, fontStyle: "italic" }}>{s.note}</div>
               )}
               {selected === s.id && s.available && (
                 <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 5 }}>
                   <CheckCircle2 size={12} color={AZURE} />
-                  <span style={{ ...GF, fontSize: 11, color: AZURE, fontWeight: 600 }}>Selected</span>
+                  <span style={{ ...GF, fontSize: 11, color: ON_LIGHT.azure, fontWeight: 600 }}>Selected</span>
                 </div>
               )}
             </button>
@@ -558,6 +605,8 @@ export function CreateTemplatePage() {
             it its own scroll, and leaves the cards where they were. */}
         {selected === "blank" && (
           <div
+            ref={modalRef}
+            className="ct-new-template-modal"
             role="dialog"
             aria-modal="true"
             aria-label="Template details"
@@ -582,7 +631,7 @@ export function CreateTemplatePage() {
                 width: "100%",
                 maxWidth: 560,
                 // Never taller than the viewport; the form scrolls inside.
-                maxHeight: isNarrow ? "92vh" : "88vh",
+                maxHeight: isNarrow ? "92dvh" : "88dvh",
                 display: "flex",
                 flexDirection: "column",
                 boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
@@ -599,7 +648,7 @@ export function CreateTemplatePage() {
                   <h3 style={{ ...GF, fontSize: 16, fontWeight: 800, color: "#0F172A", margin: "0 0 4px", letterSpacing: "-0.01em" }}>
                     Template Details
                   </h3>
-                  <p style={{ ...GF, fontSize: 12.5, color: "#64748B", margin: 0, lineHeight: 1.5 }}>
+                  <p style={{ ...GF, fontSize: 12.5, color: ON_LIGHT.slate, margin: 0, lineHeight: 1.5 }}>
                     Name the workflow and the roles it routes through.
                   </p>
                 </div>
@@ -608,7 +657,7 @@ export function CreateTemplatePage() {
                   aria-label="Close"
                   style={{
                     background: "none", border: "none", cursor: "pointer",
-                    color: "#94A3B8", padding: 4, lineHeight: 0, flexShrink: 0,
+                    color: ON_LIGHT.muted, padding: 4, lineHeight: 0, flexShrink: 0,
                     // 44px hit area even though the glyph is small.
                     margin: -4, width: 32, height: 32,
                     display: "flex", alignItems: "center", justifyContent: "center",

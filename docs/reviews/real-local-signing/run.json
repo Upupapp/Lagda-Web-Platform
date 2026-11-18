@@ -1,0 +1,30 @@
+{
+  "title": "Real backend signing QA 2026-11-18T11-08-53-760Z",
+  "workspaceId": "ws_c5824282ea614104ad7c3e6821903e93",
+  "recipientEmail": "screen.review@example.test",
+  "recipientName": "LAGDA Local Review Recipient",
+  "startedAt": "2026-11-18T11:08:53.765Z",
+  "inputSha256": "cc4ebccb83aada7d1ab6352d49c3884029674a55a0c1711498c426ef568f9b9b",
+  "documentId": "doc_60db48a3e37f479382b7111d10c7c214",
+  "signingRequestId": "sr_7e6b3e3f404f4fd290d1b5f5250aca3d",
+  "sentState": "sent",
+  "invitationReceived": true,
+  "recipientSubmitted": true,
+  "finalSha256": "886e6f16fb3fee56969dc2defc19e36bcf2d7a4378b0c73b7eba4a70efac6ea5",
+  "finalBytes": 622272,
+  "auditEntries": 7,
+  "auditTypes": [
+    "transaction-created",
+    "transaction-sent",
+    "recipient-activated",
+    "document-viewed",
+    "consent-accepted",
+    "signature-completed",
+    "transaction-completed"
+  ],
+  "completed": true,
+  "completedAt": "2026-11-18T11:12:54.064Z",
+  "verificationId": "LAGDA-VER-2026-GFmNSzM3RJ",
+  "verificationHttpStatus": 200,
+  "digestMatchesVerification": true
+}

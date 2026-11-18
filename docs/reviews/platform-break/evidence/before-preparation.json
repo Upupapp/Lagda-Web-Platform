@@ -1,0 +1,469 @@
+[
+  {
+    "tag": "demo-upload",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "demo-participants",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "demo-routing",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "demo-settings",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/settings",
+    "violations": []
+  },
+  {
+    "tag": "demo-fields",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "demo-authentication",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/authentication",
+    "violations": []
+  },
+  {
+    "tag": "demo-review",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  },
+  {
+    "tag": "demo-authorization",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/authorization",
+    "violations": []
+  },
+  {
+    "tag": "worst-upload",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "worst-participants",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "worst-routing",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "worst-settings",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/settings",
+    "violations": []
+  },
+  {
+    "tag": "worst-fields",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "worst-authentication",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/authentication",
+    "violations": []
+  },
+  {
+    "tag": "worst-review",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  },
+  {
+    "tag": "worst-authorization",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/authorization",
+    "violations": []
+  },
+  {
+    "tag": "empty-upload",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "empty-participants",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<li>• At least one participant must be added.</li>",
+            "target": [
+              "ul > li"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.54 (foreground color: #c9960c, background color: #fef9ec, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "many-participants",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "many-routing",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "many-review",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  },
+  {
+    "tag": "demo-upload",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "demo-participants",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "demo-routing",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "demo-settings",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/settings",
+    "violations": []
+  },
+  {
+    "tag": "demo-fields",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "demo-authentication",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/authentication",
+    "violations": []
+  },
+  {
+    "tag": "demo-review",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  },
+  {
+    "tag": "demo-authorization",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/authorization",
+    "violations": []
+  },
+  {
+    "tag": "worst-upload",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "worst-participants",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "worst-routing",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "worst-settings",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/settings",
+    "violations": []
+  },
+  {
+    "tag": "worst-fields",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "worst-authentication",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/authentication",
+    "violations": []
+  },
+  {
+    "tag": "worst-review",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  },
+  {
+    "tag": "worst-authorization",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/authorization",
+    "violations": []
+  },
+  {
+    "tag": "empty-upload",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "empty-participants",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<li>• At least one participant must be added.</li>",
+            "target": [
+              "ul > li"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.54 (foreground color: #c9960c, background color: #fef9ec, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "many-participants",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "many-routing",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "many-review",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  },
+  {
+    "tag": "demo-upload",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "demo-participants",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "demo-routing",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "demo-settings",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/settings",
+    "violations": []
+  },
+  {
+    "tag": "demo-fields",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "demo-authentication",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/authentication",
+    "violations": []
+  },
+  {
+    "tag": "demo-review",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  },
+  {
+    "tag": "demo-authorization",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/authorization",
+    "violations": []
+  },
+  {
+    "tag": "worst-upload",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "worst-participants",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "worst-routing",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "worst-settings",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/settings",
+    "violations": []
+  },
+  {
+    "tag": "worst-fields",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "worst-authentication",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/authentication",
+    "violations": []
+  },
+  {
+    "tag": "worst-review",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  },
+  {
+    "tag": "worst-authorization",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/authorization",
+    "violations": []
+  },
+  {
+    "tag": "empty-upload",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "empty-participants",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "many-participants",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "many-routing",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "many-review",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  }
+]

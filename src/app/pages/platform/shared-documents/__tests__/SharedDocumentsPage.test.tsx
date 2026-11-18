@@ -234,7 +234,7 @@ describe("Shared With Me", () => {
     expect(within(card).getByTestId("completed-card-banner-name")).toHaveTextContent("Globex Legal");
     expect(within(card).getByTestId("completed-card-banner-band")).toHaveStyle({ background: "#7C2D12" });
     expect(within(card).getByAltText("Globex Legal logo")).toHaveAttribute("src", "http://api.test/me/shared-documents/shd_1/branding/logo?v=v3");
-    expect(within(card).getByTestId("completed-card-progress")).toHaveTextContent("3 of 3 signed");
+    expect(within(card).getByTestId("completed-card-progress")).toHaveTextContent("3 of 3 completed");
     await userEvent.click(within(card).getByRole("button", { name: "Show actions for Supply Contract" }));
     expect(within(card).getAllByRole("menuitem").map(i => i.textContent)).toEqual([
       "View / Download signed document", "View participants", "View audit trail", "Remove your access",

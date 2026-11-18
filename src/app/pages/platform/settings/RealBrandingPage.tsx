@@ -189,18 +189,18 @@ export function RealBrandingPage({ workspaceId }: { workspaceId: string }) {
 
       <form onSubmit={e => { void handleSave(e); }} noValidate>
         <SSection title="Workspace Identity">
-          <SField label="Workspace display name" help="This is the workspace name. Changing it renames the workspace for everyone.">
-            <input type="text" value={form.displayName} maxLength={200} disabled={!canEdit}
+          <SField htmlFor="workspace-display-name" label="Workspace display name" help="This is the workspace name. Changing it renames the workspace for everyone.">
+            <input id="workspace-display-name" aria-describedby="workspace-display-name-help" type="text" value={form.displayName} maxLength={200} disabled={!canEdit}
               onChange={e => { update("displayName", e.target.value); }} style={{ ...INPUT_STYLE, ...disabledStyle }}
               aria-invalid={!nameValid} />
             {!nameValid && <div role="alert" style={{ ...GF, fontSize: 12, color: "#DC2626", marginTop: 4 }}>The workspace needs a name.</div>}
           </SField>
-          <SField label="Sender display name" help="The name to show as the sender. Leave blank to use each sender's own name.">
-            <input type="text" value={form.senderDisplayName} maxLength={120} disabled={!canEdit}
+          <SField htmlFor="sender-display-name" label="Sender display name" help="The name to show as the sender. Leave blank to use each sender's own name.">
+            <input id="sender-display-name" aria-describedby="sender-display-name-help" type="text" value={form.senderDisplayName} maxLength={120} disabled={!canEdit}
               onChange={e => { update("senderDisplayName", e.target.value); }} style={{ ...INPUT_STYLE, ...disabledStyle }} />
           </SField>
-          <SField label="Footer tagline" help="A short line about your organisation, up to 160 characters.">
-            <input type="text" value={form.footerTagline} maxLength={160} disabled={!canEdit}
+          <SField htmlFor="footer-tagline" label="Footer tagline" help="A short line about your organisation, up to 160 characters.">
+            <input id="footer-tagline" aria-describedby="footer-tagline-help" type="text" value={form.footerTagline} maxLength={160} disabled={!canEdit}
               onChange={e => { update("footerTagline", e.target.value); }} style={{ ...INPUT_STYLE, ...disabledStyle }} />
           </SField>
         </SSection>

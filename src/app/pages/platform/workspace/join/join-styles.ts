@@ -2,13 +2,14 @@
 // (078). Kept out of join-ui.tsx so Fast Refresh keeps working on it.
 
 import type { CSSProperties } from "react";
+import { ON_LIGHT } from "../../../../utils/on-light";
 
 export const GF = { fontFamily: "'Geist', sans-serif" };
 export const GM = { fontFamily: "'Geist Mono', monospace" };
 export const NAVY = "#07111F";
 export const AZURE = "#0078D4";
-export const SLATE = "#64748B";
-export const SILVER = "#8A9BAE";
+export const SLATE = ON_LIGHT.slate;
+export const SILVER = ON_LIGHT.muted;
 export const BORDER = "#E3E8EF";
 export const DANGER = "#B42318";
 

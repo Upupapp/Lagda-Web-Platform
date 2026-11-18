@@ -245,11 +245,11 @@ export function CompletedDocumentCard({ card, branding: workspaceBranding }: { c
         {card.total > 0 && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", ...GF, fontSize: 12.5, color: SLATE, marginBottom: 5 }}>
-              <span data-testid="completed-card-progress">{card.done} of {card.total} signed</span>
+              <span data-testid="completed-card-progress">{card.done} of {card.total} completed</span>
               <span>{pct}%</span>
             </div>
             <div role="meter" aria-valuenow={card.done} aria-valuemin={0} aria-valuemax={card.total}
-              aria-label={`${String(card.done)} of ${String(card.total)} signed`}
+              aria-label={`${String(card.done)} of ${String(card.total)} completed`}
               style={{ height: 6, background: BORDER, borderRadius: 999, overflow: "hidden" }}>
               <div style={{ width: `${String(pct)}%`, height: "100%", background: pct === 100 ? "#15803D" : DEFAULT_COLOR, borderRadius: 999 }} />
             </div>

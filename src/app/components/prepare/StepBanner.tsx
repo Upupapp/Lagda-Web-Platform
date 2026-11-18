@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../utils/on-light";
 // Shared "formal banner with icon" header for each /app/prepare/* step page,
 // and the two-column wide-screen shell that steps render their content into.
 // Kept in one place so Documents/Participants/Routing/Authentication/
@@ -11,7 +12,7 @@ const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
 const NAVY = "#07111F";
 const AZURE = "#0078D4";
-const SILVER = "#8A9BAE";
+const SILVER = ON_LIGHT.muted;
 
 export function StepBanner({
   icon: Icon,

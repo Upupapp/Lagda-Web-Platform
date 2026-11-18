@@ -1,3 +1,4 @@
+import { useModalFocus } from "../../hooks/useModalFocus";
 // The document a signer actually signs, with their fields where the sender
 // put them.
 //
@@ -50,7 +51,7 @@ import {
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY = "#07111F";
 const AZURE = "#0078D4";
-const SILVER = "#8A9BAE";
+const SILVER = T.silver;
 const AMBER = "#B8860B";
 
 export interface PositionedSigningSurfaceProps {
@@ -132,6 +133,8 @@ export function PositionedSigningSurface({
   const [width, setWidth] = useState(0);
   /** Which purpose the capture sheet is currently collecting. */
   const [capturing, setCapturing] = useState<"signature" | "initials" | null>(null);
+  const captureRef = useRef<HTMLDivElement>(null);
+  useModalFocus(captureRef, () => { setCapturing(null); }, false, capturing !== null);
 
   // Only the signer's own fields are shown as fillable. Server-derived ones
   // (`date-signed`, `full-name`, `email`) are filled by LAGDA and a client
@@ -225,10 +228,10 @@ export function PositionedSigningSurface({
           marginBottom: 12, padding: "10px 13px", borderRadius: 12,
           background: remaining === 0 ? T.successWash : T.warnWash,
           border: `1px solid ${remaining === 0 ? "#B7E3CA" : "#EBD9A6"}`,
-          color: remaining === 0 ? T.success : "#9A6B00",
+          color: remaining === 0 ? T.success : T.warn,
           // Sticks under the header so the count follows the signer down a
           // long document — the one number they need while scrolling.
-          position: "sticky", top: 56, zIndex: 2,
+          position: "sticky", top: "calc(56px + env(safe-area-inset-top, 0px))", zIndex: 2,
         }}
       >
         {remaining === 0
@@ -521,6 +524,7 @@ export function PositionedSigningSurface({
                           )
                           : (
                             <input
+                              className="recipient-field-text"
                               disabled={disabled}
                               aria-label={field.label}
                               maxLength={field.maxLength ?? undefined}
@@ -530,13 +534,10 @@ export function PositionedSigningSurface({
                               style={{
                                 ...GF, width: "100%", height: "100%", border: "none",
                                 background: "transparent", padding: "0 4px",
-                                // A FLOOR as well as a ceiling. `min(1.6vw,
-                                // 13px)` alone computes to ~5px at 320px,
-                                // which is not readable — the signature
-                                // prompt above already carries a clamp for
-                                // exactly this reason and this input was
-                                // simply missed.
-                                fontSize: "clamp(11px, 1.6vw, 13px)", color: NAVY,
+                                // This is an editable control, not the PDF's font.
+                                // 16px keeps it readable and avoids Safari input zoom;
+                                // the sender's stored rectangle remains unchanged.
+                                fontSize: 16, color: NAVY,
                               }}
                             />
                           )}
@@ -553,6 +554,7 @@ export function PositionedSigningSurface({
           where the mark is going before they make it. */}
       {capturing !== null && (
         <div
+          ref={captureRef} tabIndex={-1} className="recipient-capture-layer"
           role="dialog"
           aria-modal="true"
           aria-label={`Add your ${capturing}`}
@@ -581,7 +583,7 @@ export function PositionedSigningSurface({
                 aria-label="Close"
                 style={{
                   display: "grid", placeItems: "center",
-                  width: 36, height: 36, borderRadius: 999,
+                  width: 44, height: 44, borderRadius: 999,
                   border: "none", background: "transparent",
                   color: T.silver, cursor: "pointer",
                 }}

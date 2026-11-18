@@ -1,0 +1,415 @@
+{
+  "errors": [],
+  "results": [
+    {
+      "path": "/app/dashboard",
+      "tag": "desktop-dashboard",
+      "title": "Dashboard — LAGDA",
+      "url": "/app/dashboard",
+      "headings": [
+        "Dashboard",
+        "Dashboard",
+        "Send your first document",
+        "Your free document is ready",
+        "Welcome to LAGDA"
+      ],
+      "text": "LR\n\nLAGDA Local Replica\n\nFree\n\nPrepare Document\nHome\nDocuments\nShared Documents\nInvitations\nTemplates\nContacts\nVerify a Document\nNotary Directory\n\nWORKSPACE\n\nMy Settings\nLO\n\nLocal Owner\n\nOwner\n\nDashboard\nSearch…\nCtrl K\n1\nSkip to main content\nDashboard\nPrepare Document\nSend your first document\n\nUpload a PDF, add the people who need to sign, place their fields and send. Everything you send shows up here — what's waiting on whom, what's about to expire, and what's done.\n\nPrepare your first document\nHi, Local\nEdit profile\nFREE PLAN\n1\nLEFT\nYour free document is ready\n\nSend one document for signing on us. Signing documents other people send you is always free.\n\n0 of 1 document sent\nUnlimited signing for you\nUNLOCK MORE\nPersonal\n₱299/mo\n50 documents a month\nYour logo and colours\nShare completed documents\nReady-made templates and chatbot\nJoin other workspaces\nChoose Personal\nMost popular\nBusiness\n₱799/user/mo\nEverything in Personal\nInvite your team\nTeams, roles and join links\nShared contacts and activity log\nChoose Business\nTest mode: no money is moved\nPlan & Billing\nMEET THE LAGDA CHATBOT\nPERSONAL PLAN\nYou\nDraft an NDA between Reyes Law and Maria Santos. Both sign.\nDescribe it, and it writes the template\nSigners and roles set for you\nSigning order ready to send\nIncluded with Personal and Business\nUnlock the Chatbot\nSTEP 1 OF 4\nWelcome to LAGDA\n\nThis short tour walks through the Dashboard and the sidebar so you know where things live.\n\nSkip tour\nNext",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": []
+    },
+    {
+      "path": "/app/templates",
+      "tag": "desktop-templates",
+      "title": "Templates — LAGDA",
+      "url": "/app/templates",
+      "headings": [
+        "Templates",
+        "Templates",
+        "My Templates",
+        "No templates yet"
+      ],
+      "text": "LR\n\nLAGDA Local Replica\n\nFree\n\nPrepare Document\nHome\nDocuments\nShared Documents\nInvitations\nTemplates\nContacts\nVerify a Document\nNotary Directory\n\nWORKSPACE\n\nMy Settings\nLO\n\nLocal Owner\n\nOwner\n\nTemplates\nSearch…\nCtrl K\n1\nSkip to main content\nTemplates\n\nReusable document workflows for your team\n\nNew Template\nStart faster with 46 ready-made templates\nAcross 15 purposes — Recruitment, Sales, Procurement, Finance and more — with roles and signing order already set up.\nBrowse\nMy Templates\nFilters\nSort:\nLast Updated\nName (A–Z)\nLast Used\nMost Used\nStatus\nCategory\n↓\n\nNo templates found\n\nNo templates yet\n\nCreate your first template to build reusable signing workflows for your team.\n\nCreate Template\nWRITE TEMPLATES WITH THE LAGDA CHATBOT\nPERSONAL PLAN\nYou\nA service agreement for a web design project. The client and the designer sign.\nA new template in seconds\nRoles and signing order included\nEdit it like any template\nIncluded with Personal and Business\nUnlock the Chatbot",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": []
+    },
+    {
+      "path": "/app/documents",
+      "tag": "desktop-documents",
+      "title": "Documents — LAGDA",
+      "url": "/app/documents",
+      "headings": [
+        "Documents",
+        "Documents",
+        "Your documents will appear here"
+      ],
+      "text": "LR\n\nLAGDA Local Replica\n\nFree\n\nPrepare Document\nHome\nDocuments\nShared Documents\nInvitations\nTemplates\nContacts\nVerify a Document\nNotary Directory\n\nWORKSPACE\n\nMy Settings\nLO\n\nLocal Owner\n\nOwner\n\nDocuments\nSearch…\nCtrl K\n1\nSkip to main content\nDocuments\nPrepare Document\nCorrespondence\nRecords\nSent\nI must sign\nI must approve\nI must review\nAcknowledgement\nYour documents will appear here\n\nDocuments you prepare and send for signing will show up in this list. Use Prepare Document to start one.",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": []
+    },
+    {
+      "path": "/app/contacts",
+      "tag": "desktop-contacts",
+      "title": "Contacts — LAGDA",
+      "url": "/app/contacts",
+      "headings": [
+        "Contacts",
+        "Contacts",
+        "No contacts yet"
+      ],
+      "text": "LR\n\nLAGDA Local Replica\n\nFree\n\nPrepare Document\nHome\nDocuments\nShared Documents\nInvitations\nTemplates\nContacts\nVerify a Document\nNotary Directory\n\nWORKSPACE\n\nMy Settings\nLO\n\nLocal Owner\n\nOwner\n\nContacts\nSearch…\nCtrl K\n1\nSkip to main content\nSkip to contacts\nADDRESS BOOK\nContacts\n\nThe people you send documents to. Find anyone on LAGDA by their email, or add someone who isn't on LAGDA yet.\n\nContact groups\nFind people\nAll contacts\nPending\nDocument requests\nArchived\n0\nContacts\n0\nWaiting for you\n0\nRequests sent\nSearch contacts\n⌕\nFilters ▼\nRecently Updated\nRecently Used\nFrequently Used\nName\nOrganization\n↓\n\n👥\n\nNo contacts yet\n\nAdd contacts to quickly add participants to future document workflows.\n\nAdd First Contact",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": []
+    },
+    {
+      "path": "/app/dashboard",
+      "tag": "390-dashboard",
+      "title": "Dashboard — LAGDA",
+      "url": "/app/dashboard",
+      "headings": [
+        "Dashboard",
+        "Dashboard",
+        "Send your first document",
+        "Your free document is ready"
+      ],
+      "text": "1\nLO\nSkip to main content\nDashboard\nPrepare Document\nSend your first document\n\nUpload a PDF, add the people who need to sign, place their fields and send. Everything you send shows up here — what's waiting on whom, what's about to expire, and what's done.\n\nPrepare your first document\nHi, Local\nEdit profile\nFREE PLAN\n1\nLEFT\nYour free document is ready\n\nSend one document for signing on us. Signing documents other people send you is always free.\n\n0 of 1 document sent\nUnlimited signing for you\nUNLOCK MORE\nPersonal\n₱299/mo\n50 documents a month\nYour logo and colours\nShare completed documents\nReady-made templates and chatbot\nJoin other workspaces\nChoose Personal\nMost popular\nBusiness\n₱799/user/mo\nEverything in Personal\nInvite your team\nTeams, roles and join links\nShared contacts and activity log\nChoose Business\nTest mode: no money is moved\nPlan & Billing\nMEET THE LAGDA CHATBOT\nYou\nDraft an NDA between Reyes Law and Maria Santos. Both sign.\nDescribe it, and it writes the template\nSigners and roles set for you\nSigning order ready to send\nIncluded with Personal and Business\nUnlock the Chatbot",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "violations": []
+    },
+    {
+      "path": "/app/templates",
+      "tag": "390-templates",
+      "title": "Templates — LAGDA",
+      "url": "/app/templates",
+      "headings": [
+        "Templates",
+        "Templates",
+        "My Templates",
+        "No templates yet"
+      ],
+      "text": "1\nLO\nSkip to main content\nTemplates\n\nReusable document workflows for your team\n\nNew Template\nStart faster with 46 ready-made templates\nRoles and signing order already set up.\nMy Templates\nFilters\nSort:\nLast Updated\nName (A–Z)\nLast Used\nMost Used\nStatus\nCategory\n↓\n\nNo templates found\n\nNo templates yet\n\nCreate your first template to build reusable signing workflows for your team.\n\nCreate Template\nWRITE TEMPLATES WITH THE LAGDA CHATBOT\nYou\nA service agreement for a web design project. The client and the designer sign.\nIncluded with Personal and Business\nUnlock the Chatbot",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "violations": []
+    },
+    {
+      "path": "/app/documents",
+      "tag": "390-documents",
+      "title": "Documents — LAGDA",
+      "url": "/app/documents",
+      "headings": [
+        "Documents",
+        "Documents",
+        "Your documents will appear here"
+      ],
+      "text": "1\nLO\nSkip to main content\nDocuments\nPrepare Document\nCorrespondence\nRecords\nSent\nI must sign\nI must approve\nI must review\nAcknowledgement\nYour documents will appear here\n\nDocuments you prepare and send for signing will show up in this list. Use Prepare Document to start one.",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [
+        {
+          "tag": "BUTTON",
+          "cls": "doc-list-tab",
+          "text": " I must review",
+          "right": 503.359375
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 401.828125
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 400.6617431640625
+        },
+        {
+          "tag": "circle",
+          "cls": "",
+          "text": "",
+          "right": 396.578125
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "doc-list-tab",
+          "text": " Acknowledgement",
+          "right": 673.8125
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 538.359375
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 534.859375
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 537.1926879882812
+        }
+      ],
+      "violations": []
+    },
+    {
+      "path": "/app/contacts",
+      "tag": "390-contacts",
+      "title": "Contacts — LAGDA",
+      "url": "/app/contacts",
+      "headings": [
+        "Contacts",
+        "Contacts",
+        "No contacts yet"
+      ],
+      "text": "1\nLO\nSkip to main content\nSkip to contacts\nADDRESS BOOK\nContacts\n\nThe people you send documents to. Find anyone on LAGDA by their email, or add someone who isn't on LAGDA yet.\n\nContact groups\nFind people\nAll contacts\nPending\nDocument requests\nArchived\n0\nContacts\n0\nWaiting for you\n0\nRequests sent\nSearch contacts\n⌕\nFilters ▼\nRecently Updated\nRecently Used\nFrequently Used\nName\nOrganization\n↓\n\n👥\n\nNo contacts yet\n\nAdd contacts to quickly add participants to future document workflows.\n\nAdd First Contact",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "",
+          "text": "Document requests",
+          "right": 403.65625
+        },
+        {
+          "tag": "A",
+          "cls": "",
+          "text": "Archived",
+          "right": 504.796875
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 430.65625
+        },
+        {
+          "tag": "rect",
+          "cls": "",
+          "text": "",
+          "right": 429.40625
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 428.15625
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 424.40625
+        }
+      ],
+      "violations": []
+    },
+    {
+      "path": "/app/dashboard",
+      "tag": "320-dashboard",
+      "title": "Dashboard — LAGDA",
+      "url": "/app/dashboard",
+      "headings": [
+        "Dashboard",
+        "Dashboard",
+        "Send your first document",
+        "Your free document is ready"
+      ],
+      "text": "1\nLO\nSkip to main content\nDashboard\nPrepare Document\nSend your first document\n\nUpload a PDF, add the people who need to sign, place their fields and send. Everything you send shows up here — what's waiting on whom, what's about to expire, and what's done.\n\nPrepare your first document\nHi, Local\nEdit profile\nFREE PLAN\n1\nLEFT\nYour free document is ready\n\nSend one document for signing on us. Signing documents other people send you is always free.\n\n0 of 1 document sent\nUnlimited signing for you\nUNLOCK MORE\nPersonal\n₱299/mo\n50 documents a month\nYour logo and colours\nShare completed documents\nReady-made templates and chatbot\nJoin other workspaces\nChoose Personal\nMost popular\nBusiness\n₱799/user/mo\nEverything in Personal\nInvite your team\nTeams, roles and join links\nShared contacts and activity log\nChoose Business\nTest mode: no money is moved\nPlan & Billing\nMEET THE LAGDA CHATBOT\nYou\nDraft an NDA between Reyes Law and Maria Santos. Both sign.\nDescribe it, and it writes the template\nSigners and roles set for you\nSigning order ready to send\nIncluded with Personal and Business\nUnlock the Chatbot",
+      "width": 320,
+      "scrollWidth": 320,
+      "overflow": [],
+      "violations": []
+    },
+    {
+      "path": "/app/templates",
+      "tag": "320-templates",
+      "title": "Templates — LAGDA",
+      "url": "/app/templates",
+      "headings": [
+        "Templates",
+        "Templates",
+        "My Templates",
+        "No templates yet"
+      ],
+      "text": "1\nLO\nSkip to main content\nTemplates\n\nReusable document workflows for your team\n\nNew Template\nStart faster with 46 ready-made templates\nRoles and signing order already set up.\nMy Templates\nFilters\nSort:\nLast Updated\nName (A–Z)\nLast Used\nMost Used\nStatus\nCategory\n↓\n\nNo templates found\n\nNo templates yet\n\nCreate your first template to build reusable signing workflows for your team.\n\nCreate Template\nWRITE TEMPLATES WITH THE LAGDA CHATBOT\nYou\nA service agreement for a web design project. The client and the designer sign.\nIncluded with Personal and Business\nUnlock the Chatbot",
+      "width": 320,
+      "scrollWidth": 320,
+      "overflow": [],
+      "violations": []
+    },
+    {
+      "path": "/app/documents",
+      "tag": "320-documents",
+      "title": "Documents — LAGDA",
+      "url": "/app/documents",
+      "headings": [
+        "Documents",
+        "Documents",
+        "Your documents will appear here"
+      ],
+      "text": "1\nLO\nSkip to main content\nDocuments\nPrepare Document\nCorrespondence\nRecords\nSent\nI must sign\nI must approve\nI must review\nAcknowledgement\nYour documents will appear here\n\nDocuments you prepare and send for signing will show up in this list. Use Prepare Document to start one.",
+      "width": 320,
+      "scrollWidth": 320,
+      "overflow": [
+        {
+          "tag": "BUTTON",
+          "cls": "doc-list-tab",
+          "text": " I must approve",
+          "right": 366.828125
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "doc-list-tab",
+          "text": " I must review",
+          "right": 503.359375
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 401.828125
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 400.6617431640625
+        },
+        {
+          "tag": "circle",
+          "cls": "",
+          "text": "",
+          "right": 396.578125
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "doc-list-tab",
+          "text": " Acknowledgement",
+          "right": 673.8125
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 538.359375
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 534.859375
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 537.1926879882812
+        }
+      ],
+      "violations": []
+    },
+    {
+      "path": "/app/contacts",
+      "tag": "320-contacts",
+      "title": "Contacts — LAGDA",
+      "url": "/app/contacts",
+      "headings": [
+        "Contacts",
+        "Contacts",
+        "No contacts yet"
+      ],
+      "text": "1\nLO\nSkip to main content\nSkip to contacts\nADDRESS BOOK\nContacts\n\nThe people you send documents to. Find anyone on LAGDA by their email, or add someone who isn't on LAGDA yet.\n\nContact groups\nFind people\nAll contacts\nPending\nDocument requests\nArchived\n0\nContacts\n0\nWaiting for you\n0\nRequests sent\nSearch contacts\n⌕\nFilters ▼\nRecently Updated\nRecently Used\nFrequently Used\nName\nOrganization\n↓\n\n👥\n\nNo contacts yet\n\nAdd contacts to quickly add participants to future document workflows.\n\nAdd First Contact",
+      "width": 320,
+      "scrollWidth": 320,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "",
+          "text": "Document requests",
+          "right": 403.65625
+        },
+        {
+          "tag": "A",
+          "cls": "",
+          "text": "Archived",
+          "right": 504.796875
+        },
+        {
+          "tag": "svg",
+          "cls": "",
+          "text": "",
+          "right": 430.65625
+        },
+        {
+          "tag": "rect",
+          "cls": "",
+          "text": "",
+          "right": 429.40625
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 428.15625
+        },
+        {
+          "tag": "path",
+          "cls": "",
+          "text": "",
+          "right": 424.40625
+        }
+      ],
+      "violations": []
+    },
+    {
+      "path": "/app/templates",
+      "tag": "zoom-reflow-templates",
+      "title": "Templates — LAGDA",
+      "url": "/app/templates",
+      "headings": [
+        "Templates",
+        "Templates",
+        "My Templates",
+        "No templates yet"
+      ],
+      "text": "1\nLO\nSkip to main content\nTemplates\n\nReusable document workflows for your team\n\nNew Template\nStart faster with 46 ready-made templates\nRoles and signing order already set up.\nMy Templates\nFilters\nSort:\nLast Updated\nName (A–Z)\nLast Used\nMost Used\nStatus\nCategory\n↓\n\nNo templates found\n\nNo templates yet\n\nCreate your first template to build reusable signing workflows for your team.\n\nCreate Template\nWRITE TEMPLATES WITH THE LAGDA CHATBOT\nPERSONAL PLAN\nYou\nA service agreement for a web design project. The client and the designer sign.\nA new template in seconds\nRoles and signing order included\nEdit it like any template\nIncluded with Personal and Business\nUnlock the Chatbot",
+      "width": 720,
+      "scrollWidth": 720,
+      "overflow": [],
+      "violations": []
+    },
+    {
+      "path": "/app/documents",
+      "tag": "reduced-motion-documents",
+      "title": "Documents — LAGDA",
+      "url": "/app/documents",
+      "headings": [
+        "Documents",
+        "Documents",
+        "Your documents will appear here"
+      ],
+      "text": "1\nLO\nSkip to main content\nDocuments\nPrepare Document\nCorrespondence\nRecords\nSent\nI must sign\nI must approve\nI must review\nAcknowledgement\nYour documents will appear here\n\nDocuments you prepare and send for signing will show up in this list. Use Prepare Document to start one.",
+      "width": 720,
+      "scrollWidth": 720,
+      "overflow": [],
+      "violations": []
+    }
+  ]
+}

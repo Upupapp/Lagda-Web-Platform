@@ -1,0 +1,26 @@
+[
+  {
+    "subject": "\"Template E2E QA 2026-11-18T13-48-26-939Z — use 2\" is fully signed",
+    "to": [
+      "local.business.qa@example.test"
+    ]
+  },
+  {
+    "subject": "LAGDA Local Business QA sent you \"Template E2E QA 2026-11-18T13-48-26-939Z — use 2\" to sign",
+    "to": [
+      "multi.signer.2.20261118@example.test"
+    ]
+  },
+  {
+    "subject": "\"Template E2E QA 2026-11-18T13-48-26-939Z — use 1 (2)\" is fully signed",
+    "to": [
+      "local.business.qa@example.test"
+    ]
+  },
+  {
+    "subject": "LAGDA Local Business QA sent you \"Template E2E QA 2026-11-18T13-48-26-939Z — use 1 (2)\" to sign",
+    "to": [
+      "multi.signer.1.20261118@example.test"
+    ]
+  }
+]

@@ -1,5 +1,24 @@
 # LAGDA Frontend Documentation Index
 
+## Persistent design guidance
+
+- [Admin portal design memory](../DESIGN.md) — carry-forward design decisions and Emil skill workflow.
+
+## Platform stress review
+
+- [Preparation, recipient signing and platform break-ui review](reviews/platform-break/review.md) — local stress cases, fixes and evidence.
+
+## Admin portal review
+
+- [Admin Emil sprint roadmap](reviews/admin-emil/roadmap.md).
+- [Admin review and verification](reviews/admin-emil/review.md) — local administration screens and worst-case data.
+
+## Current screen improvement review
+
+- [Emil screen improvement roadmap](emil-screen-improvement-roadmap.md) — existing production features only, 18 November 2026.
+- [Review and screenshot evidence](reviews/emil-2026-11-18/review.md).
+
+
 Last updated: 2026-07-16 (Commands 1Ã¢â‚¬â€œ35 complete)
 
 ---
@@ -257,3 +276,17 @@ accessibility, responsive, reduced-motion and both production builds all pass.
 Documents marked *(pending)* were not created in Commands 1Ã¢â‚¬â€œ25 because the implementation was completed correctly without requiring a separate doc file. They are candidates for future documentation sprints.
 
 Documents marked *(planned)* require tooling (automated accessibility scanner, browser automation) that is outside the current frontend-only build phase.
+
+- [Real local signing verification](reviews/real-local-signing/review.md) — actual upload, signing, sealed PDF, recipient access and audit verification.
+
+- [Multiple-recipient signing verification](reviews/multi-recipient-signing/review.md) — real local sequential/parallel signing, idempotent retries, completed PDFs and audit trails.
+
+- [Approver, reviewer and signer workflow verification](reviews/role-workflows/review.md) — real local gating, parallel roles, skipped approval, decline, PDFs and audit evidence.
+
+- [Mobile preparation and recipient signing review](reviews/mobile-signing/review.md) — mobile-native/break-ui fixes, viewport and pointer regressions, plus real drawn-signature verification.
+
+- [Mobile templates, tracking and admin review](reviews/mobile-platform/review.md) — local mobile-native/break-ui fixes, Emil review, screenshots and regression evidence.
+
+- [Real local template workflow verification](reviews/template-workflow/review.md) — authored template creation, two independent uses, real signing, completed PDFs and access/integrity checks.
+
+- [Template variables and multiple-role verification](reviews/template-variables-roles/review.md) — real sequential/parallel workflows, five variable types, two validation fixes, completed PDFs and six participant downloads.

@@ -1,0 +1,616 @@
+[
+  {
+    "tag": "overview",
+    "width": 1440,
+    "url": "/app/workspace",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<dt style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 10px; color: rgb(138, 155, 174); text-transform: uppercase; letter-spacing: 0.05em;\">Sender</dt>",
+            "target": [
+              "div[data-testid=\"brand-card-sender\"] > dt"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<dt style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 10px; color: rgb(138, 155, 174); text-transform: uppercase; letter-spacing: 0.05em;\">Created</dt>",
+            "target": [
+              "div[data-testid=\"brand-card-created\"] > dt"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<dt style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 10px; color: rgb(138, 155, 174); text-transform: uppercase; letter-spacing: 0.05em;\">Your role</dt>",
+            "target": [
+              "div[data-testid=\"brand-card-role\"] > dt"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<button type=\"button\" aria-pressed=\"false\">30 days</button>",
+            "target": [
+              ".ov-range > button[type=\"button\"]:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "svg-img-alt",
+        "nodes": [
+          {
+            "html": "<path cx=\"75\" cy=\"75\" name=\"Declined\" stroke=\"none\" fill=\"#DC2626\" tabindex=\"-1\" class=\"recharts-sector\" d=\"M 139.4,75\n    A 64.4,64.4,0,\n    1,0,\n    139.36076926002977,77.24752758764106\n  L 118.37356189262876,76.51463815688854\n            A 43.4,43.4,0,\n            1,1,\n            118.4,75 Z\" role=\"img\">",
+            "target": [
+              ".recharts-sector"
+            ],
+            "summary": "Fix any of the following:\n  Element has no child that is a title\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "people",
+    "width": 1440,
+    "url": "/app/workspace/people",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "activity",
+    "width": 1440,
+    "url": "/app/workspace/activity",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<time datetime=\"2026-11-18T09:32:59.498Z\">5:32 PM</time>",
+            "target": [
+              "time"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span aria-hidden=\"true\">· 37 min ago</span>",
+            "target": [
+              ".act-meta > span[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<p style=\"font-family: Geist, sans-serif; font-size: 12px; color: rgb(138, 155, 174); margin: 0px;\">That is everything recorded.</p>",
+            "target": [
+              "div:nth-child(5) > p"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "settings",
+    "width": 1440,
+    "url": "/app/workspace/settings",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span class=\"ws-eyebrow\">Workspace</span>",
+            "target": [
+              ".ws-settings-head-text > .ws-eyebrow"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<p style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 11px; color: rgb(138, 155, 174); margin: 16px 0px 0px;\">Created November 18, 2026</p>",
+            "target": [
+              "section[aria-labelledby=\"identity-heading\"] > p"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "roles",
+    "width": 1440,
+    "url": "/app/workspace/settings/roles",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span class=\"ws-eyebrow\">Workspace</span>",
+            "target": [
+              ".ws-settings-head-text > .ws-eyebrow"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<th scope=\"col\" style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 10px; color: rgb(138, 155, 174); text-transform: uppercase; letter-spacing: 0.05em; text-align: left; padding: 10px 16px;\">Ability</th>",
+            "target": [
+              "th[scope=\"col\"]:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "branding",
+    "width": 1440,
+    "url": "/app/workspace/settings/branding",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span class=\"ws-eyebrow\">Workspace</span>",
+            "target": [
+              ".ws-settings-head-text > .ws-eyebrow"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "label",
+        "nodes": [
+          {
+            "html": "<input type=\"text\" maxlength=\"200\" aria-invalid=\"false\" value=\"LAGDA Local Business QA\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">",
+            "target": [
+              "input[maxlength=\"200\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "html": "<input type=\"text\" maxlength=\"120\" value=\"\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">",
+            "target": [
+              "input[maxlength=\"120\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "html": "<input type=\"text\" maxlength=\"160\" value=\"\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">",
+            "target": [
+              "input[maxlength=\"160\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "usage",
+    "width": 1440,
+    "url": "/app/workspace/settings/usage",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span class=\"ws-eyebrow\">Workspace</span>",
+            "target": [
+              ".ws-settings-head-text > .ws-eyebrow"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "overview",
+    "width": 390,
+    "url": "/app/workspace",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<dt style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 10px; color: rgb(138, 155, 174); text-transform: uppercase; letter-spacing: 0.05em;\">Sender</dt>",
+            "target": [
+              "div[data-testid=\"brand-card-sender\"] > dt"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<dt style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 10px; color: rgb(138, 155, 174); text-transform: uppercase; letter-spacing: 0.05em;\">Created</dt>",
+            "target": [
+              "div[data-testid=\"brand-card-created\"] > dt"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<dt style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 10px; color: rgb(138, 155, 174); text-transform: uppercase; letter-spacing: 0.05em;\">Your role</dt>",
+            "target": [
+              "div[data-testid=\"brand-card-role\"] > dt"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "svg-img-alt",
+        "nodes": [
+          {
+            "html": "<path cx=\"70\" cy=\"70\" name=\"Declined\" stroke=\"none\" fill=\"#DC2626\" tabindex=\"-1\" class=\"recharts-sector\" d=\"M 129.8,70\n    A 59.8,59.8,0,\n    1,0,\n    129.76357145574192,72.08698990280955\n  L 110.27545032886955,71.40644971711079\n            A 40.3,40.3,0,\n            1,1,\n            110.3,70 Z\" role=\"img\">",
+            "target": [
+              ".recharts-sector"
+            ],
+            "summary": "Fix any of the following:\n  Element has no child that is a title\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "people",
+    "width": 390,
+    "url": "/app/workspace/people",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "activity",
+    "width": 390,
+    "url": "/app/workspace/activity",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<time datetime=\"2026-11-18T09:32:59.498Z\">5:32 PM</time>",
+            "target": [
+              "time"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span aria-hidden=\"true\">· 37 min ago</span>",
+            "target": [
+              ".act-meta > span[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<p style=\"font-family: Geist, sans-serif; font-size: 12px; color: rgb(138, 155, 174); margin: 0px;\">That is everything recorded.</p>",
+            "target": [
+              "div:nth-child(5) > p"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "settings",
+    "width": 390,
+    "url": "/app/workspace/settings",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span class=\"ws-eyebrow\">Workspace</span>",
+            "target": [
+              ".ws-settings-head-text > .ws-eyebrow"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<p style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 11px; color: rgb(138, 155, 174); margin: 16px 0px 0px;\">Created November 18, 2026</p>",
+            "target": [
+              "section[aria-labelledby=\"identity-heading\"] > p"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "roles",
+    "width": 390,
+    "url": "/app/workspace/settings/roles",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span class=\"ws-eyebrow\">Workspace</span>",
+            "target": [
+              ".ws-settings-head-text > .ws-eyebrow"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "branding",
+    "width": 390,
+    "url": "/app/workspace/settings/branding",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span class=\"ws-eyebrow\">Workspace</span>",
+            "target": [
+              ".ws-settings-head-text > .ws-eyebrow"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "label",
+        "nodes": [
+          {
+            "html": "<input type=\"text\" maxlength=\"200\" aria-invalid=\"false\" value=\"LAGDA Local Business QA\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">",
+            "target": [
+              "input[maxlength=\"200\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "html": "<input type=\"text\" maxlength=\"120\" value=\"\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">",
+            "target": [
+              "input[maxlength=\"120\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "html": "<input type=\"text\" maxlength=\"160\" value=\"\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">",
+            "target": [
+              "input[maxlength=\"160\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "usage",
+    "width": 390,
+    "url": "/app/workspace/settings/usage",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span class=\"ws-eyebrow\">Workspace</span>",
+            "target": [
+              ".ws-settings-head-text > .ws-eyebrow"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "overview",
+    "width": 320,
+    "url": "/app/workspace",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<dt style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 10px; color: rgb(138, 155, 174); text-transform: uppercase; letter-spacing: 0.05em;\">Sender</dt>",
+            "target": [
+              "div[data-testid=\"brand-card-sender\"] > dt"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<dt style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 10px; color: rgb(138, 155, 174); text-transform: uppercase; letter-spacing: 0.05em;\">Created</dt>",
+            "target": [
+              "div[data-testid=\"brand-card-created\"] > dt"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<dt style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 10px; color: rgb(138, 155, 174); text-transform: uppercase; letter-spacing: 0.05em;\">Your role</dt>",
+            "target": [
+              "div[data-testid=\"brand-card-role\"] > dt"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "svg-img-alt",
+        "nodes": [
+          {
+            "html": "<path cx=\"70\" cy=\"70\" name=\"Declined\" stroke=\"none\" fill=\"#DC2626\" tabindex=\"-1\" class=\"recharts-sector\" d=\"M 129.8,70\n    A 59.8,59.8,0,\n    1,0,\n    129.76357145574192,72.08698990280955\n  L 110.27545032886955,71.40644971711079\n            A 40.3,40.3,0,\n            1,1,\n            110.3,70 Z\" role=\"img\">",
+            "target": [
+              ".recharts-sector"
+            ],
+            "summary": "Fix any of the following:\n  Element has no child that is a title\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "people",
+    "width": 320,
+    "url": "/app/workspace/people",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "tag": "activity",
+    "width": 320,
+    "url": "/app/workspace/activity",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<time datetime=\"2026-11-18T09:32:59.498Z\">5:32 PM</time>",
+            "target": [
+              "time"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span aria-hidden=\"true\">· 37 min ago</span>",
+            "target": [
+              ".act-meta > span[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<p style=\"font-family: Geist, sans-serif; font-size: 12px; color: rgb(138, 155, 174); margin: 0px;\">That is everything recorded.</p>",
+            "target": [
+              "div:nth-child(5) > p"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "settings",
+    "width": 320,
+    "url": "/app/workspace/settings",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span class=\"ws-eyebrow\">Workspace</span>",
+            "target": [
+              ".ws-settings-head-text > .ws-eyebrow"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<p style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 11px; color: rgb(138, 155, 174); margin: 16px 0px 0px;\">Created November 18, 2026</p>",
+            "target": [
+              "section[aria-labelledby=\"identity-heading\"] > p"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #8a9bae, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "roles",
+    "width": 320,
+    "url": "/app/workspace/settings/roles",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span class=\"ws-eyebrow\">Workspace</span>",
+            "target": [
+              ".ws-settings-head-text > .ws-eyebrow"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "branding",
+    "width": 320,
+    "url": "/app/workspace/settings/branding",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span class=\"ws-eyebrow\">Workspace</span>",
+            "target": [
+              ".ws-settings-head-text > .ws-eyebrow"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "label",
+        "nodes": [
+          {
+            "html": "<input type=\"text\" maxlength=\"200\" aria-invalid=\"false\" value=\"LAGDA Local Business QA\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">",
+            "target": [
+              "input[maxlength=\"200\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "html": "<input type=\"text\" maxlength=\"120\" value=\"\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">",
+            "target": [
+              "input[maxlength=\"120\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "html": "<input type=\"text\" maxlength=\"160\" value=\"\" style=\"font-family: Geist, sans-serif; font-size: 13.5px; padding: 9px 12px; min-height: 40px; border: 1.5px solid rgb(203, 213, 225); border-radius: 8px; color: rgb(7, 17, 31); width: 100%; box-sizing: border-box; background: rgb(255, 255, 255);\">",
+            "target": [
+              "input[maxlength=\"160\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "usage",
+    "width": 320,
+    "url": "/app/workspace/settings/usage",
+    "overflow": false,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span class=\"ws-eyebrow\">Workspace</span>",
+            "target": [
+              ".ws-settings-head-text > .ws-eyebrow"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.71 (foreground color: #8a9bae, background color: #f8fafc, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  }
+]

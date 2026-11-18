@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../utils/on-light";
 // The dashboard, for a real account.
 //
 // ── What it is built on ────────────────────────────────────────────────────
@@ -68,10 +69,10 @@ const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
 const GREEN  = "#059669";
-const RED    = "#DC2626";
+const RED    = "#B91C1C";
 const AMBER  = "#B45309";
-const SLATE6 = "#64748B";
-const SLATE4 = "#94A3B8";
+const SLATE6 = ON_LIGHT.slate;
+const SLATE4 = ON_LIGHT.muted;
 const SLATE2 = "#E2E8F0";
 
 /** The page fetches this many. Also the API's ceiling. */
@@ -196,7 +197,7 @@ function PrepareLink({ label = "Prepare Document" }: { label?: string }) {
       onClick={onPrepareClick()}
       style={{
         display: "inline-flex", alignItems: "center", gap: 6,
-        padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+        padding: "8px 16px", minHeight: 44, boxSizing: "border-box", borderRadius: 8, fontSize: 13, fontWeight: 600,
         background: AZURE, color: "#fff", textDecoration: "none", ...GF,
       }}
     >
@@ -382,12 +383,12 @@ function ProgressMeter({ signed, of }: { signed: number; of: number }) {
     <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
       <div
         role="meter" aria-valuenow={signed} aria-valuemin={0} aria-valuemax={of}
-        aria-label={`${signed} of ${of} signed`}
+        aria-label={`${signed} of ${of} completed`}
         style={{ width: 72, height: 6, borderRadius: 3, background: SLATE2, overflow: "hidden", flexShrink: 0 }}
       >
         <div style={{ width: `${pct}%`, height: "100%", background: pct === 100 ? GREEN : AZURE }} />
       </div>
-      <span style={{ fontSize: 12, color: SLATE6, whiteSpace: "nowrap" }}>{signed} of {of} signed</span>
+      <span style={{ fontSize: 12, color: SLATE6, whiteSpace: "nowrap" }}>{signed} of {of} completed</span>
     </div>
   );
 }
@@ -493,13 +494,14 @@ export function RealDashboard() {
   return (
     <>
       <AppContent style={{ padding: "0 24px 40px" }}>
-        {/* Who you are: on the banner of the workspace you are in, or — on
-            the Free plan, which has no branding — your Free pass and the way
-            to Plan & Billing. Nothing is shown until the plan is known, so a
-            Free person never sees the banner flash first. */}
-        {myPlan === null ? <div style={{ minHeight: 200 }} aria-hidden />
-          : myPlan.plan === "free" ? <><FreePlanHero plan={myPlan} /><ChatbotShowcase /></>
-          : <ProfileHero />}
+        {/* Existing work comes before optional upgrades. Paid workspaces keep their profile banner. */}
+        {myPlan !== null && myPlan.plan !== "free" && <ProfileHero />}
+        {myPlan?.plan === "free" && (
+          <div className="hd-task-header">
+            <h1>Dashboard</h1>
+            <PrepareLink />
+          </div>
+        )}
         {status === "loading" && (
           <div style={{ padding: "24px 0" }} aria-busy="true" aria-label="Loading dashboard">
             <SkeletonBlock height={96} />
@@ -600,6 +602,12 @@ export function RealDashboard() {
             </p>
           </>
         )}
+        {myPlan?.plan === "free" && (
+          <section aria-label="Your plan and optional upgrades">
+            <FreePlanHero plan={myPlan} />
+            <ChatbotShowcase />
+          </section>
+        )}
       </AppContent>
 
       {signaturesFor && workspaceId && (
@@ -628,6 +636,9 @@ export function RealDashboard() {
 }
 
 const HOME_CSS = `
+.hd-task-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 20px; }
+.hd-task-header h1 { margin: 0; font-family: 'Geist', sans-serif; font-size: 22px; color: #07111F; }
+
 .hd-panel { background: #FFFFFF; border: 1px solid #E6EBF2; border-radius: 18px; padding: 18px 18px 14px; margin-top: 16px;
   box-shadow: 0 1px 2px rgba(7,17,31,0.03); min-width: 0; }
 .hd-panel-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; min-width: 0; }

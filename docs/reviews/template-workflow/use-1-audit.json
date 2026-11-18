@@ -1,0 +1,113 @@
+{
+  "signingRequestId": "sr_60eda379f4954150bc19dfe9b45a7c08",
+  "state": "completed",
+  "entries": [
+    {
+      "id": "ev_da28ba9a373c49deb347845083cf0aec",
+      "type": "transaction-created",
+      "eventVersion": 1,
+      "occurredAt": "2026-11-18T13:51:08.112Z",
+      "actor": {
+        "type": "workspace-user",
+        "displayName": "Workspace user"
+      },
+      "description": "Signing request created",
+      "details": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "ev_26346b55416847528b94a9b1d39164f2",
+      "type": "recipient-activated",
+      "eventVersion": 1,
+      "occurredAt": "2026-11-18T13:51:08.208Z",
+      "actor": {
+        "type": "system",
+        "displayName": "LAGDA system"
+      },
+      "description": "LAGDA Multi QA Signer 1 became eligible to sign",
+      "details": {
+        "kind": "none"
+      },
+      "subject": {
+        "recipientId": "srr_620a6998a80141bdbd071f3d8d52807a",
+        "displayName": "LAGDA Multi QA Signer 1"
+      }
+    },
+    {
+      "id": "ev_829c78e0c09b478990b7ae9efbaca568",
+      "type": "transaction-sent",
+      "eventVersion": 1,
+      "occurredAt": "2026-11-18T13:51:08.208Z",
+      "actor": {
+        "type": "workspace-user",
+        "displayName": "Workspace user"
+      },
+      "description": "Request sent for signing",
+      "details": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "ev_21019035c9294ab6ac1cf040aedbe75a",
+      "type": "document-viewed",
+      "eventVersion": 1,
+      "occurredAt": "2026-11-18T13:51:51.280Z",
+      "actor": {
+        "type": "recipient",
+        "displayName": "LAGDA Multi QA Signer 1",
+        "recipientId": "srr_620a6998a80141bdbd071f3d8d52807a"
+      },
+      "description": "Recipient entered the signing ceremony",
+      "details": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "ev_133cc19538c14da99a10430935b90c5b",
+      "type": "consent-accepted",
+      "eventVersion": 1,
+      "occurredAt": "2026-11-18T13:51:54.540Z",
+      "actor": {
+        "type": "recipient",
+        "displayName": "LAGDA Multi QA Signer 1",
+        "recipientId": "srr_620a6998a80141bdbd071f3d8d52807a"
+      },
+      "description": "Recipient accepted electronic-signature consent",
+      "details": {
+        "kind": "consent",
+        "consentType": "electronic-records-and-signature",
+        "consentVersion": "v0-demonstration"
+      }
+    },
+    {
+      "id": "ev_87175b3984cd4c4faff16fe5ac09ee6f",
+      "type": "signature-completed",
+      "eventVersion": 1,
+      "occurredAt": "2026-11-18T13:51:55.623Z",
+      "actor": {
+        "type": "recipient",
+        "displayName": "LAGDA Multi QA Signer 1",
+        "recipientId": "srr_620a6998a80141bdbd071f3d8d52807a"
+      },
+      "description": "Recipient completed signing",
+      "details": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "ev_934b451f48ad4c7c82be4f61647e8397",
+      "type": "transaction-completed",
+      "eventVersion": 1,
+      "occurredAt": "2026-11-18T13:51:58.693Z",
+      "actor": {
+        "type": "system",
+        "displayName": "LAGDA system"
+      },
+      "description": "Signing request completed",
+      "details": {
+        "kind": "none"
+      }
+    }
+  ]
+}

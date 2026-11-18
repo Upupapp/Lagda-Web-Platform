@@ -1,0 +1,12 @@
+
+ RUN  v3.2.4 C:/Users/paulg/OneDrive/Documents/ChatGPT/LAGDA
+
+ ✓ src/app/hooks/__tests__/useFlowViewport.test.tsx (3 tests) 16ms
+ ✓ src/app/components/recipient/__tests__/SignatureCapture.test.tsx (30 tests) 3510ms
+   ✓ typing a signature letter by letter, with the value fed back > keeps the field while the name is typed, and the signature is the whole name  349ms
+   ✓ typing a signature letter by letter, with the value fed back > lets the signer correct a mistake without the field vanishing  367ms
+
+ Test Files  2 passed (2)
+      Tests  33 passed (33)
+   Start at  20:25:08
+   Duration  6.15s (transform 378ms, setup 3.55s, collect 408ms, tests 3.53s, environment 683ms, prepare 108ms)

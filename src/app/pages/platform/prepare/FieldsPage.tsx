@@ -1,3 +1,5 @@
+import { useModalFocus } from "../../../hooks/useModalFocus";
+import { ON_LIGHT } from "../../../utils/on-light";
 // Place Fields — interactive field-placement editor.
 // Command 19: replaces FieldsHandoff.tsx placeholder.
 //
@@ -100,7 +102,7 @@ const CANVAS_Z = {
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
-const SILVER = "#8A9BAE";
+const SILVER = ON_LIGHT.muted;
 const GOLD   = "#C9960C";
 const BGCANVAS = "#DFE3E8";
 const WHITE  = "#FFFFFF";
@@ -308,7 +310,7 @@ function FieldElement({ field, isSelected, identity, isSender, onPointerDown, on
         ...GF,
         fontSize:     "min(11px, 1.8vw)",
         fontWeight:   600,
-        color:        isSender ? GOLD : (identity ? identity.colorHex : "#4B5E70"),
+        color:        isSender ? ON_LIGHT.gold : "#334155",
         whiteSpace:   "nowrap",
         overflow:     "hidden",
         textOverflow: "ellipsis",
@@ -875,7 +877,7 @@ function PageCanvas({
                       position: "absolute", inset: 0, display: "flex",
                       alignItems: "center", justifyContent: "center",
                       padding: 24, textAlign: "center", pointerEvents: "none",
-                      fontSize: 13, color: "#8A9BAE",
+                      fontSize: 13, color: ON_LIGHT.muted,
                     }}
                   >
                     Loading your document…
@@ -945,7 +947,7 @@ function PageCanvas({
         </div>
 
         {/* Page indicator */}
-        <div style={{ ...GF, fontSize: 11, color: SILVER, textAlign: "center", marginTop: 8 }}>
+        <div style={{ ...GF, fontSize: 11, color: "#475569", textAlign: "center", marginTop: 8 }}>
           Page {currentPage.pageNumber} of {currentDoc?.pageCount ?? 1} — {currentPageFields.length} field{currentPageFields.length !== 1 ? "s" : ""}
         </div>
       </div>
@@ -1001,7 +1003,7 @@ function DocumentPanel() {
                   cursor: "pointer",
                   fontSize: 12,
                   fontWeight: isCurDoc ? 700 : 500,
-                  color: isCurDoc ? AZURE : NAVY,
+                  color: isCurDoc ? ON_LIGHT.azure : NAVY,
                 }}
               >
                 <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -1033,7 +1035,7 @@ function DocumentPanel() {
                       border: "none",
                       cursor: "pointer",
                       fontSize: 11,
-                      color: isCurPage ? AZURE : "#4B5E70",
+                      color: isCurPage ? ON_LIGHT.azure : "#4B5E70",
                       fontWeight: isCurPage ? 600 : 400,
                     }}
                   >
@@ -1127,9 +1129,9 @@ function FieldPalettePanel() {
                   {FIELD_TYPE_ICONS[type]}
                 </span>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: isActive ? AZURE : NAVY }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: isActive ? ON_LIGHT.azure : NAVY }}>
                     {FIELD_TYPE_LABELS[type]}
-                    {tier === "standard"   && <span style={{ fontSize: 9, marginLeft: 5, color: AZURE, fontWeight: 700 }}>PLAN</span>}
+                    {tier === "standard"   && <span style={{ fontSize: 9, marginLeft: 5, color: ON_LIGHT.azure, fontWeight: 700 }}>PLAN</span>}
                     {tier === "enterprise" && <span style={{ fontSize: 9, marginLeft: 5, color: SILVER, fontWeight: 700 }}>ENTERPRISE</span>}
                     {tier === "planned"    && <span style={{ fontSize: 9, marginLeft: 5, color: SILVER, fontWeight: 700 }}>COMING SOON</span>}
                     {notPersisted          && <span style={{ fontSize: 9, marginLeft: 5, color: "#B8720A", fontWeight: 700 }}>NOT SAVED</span>}
@@ -1144,7 +1146,7 @@ function FieldPalettePanel() {
         </div>
       ))}
       {mode === "place-field" && pendingFieldType && (
-        <div style={{ ...GF, padding: "10px 14px 14px", fontSize: 12, color: AZURE, background: "#EBF4FC", borderTop: "1px solid #C8E1F5" }}>
+        <div style={{ ...GF, padding: "10px 14px 14px", fontSize: 12, color: ON_LIGHT.azure, background: "#EBF4FC", borderTop: "1px solid #C8E1F5" }}>
           Click anywhere on the page to place a <strong>{FIELD_TYPE_LABELS[pendingFieldType]}</strong> field.
           <button
             onClick={() => setPendingField(null)}
@@ -1574,7 +1576,7 @@ function FieldListView({ participants }: FieldListProps) {
                           <span>{identity.displayName}</span>
                         </span>
                       ) : field.type === "sender-text" ? (
-                        <span style={{ color: GOLD, fontWeight: 600 }}>Sender</span>
+                        <span style={{ color: ON_LIGHT.gold, fontWeight: 600 }}>Sender</span>
                       ) : (
                         <span style={{ color: "#C0392B", fontWeight: 600 }}>Unassigned</span>
                       )}
@@ -1582,7 +1584,7 @@ function FieldListView({ participants }: FieldListProps) {
                     <td style={{ padding: "6px 10px" }}>
                       <button
                         onClick={() => { setDocument(field.documentId); setPage(field.pageId); }}
-                        style={{ ...GF, background: "none", border: "none", cursor: "pointer", color: AZURE, fontSize: 12, padding: 0, textDecoration: "underline" }}
+                        style={{ ...GF, background: "none", border: "none", cursor: "pointer", color: ON_LIGHT.azure, fontSize: 12, padding: 0, textDecoration: "underline" }}
                       >
                         Go to page
                       </button>
@@ -1795,7 +1797,7 @@ export function ValidationPanel({
   // real next step instead of nothing.
   const renderIssueActions = (issue: FieldValidationIssue) => {
     const fixButtonStyle = { ...GF, fontSize: 11, fontWeight: 700, color: "#2E7D32", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" } as const;
-    const linkButtonStyle = { ...GF, fontSize: 11, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" } as const;
+    const linkButtonStyle = { ...GF, fontSize: 11, color: ON_LIGHT.azure, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" } as const;
     return (
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 5 }}>
         {(issue.fieldId || issue.documentId) && (
@@ -1917,11 +1919,11 @@ export function ValidationPanel({
       {/* Warnings */}
       {validation.warnings.length > 0 && (
         <div style={{ marginBottom: 12 }}>
-          <div style={{ ...GF, fontSize: 11, fontWeight: 700, color: GOLD, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
+          <div style={{ ...GF, fontSize: 11, fontWeight: 700, color: ON_LIGHT.gold, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
             Warnings ({validation.warnings.length})
           </div>
           {validation.warnings.map(issue => (
-            <div key={issue.id} style={{ ...GF, padding: "8px 10px", borderRadius: 6, background: "#FEF9EC", border: "1px solid #F0D07A", marginBottom: 5, fontSize: 12, color: GOLD }}>
+            <div key={issue.id} style={{ ...GF, padding: "8px 10px", borderRadius: 6, background: "#FEF9EC", border: "1px solid #F0D07A", marginBottom: 5, fontSize: 12, color: ON_LIGHT.gold }}>
               <div style={{ fontWeight: 600 }}>⚠ {issue.message}</div>
               {issue.suggestion && <div style={{ fontSize: 11, color: "#856404", marginTop: 3 }}>{issue.suggestion}</div>}
               {renderIssueActions(issue)}
@@ -1985,6 +1987,8 @@ function KeyboardPlaceDialog({ participants, onClose }: KeyboardPlaceDialogProps
   const [participantId, setParticipantId] = useState<string>("");
   const [region,        setRegion]        = useState("ml");
 
+  const keyboardRef = useRef<HTMLDivElement>(null);
+  useModalFocus(keyboardRef, onClose);
   const isSender  = fieldType === "sender-text";
   const eligible  = participants.filter(p => FIELD_ELIGIBLE_ROLES[fieldType].includes(p.role));
   const selRegion = PLACEMENT_REGIONS.find(r => r.id === region)!;
@@ -2009,6 +2013,7 @@ function KeyboardPlaceDialog({ participants, onClose }: KeyboardPlaceDialogProps
     <div
       role="dialog"
       aria-modal="true"
+      ref={keyboardRef} tabIndex={-1}
       aria-label="Add field — keyboard placement"
       style={{
         position: "fixed", inset: 0, zIndex: Z.modal,
@@ -2152,21 +2157,15 @@ export function PlaceForEveryoneDialog({
   const requests = planRequests(participants, routing, fields, { includeApprovers });
   const hasApprovers = participants.some(p => p.role === "approver");
   const confirmRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    confirmRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      e.stopPropagation();
-      onClose();
-    };
-    window.addEventListener("keydown", onKey, true);
-    return () => { window.removeEventListener("keydown", onKey, true); };
-  }, [onClose]);
+  const placementRef = useRef<HTMLDivElement>(null);
+  useModalFocus(placementRef, onClose);
+  useEffect(() => { confirmRef.current?.focus(); }, []);
 
   return (
     <div
       role="dialog"
       aria-modal="true"
+      ref={placementRef} tabIndex={-1}
       aria-labelledby="place-everyone-title"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{
@@ -2234,7 +2233,7 @@ export function PlaceForEveryoneDialog({
 // ── Save state label ──────────────────────────────────────────────────────────
 function SaveStateLabel({ state }: { state: string }) {
   if (state === "idle")               return null;
-  if (state === "unsaved-changes")    return <span style={{ ...GF, fontSize: 11, color: GOLD }}>Unsaved changes</span>;
+  if (state === "unsaved-changes")    return <span style={{ ...GF, fontSize: 11, color: ON_LIGHT.gold }}>Unsaved changes</span>;
   if (state === "saved-in-session")   return <span style={{ ...GF, fontSize: 11, color: "#4CAF7D" }}>Saved in this session</span>;
   if (state === "error")              return <span style={{ ...GF, fontSize: 11, color: "#C0392B" }}>Save error — changes retained locally</span>;
   return null;
@@ -2465,7 +2464,7 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
       <button
         onClick={() => setShowKbDialog(true)}
         aria-label="Add field using keyboard placement"
-        style={{ ...btnBase, flexShrink: 0, background: pendingFieldType ? "#EBF4FC" : WHITE, color: AZURE, border: `1px solid ${AZURE}` }}
+        style={{ ...btnBase, flexShrink: 0, background: pendingFieldType ? "#EBF4FC" : WHITE, color: ON_LIGHT.azure, border: `1px solid ${AZURE}` }}
       >
         {isCompact ? "+ Add" : "+ Add Field"}
       </button>
@@ -3119,12 +3118,12 @@ function FieldsPageInner() {
 
   if (!draft) {
     return (
-      <div style={{ ...GF, display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#F5F7FA" }}>
+      <div style={{ ...GF, display: "flex", alignItems: "center", justifyContent: "center", height: "100dvh", background: "#F5F7FA" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>📄</div>
           <h1 style={{ fontSize: 18, fontWeight: 700, color: NAVY, margin: "0 0 8px" }}>No Preparation Draft</h1>
           <p style={{ fontSize: 13, color: SILVER, margin: "0 0 20px" }}>Start a new preparation workflow to place document fields.</p>
-          <a href="/app/prepare" style={{ ...GF, color: AZURE, fontSize: 13, fontWeight: 600 }}>← Go to Prepare</a>
+          <a href="/app/prepare" style={{ ...GF, color: ON_LIGHT.azure, fontSize: 13, fontWeight: 600 }}>← Go to Prepare</a>
         </div>
       </div>
     );
@@ -3201,7 +3200,7 @@ function FieldsPageInner() {
 
   if (loadState === "initializing") {
     return (
-      <div style={{ ...GF, display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#F5F7FA" }}>
+      <div style={{ ...GF, display: "flex", alignItems: "center", justifyContent: "center", height: "100dvh", background: "#F5F7FA" }}>
         <div style={{ textAlign: "center", color: SILVER }}>
           <div style={{ width: 28, height: 28, border: `2px solid ${AZURE}22`, borderTopColor: AZURE, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
           <p style={{ fontSize: 13 }}>Loading editor…</p>
@@ -3213,7 +3212,7 @@ function FieldsPageInner() {
 
   if (loadState === "error") {
     return (
-      <div style={{ ...GF, display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#F5F7FA" }}>
+      <div style={{ ...GF, display: "flex", alignItems: "center", justifyContent: "center", height: "100dvh", background: "#F5F7FA" }}>
         <div style={{ textAlign: "center", maxWidth: 380 }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>⚠</div>
           <h1 style={{ fontSize: 18, fontWeight: 700, color: "#C0392B", margin: "0 0 8px" }}>Editor Error</h1>
@@ -3244,6 +3243,7 @@ function FieldsPageInner() {
         background: "#F0F2F5",
         overflow:  "hidden",
       }}
+      className="prep-field-editor"
       aria-label="Field placement editor"
     >
       {/* Heading for screen readers */}
@@ -3333,7 +3333,7 @@ function FieldsPageInner() {
                     bottom: "calc(14px + env(safe-area-inset-bottom, 0px))",
                     zIndex: Z.editorControls,
                     minHeight: 40, padding: "0 16px", borderRadius: 999,
-                    border: "1px solid #D1D9E0", background: WHITE, color: AZURE,
+                    border: "1px solid #D1D9E0", background: WHITE, color: ON_LIGHT.azure,
                     fontSize: 13, fontWeight: 700, cursor: "pointer",
                     boxShadow: "0 2px 10px rgba(7,17,31,0.16)",
                   }}

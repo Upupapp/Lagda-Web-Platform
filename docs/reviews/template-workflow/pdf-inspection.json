@@ -1,0 +1,20 @@
+[
+  {
+    "use": 1,
+    "pages": 1,
+    "sourceTextPreserved": true,
+    "expectedSignatureText": "LAGDA Multi QA Signer 1",
+    "expectedSignaturePresent": true,
+    "otherRecipientSignatureAbsent": true,
+    "signedPdfUnmodified": true
+  },
+  {
+    "use": 2,
+    "pages": 1,
+    "sourceTextPreserved": true,
+    "expectedSignatureText": "LAGDA Multi QA Signer 2",
+    "expectedSignaturePresent": true,
+    "otherRecipientSignatureAbsent": true,
+    "signedPdfUnmodified": true
+  }
+]

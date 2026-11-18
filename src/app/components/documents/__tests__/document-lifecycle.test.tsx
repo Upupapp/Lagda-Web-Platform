@@ -265,7 +265,7 @@ describe("the Recycle Bin", () => {
     // Drawn as the branded Completed card: banner, Verification ID, progress.
     expect(within(item).getByTestId("completed-card-banner-name")).toHaveTextContent("Reyes Law");
     expect(await within(item).findByText("LAGDA-VER-2026-TEST")).toBeInTheDocument();
-    expect(within(item).getByTestId("completed-card-progress")).toHaveTextContent("3 of 3 signed");
+    expect(within(item).getByTestId("completed-card-progress")).toHaveTextContent("3 of 3 completed");
     expect(screen.getByTestId("recycle-bin-total")).toHaveTextContent("1 document");
     await user.click(within(item).getByRole("button", { name: /Permanently Delete/ }));
     const confirm = screen.getByRole("alertdialog", { name: "Permanently delete this document?" });

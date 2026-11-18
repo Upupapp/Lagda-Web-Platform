@@ -105,7 +105,7 @@ describe("Documents › Correspondence", () => {
     expect(within(card).getByText(/Sent Sep 28, 2026/)).toBeInTheDocument();
     expect(within(card).getByRole("heading", { name: "Employment Agreement 2026" })).toBeInTheDocument();
     expect(within(card).getByText(/To 3 participants/)).toBeInTheDocument();
-    expect(within(card).getByText("1 of 3 signed")).toBeInTheDocument();
+    expect(within(card).getByText("1 of 3 completed")).toBeInTheDocument();
     for (const name of ["Participants of", "History of", "View", "to a new email address"]) {
       expect(within(card).getByRole("button", { name: new RegExp(name) })).toBeInTheDocument();
     }

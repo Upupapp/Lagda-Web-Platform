@@ -194,7 +194,9 @@ export function useFieldEditorShortcuts(handlers: FieldShortcutHandlers): void {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const h = ref.current;
-      if (h.enabled === false) return;
+      if (h.enabled === false || event.defaultPrevented) return;
+      // A modal owns its keys; editor Escape/Delete must not act behind it.
+      if (event.target instanceof Element && event.target.closest('[role="dialog"], [role="alertdialog"]')) return;
 
       // Every binding is for the canvas, not for whatever is being typed in
       // — including Escape, which inside a text box belongs to that box.

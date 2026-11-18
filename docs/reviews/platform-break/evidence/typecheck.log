@@ -1,0 +1,3 @@
+
+> @figma/my-make-file@0.0.1 typecheck
+> tsc --build --force tsconfig.app.json tsconfig.node.json tsconfig.test.json

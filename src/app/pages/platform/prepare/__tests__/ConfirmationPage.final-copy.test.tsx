@@ -128,7 +128,7 @@ describe("Send and the completed document", () => {
     withCompletion({ emailFinalCopy: false });
     open();
     expect(screen.getByTestId("final-copy-note")).toHaveTextContent(
-      "Participants will not be emailed the completed document. They can still open it in LAGDA under Records.");
+      "When everyone has finished, eligible participants can open the completed document in LAGDA under Records. No separate download-link email is sent.");
     await send();
     expect(request.send).toHaveBeenCalledWith("ws_1", "sr_1", expect.any(String), { shareFinalCopy: false });
   });
@@ -137,7 +137,7 @@ describe("Send and the completed document", () => {
     withCompletion({ emailFinalCopy: true });
     open();
     expect(screen.getByTestId("final-copy-note")).toHaveTextContent(
-      "each participant is emailed a link to the completed document");
+      "No separate download-link email is sent.");
     await send();
     expect(request.send).toHaveBeenCalledWith("ws_1", "sr_1", expect.any(String), {});
   });

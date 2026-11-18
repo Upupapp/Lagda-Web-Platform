@@ -1,0 +1,31 @@
+{
+  "scenario": "decline",
+  "stage": "declined",
+  "requestState": "declined",
+  "states": [
+    "declined",
+    "active",
+    "waiting"
+  ],
+  "completedCount": 0,
+  "requiredCount": 3,
+  "invitationCount": 2,
+  "deniedChecks": [
+    {
+      "role": "approver",
+      "continueStatus": 404,
+      "error": "SIGNING_UNAVAILABLE"
+    },
+    {
+      "role": "reviewer",
+      "continueStatus": 404,
+      "error": "SIGNING_UNAVAILABLE"
+    },
+    {
+      "role": "signer",
+      "continueStatus": 404,
+      "error": "SIGNING_UNAVAILABLE"
+    }
+  ],
+  "completedPdfUnavailable": true
+}

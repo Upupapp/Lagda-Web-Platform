@@ -315,6 +315,12 @@ const DOC_STYLES = SKELETON_STYLE + `
     .doc-group { flex: 1 1 0; padding: 0 10px; min-width: 0; }
   }
 
+  @media (pointer: coarse), (max-width: 640px) {
+    .doc-filter-bar button, .doc-filter-bar input, .doc-filter-bar select { min-height: 44px; touch-action: manipulation; }
+  }
+  @media (pointer: coarse) {
+    .doc-filter-bar input, .doc-filter-bar select { font-size: 16px; }
+  }
   /* The lists inside the chosen group. */
   .doc-list-strip { position: relative; margin-top: 16px; }
   .doc-list-tabs { display: flex; gap: 4px; border-bottom: 1px solid #E2E8F0; overflow-x: auto; scrollbar-width: none; }
@@ -326,7 +332,7 @@ const DOC_STYLES = SKELETON_STYLE + `
     color: #64748B; background: none; border: none; border-bottom: 2px solid transparent;
     cursor: pointer; margin-bottom: -1px;
   }
-  .doc-list-tab[aria-selected="true"] { color: #0078D4; border-bottom-color: #0078D4; }
+  .doc-list-tab[aria-selected="true"] { color: #0063B1; border-bottom-color: #0078D4; }
   /* Phones and tablets: the sections sit side by side on ONE row of chips
      that scrolls sideways. An arrow at either edge shows there is more that
      way and moves the row, and the chosen section is always brought into
@@ -2334,11 +2340,11 @@ function OutboxCard({ item, branding, onView, onSignatures, onAudit, onResend, o
       </>}
     >
       <MailLine>
-        To {total} {total === 1 ? "participant" : "participants"} · <strong style={{ color: "#07111F" }}>{done} of {total} signed</strong>
+        To {total} {total === 1 ? "participant" : "participants"} · <strong style={{ color: "#07111F" }}>{done} of {total} completed</strong>
       </MailLine>
       {total > 0 && (
         <div className="mail-progress" role="meter" aria-valuenow={done} aria-valuemin={0} aria-valuemax={total}
-          aria-label={`${String(done)} of ${String(total)} signed`}>
+          aria-label={`${String(done)} of ${String(total)} completed`}>
           <div style={{ width: `${String(pct)}%`, background: pct === 100 ? "#15803D" : status.color }} />
         </div>
       )}
@@ -3088,7 +3094,7 @@ function DocumentsPageRealMode() {
                   Clear filters
                 </button>
               )}
-              <span aria-live="polite" style={{ ...GF, fontSize: 12, color: SLATE4, marginLeft: "auto", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <span aria-live="polite" style={{ ...GF, fontSize: 12, color: SLATE6, marginLeft: "auto", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {fetching
                   ? "Searching…"
                   : total > items.length

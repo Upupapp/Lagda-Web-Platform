@@ -1,0 +1,162 @@
+[
+  {
+    "tag": "demo-consent",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-ceremony",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": true,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "Position / authority to sign for the organisation",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-signature-capture",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-simulated-completion",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-empty",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-consent",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-ceremony",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": true,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "Position / authority to sign for the organisation",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-signature-capture",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-simulated-completion",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-empty",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  }
+]

@@ -1,0 +1,224 @@
+[
+  {
+    "tag": "-app-documents",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/documents",
+    "violations": []
+  },
+  {
+    "tag": "-app-contacts",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/contacts",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span class=\"ct-card-title\">Senior Product Design Engineer, Platform Infrastructure</span>",
+            "target": [
+              ".ct-card-title"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.46 (foreground color: #7b8ba3, background color: #ffffff, font size: 10.1pt (13.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 9px; padding: 2px 6px; border-radius: 999px; background: rgba(0, 120, 212, 0.094); color: rgb(0, 120, 212);\">Client</span>",
+            "target": [
+              ".ct-card-tags > span:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.98 (foreground color: #0078d4, background color: #e7f2fb, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 9px; padding: 2px 6px; border-radius: 999px; background: rgba(95, 125, 142, 0.094); color: rgb(95, 125, 142);\">Finance</span>",
+            "target": [
+              ".ct-card-tags > span:nth-child(3)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.91 (foreground color: #5f7d8e, background color: #f0f3f4, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span class=\"ct-card-when\">",
+            "target": [
+              ".ct-card:nth-child(1) > .ct-card-foot > .ct-card-when"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.46 (foreground color: #7b8ba3, background color: #ffffff, font size: 9.4pt (12.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span class=\"ct-card-when\">",
+            "target": [
+              ".ct-card:nth-child(2) > .ct-card-foot > .ct-card-when"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.46 (foreground color: #7b8ba3, background color: #ffffff, font size: 9.4pt (12.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span class=\"ct-card-when\">",
+            "target": [
+              ".ct-card:nth-child(3) > .ct-card-foot > .ct-card-when"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.46 (foreground color: #7b8ba3, background color: #ffffff, font size: 9.4pt (12.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "-app-templates",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/templates",
+    "violations": []
+  },
+  {
+    "tag": "-app-shared-documents",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/shared-documents/by-me",
+    "violations": []
+  },
+  {
+    "tag": "-app-notifications",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/notifications",
+    "violations": []
+  },
+  {
+    "tag": "-app-settings-profile",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/settings/profile",
+    "violations": []
+  },
+  {
+    "tag": "-app-settings-security",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/settings/security",
+    "violations": []
+  },
+  {
+    "tag": "-app-documents",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/documents",
+    "violations": []
+  },
+  {
+    "tag": "-app-contacts",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/contacts",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span class=\"ct-card-title\">Senior Product Design Engineer, Platform Infrastructure</span>",
+            "target": [
+              ".ct-card-title"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.46 (foreground color: #7b8ba3, background color: #ffffff, font size: 10.1pt (13.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 9px; padding: 2px 6px; border-radius: 999px; background: rgba(0, 120, 212, 0.094); color: rgb(0, 120, 212);\">Client</span>",
+            "target": [
+              ".ct-card-tags > span:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.98 (foreground color: #0078d4, background color: #e7f2fb, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span style=\"font-family: &quot;Geist Mono&quot;, monospace; font-size: 9px; padding: 2px 6px; border-radius: 999px; background: rgba(95, 125, 142, 0.094); color: rgb(95, 125, 142);\">Finance</span>",
+            "target": [
+              ".ct-card-tags > span:nth-child(3)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.91 (foreground color: #5f7d8e, background color: #f0f3f4, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "-app-templates",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/templates",
+    "violations": []
+  },
+  {
+    "tag": "-app-shared-documents",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/shared-documents/by-me",
+    "violations": []
+  },
+  {
+    "tag": "-app-notifications",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/notifications",
+    "violations": []
+  },
+  {
+    "tag": "-app-settings-profile",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/settings/profile",
+    "violations": []
+  },
+  {
+    "tag": "-app-settings-security",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/settings/security",
+    "violations": []
+  },
+  {
+    "tag": "-app-documents",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/documents",
+    "violations": []
+  },
+  {
+    "tag": "-app-contacts",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/contacts",
+    "violations": []
+  },
+  {
+    "tag": "-app-templates",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/templates",
+    "violations": []
+  },
+  {
+    "tag": "-app-shared-documents",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/shared-documents/by-me",
+    "violations": []
+  },
+  {
+    "tag": "-app-notifications",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/notifications",
+    "violations": []
+  },
+  {
+    "tag": "-app-settings-profile",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/settings/profile",
+    "violations": []
+  },
+  {
+    "tag": "-app-settings-security",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/settings/security",
+    "violations": []
+  }
+]

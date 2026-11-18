@@ -1,0 +1,15 @@
+{
+  "scenario": "parallel",
+  "stage": "after-review",
+  "requestState": "partially-completed",
+  "states": [
+    "active",
+    "signed",
+    "signed"
+  ],
+  "completedCount": 2,
+  "requiredCount": 3,
+  "invitationCount": 3,
+  "deniedChecks": [],
+  "completedPdfUnavailable": true
+}

@@ -1,0 +1,37 @@
+
+C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\prepare\__tests__\EditorMobileChrome.test.tsx
+  104:23  warning  Avoid direct Node access. Prefer using the methods from Testing Library  testing-library/no-node-access
+  125:44  warning  Avoid direct Node access. Prefer using the methods from Testing Library  testing-library/no-node-access
+
+C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\recipient\__tests__\signer-ui.test.tsx
+   63:31  warning  Avoid direct Node access. Prefer using the methods from Testing Library                              testing-library/no-node-access
+   63:31  warning  Avoid direct Node access. Prefer using the methods from Testing Library                              testing-library/no-node-access
+   68:16  warning  Avoid direct Node access. Prefer using the methods from Testing Library                              testing-library/no-node-access
+   90:12  warning  Avoid using container methods. Prefer using the methods from Testing Library, such as "getByRole()"  testing-library/no-container
+   90:22  warning  Avoid direct Node access. Prefer using the methods from Testing Library                              testing-library/no-node-access
+   98:48  warning  Avoid direct Node access. Prefer using the methods from Testing Library                              testing-library/no-node-access
+  106:48  warning  Avoid direct Node access. Prefer using the methods from Testing Library                              testing-library/no-node-access
+  143:12  warning  Avoid using container methods. Prefer using the methods from Testing Library, such as "getByRole()"  testing-library/no-container
+  143:22  warning  Avoid direct Node access. Prefer using the methods from Testing Library                              testing-library/no-node-access
+  147:12  warning  Avoid using container methods. Prefer using the methods from Testing Library, such as "getByRole()"  testing-library/no-container
+  147:17  warning  Avoid direct Node access. Prefer using the methods from Testing Library                              testing-library/no-node-access
+  155:23  warning  Avoid direct Node access. Prefer using the methods from Testing Library                              testing-library/no-node-access
+  160:18  warning  Avoid direct Node access. Prefer using the methods from Testing Library                              testing-library/no-node-access
+  200:23  warning  Avoid direct Node access. Prefer using the methods from Testing Library                              testing-library/no-node-access
+  204:18  warning  Avoid direct Node access. Prefer using the methods from Testing Library                              testing-library/no-node-access
+
+C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\components\system\design-system.tsx
+  58:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  69:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  97:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\prepare\FieldsPage.tsx
+   706:6   warning  React Hook useCallback has an unnecessary dependency: 'currentPageFields'. Either exclude it or remove the dependency array     react-hooks/exhaustive-deps
+  1636:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\prepare\PrepareLayout.tsx
+  72:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  74:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  80:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+✖ 25 problems (0 errors, 25 warnings)

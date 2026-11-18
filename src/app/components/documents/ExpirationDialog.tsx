@@ -1,10 +1,11 @@
+import { useModalFocus } from "../../hooks/useModalFocus";
 // Set, change or remove a sent document's expiration.
 //
 // The deadline is optional and belongs to the sender. It can be set only while
 // the document is still out for signing; the server refuses anything else, and
 // what it says is shown as it is.
 
-import { useEffect, useId, useState, type CSSProperties } from "react";
+import { useRef, useId, useState, type CSSProperties } from "react";
 import { X, CalendarClock, Loader2, AlertCircle } from "lucide-react";
 import { realSigningRequestService } from "../../services/real/signing-request.service";
 import { ApiError } from "../../services/api-client";
@@ -34,13 +35,10 @@ export function ExpirationDialog({
   const dateId = useId();
   const [date, setDate] = useState(() => dateOfDeadline(expiresAt));
   const [busy, setBusy] = useState<"save" | "remove" | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === "Escape" && busy === null) onClose(); }
-    document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("keydown", onKey); };
-  }, [onClose, busy]);
+  useModalFocus(dialogRef, onClose, busy !== null);
 
   async function apply(next: string | null, kind: "save" | "remove") {
     setBusy(kind);
@@ -70,7 +68,7 @@ export function ExpirationDialog({
 
   return (
     <div
-      role="dialog" aria-modal="true" aria-label={`Expiration for ${documentTitle}`}
+      ref={dialogRef} tabIndex={-1} className="platform-task-dialog" role="dialog" aria-modal="true" aria-label={`Expiration for ${documentTitle}`}
       style={{
         position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center",
         justifyContent: "center", background: "rgba(7,17,31,0.55)", padding: 16,

@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../utils/on-light";
 // Desktop sidebar for the authenticated LAGDA customer platform.
 // Collapses to icon-only mode via a toggle button.
 // Hidden on mobile — MobileNav handles that breakpoint.
@@ -74,7 +75,7 @@ function SidebarItem({ to, icon, label, badge, collapsed }: SidebarItemProps) {
           textDecoration: "none",
           background: isActive ? "rgba(0,120,212,0.14)" : "transparent",
           border: isActive ? "1px solid rgba(0,120,212,0.22)" : "1px solid transparent",
-          color: isActive ? "#0078D4" : "#64748B",
+          color: isActive ? ON_LIGHT.azure : "#64748B",
           transition: "background 0.12s, color 0.12s",
           position: "relative",
           minHeight: 36,
@@ -83,7 +84,7 @@ function SidebarItem({ to, icon, label, badge, collapsed }: SidebarItemProps) {
       >
         {({ isActive }) => (
           <>
-            <span aria-hidden style={{ flexShrink: 0, color: isActive ? "#0078D4" : "#64748B", display: "flex", alignItems: "center" }}>
+            <span aria-hidden style={{ flexShrink: 0, color: isActive ? ON_LIGHT.azure : "#64748B", display: "flex", alignItems: "center" }}>
               <NavIcon name={icon} />
             </span>
             {!collapsed && (
@@ -92,7 +93,7 @@ function SidebarItem({ to, icon, label, badge, collapsed }: SidebarItemProps) {
               </span>
             )}
             {!collapsed && badge != null && badge > 0 && (
-              <span style={{ ...GM, fontSize: 10, fontWeight: 700, background: "rgba(0,120,212,0.15)", color: "#0078D4", borderRadius: 999, padding: "1px 6px", marginLeft: "auto", flexShrink: 0 }}>
+              <span style={{ ...GM, fontSize: 10, fontWeight: 700, background: "rgba(0,120,212,0.15)", color: ON_LIGHT.azure, borderRadius: 999, padding: "1px 6px", marginLeft: "auto", flexShrink: 0 }}>
                 {badge > 99 ? "99+" : badge}
               </span>
             )}
@@ -138,14 +139,14 @@ function DocumentsNavItem({
           textDecoration: "none",
           background: isActive ? "rgba(0,120,212,0.14)" : "transparent",
           border: isActive ? "1px solid rgba(0,120,212,0.22)" : "1px solid transparent",
-          color: isActive ? "#0078D4" : "#64748B",
+          color: isActive ? ON_LIGHT.azure : "#64748B",
           transition: "background 0.12s, color 0.12s",
           minHeight: 36,
         })}
       >
         {({ isActive }) => (
           <>
-            <span aria-hidden style={{ flexShrink: 0, color: isActive ? "#0078D4" : "#64748B", display: "flex", alignItems: "center" }}>
+            <span aria-hidden style={{ flexShrink: 0, color: isActive ? ON_LIGHT.azure : "#64748B", display: "flex", alignItems: "center" }}>
               <NavIcon name={icon} />
             </span>
             <span style={{ ...GF, fontSize: 13, fontWeight: isActive ? 600 : 400, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -177,13 +178,13 @@ function CountedNavItem({ to, icon, label, collapsed, count, kind }: {
           borderRadius: 8, textDecoration: "none",
           background: isActive ? "rgba(0,120,212,0.14)" : "transparent",
           border: isActive ? "1px solid rgba(0,120,212,0.22)" : "1px solid transparent",
-          color: isActive ? "#0078D4" : "#64748B", transition: "background 0.12s, color 0.12s",
+          color: isActive ? ON_LIGHT.azure : "#64748B", transition: "background 0.12s, color 0.12s",
           position: "relative", minHeight: 36,
         })}
       >
         {({ isActive }) => (
           <>
-            <span aria-hidden style={{ flexShrink: 0, color: isActive ? "#0078D4" : "#64748B", display: "flex", alignItems: "center" }}>
+            <span aria-hidden style={{ flexShrink: 0, color: isActive ? ON_LIGHT.azure : "#64748B", display: "flex", alignItems: "center" }}>
               <NavIcon name={icon} />
             </span>
             {!collapsed && (
@@ -220,13 +221,13 @@ function InvitationsNavItem({ to, icon, label, collapsed, pending }: {
           borderRadius: 8, textDecoration: "none",
           background: isActive ? "rgba(0,120,212,0.14)" : "transparent",
           border: isActive ? "1px solid rgba(0,120,212,0.22)" : "1px solid transparent",
-          color: isActive ? "#0078D4" : "#64748B", transition: "background 0.12s, color 0.12s",
+          color: isActive ? ON_LIGHT.azure : "#64748B", transition: "background 0.12s, color 0.12s",
           position: "relative", minHeight: 36,
         })}
       >
         {({ isActive }) => (
           <>
-            <span aria-hidden style={{ flexShrink: 0, color: isActive ? "#0078D4" : "#64748B", display: "flex", alignItems: "center" }}>
+            <span aria-hidden style={{ flexShrink: 0, color: isActive ? ON_LIGHT.azure : "#64748B", display: "flex", alignItems: "center" }}>
               <NavIcon name={icon} />
             </span>
             {!collapsed && (
@@ -279,7 +280,6 @@ export function PlatformSidebar() {
         overflowY: "auto",
         overflowX: "hidden",
         zIndex: Z.shell,
-        transition: "width 0.2s ease",
       }}
       className="platform-sidebar"
     >

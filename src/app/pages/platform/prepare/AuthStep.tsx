@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../../utils/on-light";
 // Authentication — set the default auth method and per-participant overrides.
 // PRIVACY: no OTP codes, passwords, or tokens are shown, collected, or logged here.
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
@@ -22,13 +23,12 @@ import { IDENTITY_CHECK_OPTION_LABEL } from "../../../models/identity-check";
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
-const SILVER = "#8A9BAE";
-const GOLD   = "#C9960C";
+const SILVER = ON_LIGHT.muted;
 
 function availabilityBadge(avail: string): { text: string; color: string; bg: string } | null {
   switch (avail) {
     case "plan-dependent":
-      return { text: "Plan", color: GOLD, bg: "#FEF9EC" };
+      return { text: "Plan", color: ON_LIGHT.gold, bg: "#FEF9EC" };
     case "enterprise":
       return { text: "Enterprise", color: "#6C4BA8", bg: "#F0EEF8" };
     case "planned":
@@ -105,7 +105,7 @@ function MethodCard({
           {config.description}
         </div>
         {disabledReason && (
-          <div style={{ fontSize: 11, color: GOLD, marginTop: 4 }}>{disabledReason}</div>
+          <div style={{ fontSize: 11, color: ON_LIGHT.gold, marginTop: 4 }}>{disabledReason}</div>
         )}
         {config.planNote && !disabled && (
           <div style={{ fontSize: 11, color: SILVER, marginTop: 4 }}>{config.planNote}</div>
@@ -151,7 +151,7 @@ function ParticipantAuthRow({
               ...GF,
               fontSize: 11,
               fontWeight: 600,
-              color: AZURE,
+              color: ON_LIGHT.azure,
               background: "none",
               border: "none",
               cursor: "pointer",
@@ -180,7 +180,7 @@ function ParticipantAuthRow({
                 borderRadius: 20,
                 border: `1px solid ${isSelected ? AZURE : "#D1D9E0"}`,
                 background: isSelected ? (isDefault ? "#EBF4FC" : "#D0EAFF") : "#FFFFFF",
-                color: isSelected ? AZURE : available ? NAVY : "#B0BEC5",
+                color: isSelected ? ON_LIGHT.azure : available ? NAVY : "#B0BEC5",
                 fontSize: 11,
                 fontWeight: isSelected ? 700 : 500,
                 cursor: available ? "pointer" : "not-allowed",
@@ -253,12 +253,12 @@ export function AuthStep() {
     <div style={{ ...GF, width: "100%" }}>
       {/* Validation */}
       {authErrors.length > 0 && (
-        <ul aria-live="polite" style={{ ...GF, listStyle: "none", margin: "0 0 16px", padding: "10px 14px", borderRadius: 8, border: "1px solid #F0D07A", background: "#FEF9EC", fontSize: 13, color: GOLD }}>
+        <ul aria-live="polite" style={{ ...GF, listStyle: "none", margin: "0 0 16px", padding: "10px 14px", borderRadius: 8, border: "1px solid #F0D07A", background: "#FEF9EC", fontSize: 13, color: ON_LIGHT.gold }}>
           {authErrors.map(e => <li key={e.id}>• {e.message}</li>)}
         </ul>
       )}
       {authWarnings.length > 0 && (
-        <ul style={{ ...GF, listStyle: "none", margin: "0 0 16px", padding: "10px 14px", borderRadius: 8, border: "1px solid #F0D07A", background: "#FEF9EC", fontSize: 13, color: GOLD }}>
+        <ul style={{ ...GF, listStyle: "none", margin: "0 0 16px", padding: "10px 14px", borderRadius: 8, border: "1px solid #F0D07A", background: "#FEF9EC", fontSize: 13, color: ON_LIGHT.gold }}>
           {authWarnings.map(e => <li key={e.id}>• {e.message}</li>)}
         </ul>
       )}
@@ -365,7 +365,7 @@ export function AuthStep() {
                   <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, overflowWrap: "anywhere" }}>
                     {p.name}
                   </div>
-                  <div style={{ ...GF, fontSize: 11, color: AZURE, fontWeight: 700, overflowWrap: "anywhere" }}>
+                  <div style={{ ...GF, fontSize: 11, color: ON_LIGHT.azure, fontWeight: 700, overflowWrap: "anywhere" }}>
                     {getAuthMethodConfig(effective).label} + {IDENTITY_CHECK_OPTION_LABEL}
                   </div>
                 </div>
@@ -381,7 +381,7 @@ export function AuthStep() {
                 >
                   {p.name}
                 </span>
-                <span style={{ ...GF, fontSize: 11, color: override ? AZURE : SILVER, flexShrink: 0, fontWeight: override ? 700 : 400 }}>
+                <span style={{ ...GF, fontSize: 11, color: override ? ON_LIGHT.azure : SILVER, flexShrink: 0, fontWeight: override ? 700 : 400 }}>
                   {getAuthMethodConfig(effective).label}
                 </span>
               </div>

@@ -48,10 +48,20 @@ function renderShellAt(path: string) {
   );
 }
 
+async function waitForDemoPeopleLoaded() {
+  // Headings render before the delayed demo service resolves. Wait for both
+  // datasets so this test verifies the roster and leaves no work after teardown.
+  const members = await screen.findByRole("table");
+  expect(within(members).getAllByRole("row").length).toBeGreaterThan(1);
+  const teams = await screen.findByRole("list", { name: "Teams" });
+  expect(within(teams).getAllByRole("listitem").length).toBeGreaterThan(0);
+}
+
 describe("Workspace shell — demo build", () => {
   it("shows the demonstration workspace, its three parts and the requests waiting, with no network", async () => {
     const pendingRequests = (await listJoinRequests("demo", "pending")).length;
     renderShellAt("/app/workspace/people");
+    await waitForDemoPeopleLoaded();
     await waitFor(() => expect(screen.getByTestId("workspace-name")).toHaveTextContent("Mabini Legal Solutions"));
     expect(screen.getByText("Demonstration")).toBeInTheDocument();
     const parts = within(screen.getByTestId("workspace-parts")).getAllByRole("link");
@@ -81,6 +91,7 @@ describe("Workspace shell — demo build", () => {
     await user.click(screen.getByTestId("part-people"));
     expect(await screen.findByRole("heading", { level: 2, name: "Member Directory" })).toBeInTheDocument();
     expect(await screen.findByRole("heading", { level: 2, name: "Teams" })).toBeInTheDocument();
+    await waitForDemoPeopleLoaded();
     expect(screen.getByTestId("part-people")).toHaveAttribute("data-active", "true");
     expect(fetchSpy).not.toHaveBeenCalled();
   });

@@ -773,3 +773,7 @@ Subtle upward fade (4px, 220ms, ease-out) applied on every route change via a `k
 | ESLint | ⚠️ Not yet configured (deferred) |
 | Unit tests | ⚠️ Test framework not configured (deferred to Command 11) |
 | Google Fonts CDN dependency | ⚠️ Fonts loaded from CDN; self-hosting recommended for production |
+
+## Admin portal implementation memory — 18 November 2026
+
+[DESIGN.md](../DESIGN.md) records the user-approved carry-forward baseline from the completed Emil sprints: readable light-surface tokens, accessible labels and dialogs, task-first layouts, responsive controls, restrained motion and accurate states. Apply these decisions to future admin portal work while preserving this document's brand foundations. See the [sprint review](reviews/emil-sprints/implementation-review.md) for implementation evidence and verification limits.

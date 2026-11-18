@@ -1,0 +1,22 @@
+[
+  {
+    "key": "worst",
+    "count": 6,
+    "persisted": true
+  },
+  {
+    "key": "demo",
+    "count": 1,
+    "persisted": true
+  },
+  {
+    "key": "empty",
+    "count": 0,
+    "persisted": true
+  },
+  {
+    "key": "many",
+    "count": 50,
+    "persisted": true
+  }
+]

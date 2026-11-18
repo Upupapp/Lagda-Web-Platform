@@ -159,7 +159,7 @@ export function ReadyMadeGalleryPage() {
           padding: isNarrow ? "8px 13px" : "6px 12px", minHeight: isNarrow ? 36 : undefined, cursor: "pointer",
         }}
       >
-        {label} <span style={{ opacity: 0.75 }}>({count})</span>
+        {label} <span>({count})</span>
       </button>
     );
   };
@@ -169,8 +169,8 @@ export function ReadyMadeGalleryPage() {
       <style>{`
         .rmt-card { transition: box-shadow .18s, border-color .18s, transform .18s; outline: none; }
         .rmt-card img { transition: transform .35s ease; }
-        .rmt-card:hover { box-shadow: 0 6px 20px rgba(15,23,42,0.10); border-color: #CBD5E1; transform: translateY(-2px); }
-        .rmt-card:hover img { transform: scale(1.04); }
+        @media (hover: hover) and (pointer: fine) { .rmt-card:hover { box-shadow: 0 6px 20px rgba(15,23,42,0.10); border-color: #CBD5E1; transform: translateY(-2px); } }
+        @media (hover: hover) and (pointer: fine) { .rmt-card:hover img { transform: scale(1.04); } }
         .rmt-card:focus-visible { box-shadow: 0 0 0 3px white, 0 0 0 5px ${AZURE}; border-color: ${AZURE}; }
         .rmt-locked { pointer-events: none; user-select: none; overflow: hidden; }
         .rmt-locked > :not(.rmt-frost) { filter: blur(2.5px) saturate(0.85); }
@@ -182,7 +182,7 @@ export function ReadyMadeGalleryPage() {
         .rmt-ghost span { display: block; height: 7px; border-radius: 4px; background: #E2E8F0; }
         @media (prefers-reduced-motion: reduce) {
           .rmt-card, .rmt-card img { transition: none; }
-          .rmt-card:hover, .rmt-card:hover img { transform: none; }
+          @media (hover: hover) and (pointer: fine) { .rmt-card:hover, .rmt-card:hover img { transform: none; } }
         }
       `}</style>
 

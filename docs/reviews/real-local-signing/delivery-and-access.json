@@ -1,0 +1,21 @@
+{
+  "mail": [
+    {
+      "subject": "\"Real backend signing QA 2026-11-18T11-08-53-760Z\" is fully signed",
+      "to": [
+        "local.business.qa@example.test"
+      ],
+      "completion": true,
+      "invitation": false
+    },
+    {
+      "subject": "LAGDA Local Business QA sent you \"Real backend signing QA 2026-11-18T11-08-53-760Z\" to sign",
+      "to": [
+        "screen.review@example.test"
+      ],
+      "completion": false,
+      "invitation": true
+    }
+  ],
+  "unauthenticatedDownloadStatus": 401
+}

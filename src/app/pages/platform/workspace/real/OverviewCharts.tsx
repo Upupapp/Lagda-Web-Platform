@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../../../utils/on-light";
 // The Overview's charts. Every one is drawn from real figures
 // (overview-insights.ts); one whose figures did not load says so instead of
 // showing zeros, and one with nothing to show yet says what will appear.
@@ -29,7 +30,7 @@ import { ActivitySentence } from "./RealActivityPage";
 const SENT = "#0078D4";
 const DONE = "#16A34A";
 const NAVY = "#07111F";
-const SLATE = "#64748B";
+const SLATE = ON_LIGHT.slate;
 
 function Unavailable({ what }: { what: string }) {
   return <p className="ov-muted">The {what} could not be loaded. Reload the page to try again.</p>;
@@ -229,9 +230,9 @@ export function StatusDonut({ requests }: { requests: Loadable<SigningRequestLis
         <div className="ov-donut">
           <div className="ov-donut-chart" role="img" aria-label={slices.map(s => `${s.label}: ${String(s.value)}`).join(", ")}>
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart accessibilityLayer={false}>
                 <Pie data={slices.filter(s => s.value > 0)} dataKey="value" nameKey="label" innerRadius="62%" outerRadius="92%" paddingAngle={2} stroke="none" isAnimationActive={false}>
-                  {slices.filter(s => s.value > 0).map(s => <Cell key={s.key} fill={SLICE_COLOR[s.key]} />)}
+                  {slices.filter(s => s.value > 0).map(s => <Cell key={s.key} fill={SLICE_COLOR[s.key]} aria-label={`${s.label}: ${String(s.value)}`} />)}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
@@ -313,13 +314,13 @@ export const OVERVIEW_CSS = `
 .ov-muted { font-family: 'Geist', sans-serif; font-size: 12.5px; color: ${SLATE}; margin: 2px 0 0; line-height: 1.5; }
 .ov-empty { font-family: 'Geist', sans-serif; font-size: 13px; color: ${SLATE}; margin: 6px 0; padding: 22px 12px; text-align: center; background: #F8FAFC; border: 1px dashed #D7DEE7; border-radius: 12px; }
 .ov-link { font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 600; color: #005A9E; text-decoration: none; white-space: nowrap; }
-.ov-link:hover { text-decoration: underline; }
+@media (hover: hover) and (pointer: fine) { .ov-link:hover { text-decoration: underline; } }
 .ov-skeleton { height: 120px; border-radius: 12px; background: linear-gradient(90deg, #F1F5F9 0%, #E9EEF4 50%, #F1F5F9 100%); background-size: 200% 100%; animation: ov-shimmer 1.2s linear infinite; }
 @keyframes ov-shimmer { to { background-position: -200% 0; } }
 
 .ov-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
 .ov-kpi { display: flex; flex-direction: column; gap: 4px; text-decoration: none; position: relative; overflow: hidden; transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease; }
-.ov-kpi:hover { border-color: #93C5FD; box-shadow: 0 10px 22px -14px rgba(0,120,212,0.6); transform: translateY(-1px); }
+@media (hover: hover) and (pointer: fine) { .ov-kpi:hover { border-color: #93C5FD; box-shadow: 0 10px 22px -14px rgba(0,120,212,0.6); transform: translateY(-1px); } }
 .ov-kpi-top { display: flex; align-items: center; gap: 8px; font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 600; color: ${SLATE}; }
 .ov-kpi-icon { width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .ov-kpi-value { font-family: 'Geist', sans-serif; font-size: 28px; font-weight: 800; color: ${NAVY}; line-height: 1.1; margin-top: 4px; }

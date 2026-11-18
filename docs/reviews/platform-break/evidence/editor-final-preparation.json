@@ -1,0 +1,58 @@
+[
+  {
+    "tag": "worst-fields",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "field-validation",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "worst-fields",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "field-validation",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "editor-page-drawer",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "worst-fields",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "field-validation",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "editor-page-drawer",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  }
+]

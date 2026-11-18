@@ -1,0 +1,9 @@
+
+ RUN  v3.2.4 C:/Users/paulg/OneDrive/Documents/ChatGPT/LAGDA
+
+ ✓ src/app/layouts/__tests__/PlatformLayout.signing.test.tsx (8 tests) 99ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  19:35:52
+   Duration  2.72s (transform 394ms, setup 1.86s, collect 271ms, tests 99ms, environment 306ms, prepare 71ms)

@@ -1,0 +1,10 @@
+
+ RUN  v3.2.4 C:/Users/paulg/OneDrive/Documents/ChatGPT/LAGDA
+
+ ✓ src/app/hooks/__tests__/useFlowViewport.test.tsx (4 tests) 19ms
+ ✓ src/app/components/recipient/__tests__/ConfirmActionDialog.test.tsx (2 tests) 117ms
+
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+   Start at  20:42:26
+   Duration  2.95s (transform 354ms, setup 3.82s, collect 382ms, tests 136ms, environment 902ms, prepare 142ms)

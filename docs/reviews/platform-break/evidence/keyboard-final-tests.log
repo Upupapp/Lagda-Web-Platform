@@ -1,0 +1,12 @@
+
+ RUN  v3.2.4 C:/Users/paulg/OneDrive/Documents/ChatGPT/LAGDA
+
+ ✓ src/app/components/prepare/__tests__/EditorMobileChrome.test.tsx (16 tests) 525ms
+ ✓ src/app/hooks/__tests__/useWorkspaceDialog.test.tsx (2 tests) 355ms
+ ✓ src/app/pages/platform/templates/__tests__/TemplatesPage.myTemplates.test.tsx (1 test) 111ms
+ ✓ src/app/hooks/__tests__/useFieldEditorShortcuts.test.tsx (28 tests) 74ms
+
+ Test Files  4 passed (4)
+      Tests  47 passed (47)
+   Start at  18:59:35
+   Duration  5.58s (transform 887ms, setup 3.38s, collect 3.07s, tests 1.06s, environment 2.16s, prepare 315ms)

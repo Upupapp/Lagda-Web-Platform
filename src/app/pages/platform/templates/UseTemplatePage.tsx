@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../../utils/on-light";
 // /app/templates/:templateId/use — Use Template flow.
 // 3-step wizard: Map Roles → Enter Variables → Review & Launch.
 // Creates a Prepare draft on completion. Against the real backend each use
@@ -89,7 +90,7 @@ function RoleMappingStep({
   return (
     <div>
       <h2 style={{ ...GF, fontSize: 16, fontWeight: 700, color: "#0F172A", margin: "0 0 6px", textAlign: "center" }}>Map Participants to Roles</h2>
-      <p style={{ ...GF, fontSize: 13, color: "#64748B", margin: "0 0 20px", textAlign: "center" }}>
+      <p style={{ ...GF, fontSize: 13, color: ON_LIGHT.slate, margin: "0 0 20px", textAlign: "center" }}>
         Enter the participant for each role placeholder in this template.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -102,7 +103,7 @@ function RoleMappingStep({
                 <div style={{ width: 10, height: 10, borderRadius: "50%", background: color, flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ ...GF, fontSize: 13, fontWeight: 700, color: "#0F172A" }}>{m.placeholderLabel}</div>
-                  <div style={{ ...GF, fontSize: 11, color: "#94A3B8" }}>
+                  <div style={{ ...GF, fontSize: 11, color: ON_LIGHT.muted }}>
                     {PREP_PARTICIPANT_ROLE_LABELS[m.role] ?? m.role}
                     {!m.required && " · Optional"}
                   </div>
@@ -126,11 +127,11 @@ function RoleMappingStep({
                 />
                 {m.role === "carbon-copy" ? (
                   <FormField label="Access">
-                    <input type="text" readOnly aria-readonly="true" value="Sees it in their LAGDA account" style={readOnlyInputStyle} />
+                    <input aria-label={`Access for ${m.placeholderLabel}`} type="text" readOnly aria-readonly="true" value="Sees it in their LAGDA account" style={readOnlyInputStyle} />
                   </FormField>
                 ) : (
                   <FormField label="Authentication">
-                    <select value={MAP_ROLES_AUTH_METHOD} disabled style={readOnlyInputStyle}>
+                    <select aria-label={`Authentication for ${m.placeholderLabel}`} value={MAP_ROLES_AUTH_METHOD} disabled style={readOnlyInputStyle}>
                       <option value={MAP_ROLES_AUTH_METHOD}>{authLabel}</option>
                     </select>
                   </FormField>
@@ -222,7 +223,7 @@ function VariablesStep({
           <CheckCircle2 size={22} color={GREEN} />
         </div>
         <p style={{ ...GF, fontSize: 14, color: "#0F172A", fontWeight: 600, margin: "0 0 4px" }}>No Variables Required</p>
-        <p style={{ ...GF, fontSize: 13, color: "#64748B", margin: 0 }}>This template has no customizable variables.</p>
+        <p style={{ ...GF, fontSize: 13, color: ON_LIGHT.slate, margin: 0 }}>This template has no customizable variables.</p>
       </div>
     );
   }
@@ -237,7 +238,7 @@ function VariablesStep({
           still recorded on the review step, but has nowhere to appear.
         </p>
       </div>
-      <p style={{ ...GF, fontSize: 13, color: "#64748B", margin: "0 0 20px", textAlign: "center" }}>
+      <p style={{ ...GF, fontSize: 13, color: ON_LIGHT.slate, margin: "0 0 20px", textAlign: "center" }}>
         These values will be used to customize the invitation message and document content.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -251,12 +252,13 @@ function VariablesStep({
                     {v.label}
                     {v.required && <span style={{ color: RED }}> *</span>}
                   </label>
-                  <code style={{ ...GF, fontSize: 10, background: "#EEF4FB", color: AZURE, padding: "2px 5px", borderRadius: 4 }}>{`{{${v.internalKey}}}`}</code>
+                  <code style={{ ...GF, fontSize: 10, background: "#EEF4FB", color: ON_LIGHT.azure, padding: "2px 5px", borderRadius: 4 }}>{`{{${v.internalKey}}}`}</code>
                 </div>
-                {v.helpText && <p style={{ ...GF, fontSize: 11, color: "#94A3B8", margin: 0 }}>{v.helpText}</p>}
+                {v.helpText && <p style={{ ...GF, fontSize: 11, color: ON_LIGHT.muted, margin: 0 }}>{v.helpText}</p>}
               </div>
               {v.type === "multiline-text" ? (
                 <textarea
+                  aria-label={v.label}
                   value={(val as string) ?? ""}
                   onChange={e => onChange(v.internalKey, e.target.value)}
                   placeholder={v.placeholder}
@@ -265,6 +267,7 @@ function VariablesStep({
                 />
               ) : v.type === "date" ? (
                 <input
+                  aria-label={v.label}
                   type="date"
                   value={(val as string) ?? ""}
                   onChange={e => onChange(v.internalKey, e.target.value)}
@@ -282,12 +285,13 @@ function VariablesStep({
                   </label>
                 </div>
               ) : v.type === "select" && v.options ? (
-                <select value={(val as string) ?? ""} onChange={e => onChange(v.internalKey, e.target.value)} style={selectStyle}>
+                <select aria-label={v.label} value={(val as string) ?? ""} onChange={e => onChange(v.internalKey, e.target.value)} style={selectStyle}>
                   <option value="">— Select —</option>
                   {v.options.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
                 </select>
               ) : (
                 <input
+                  aria-label={v.label}
                   type={v.type === "number" ? "number" : "text"}
                   value={(val as string) ?? ""}
                   onChange={e => onChange(v.internalKey, e.target.value)}
@@ -317,7 +321,7 @@ function ReviewStep({
   return (
     <div>
       <h2 style={{ ...GF, fontSize: 16, fontWeight: 700, color: "#0F172A", margin: "0 0 6px", textAlign: "center" }}>Review & Launch</h2>
-      <p style={{ ...GF, fontSize: 13, color: "#64748B", margin: "0 0 20px", textAlign: "center" }}>
+      <p style={{ ...GF, fontSize: 13, color: ON_LIGHT.slate, margin: "0 0 20px", textAlign: "center" }}>
         Review your configuration before creating the signing request.
       </p>
 
@@ -326,13 +330,13 @@ function ReviewStep({
         <LayoutTemplate size={18} color={AZURE} />
         <div>
           <div style={{ ...GF, fontSize: 13, fontWeight: 700, color: "#0F172A" }}>{template.name}</div>
-          <div style={{ ...GF, fontSize: 11, color: "#64748B" }}>{TEMPLATE_CATEGORY_LABELS[template.category]}</div>
+          <div style={{ ...GF, fontSize: 11, color: ON_LIGHT.slate }}>{TEMPLATE_CATEGORY_LABELS[template.category]}</div>
         </div>
       </div>
 
       {/* Participants */}
       <div style={{ background: "white", border: "1px solid #E2E8F0", borderRadius: 10, padding: "14px 16px", marginBottom: 14 }}>
-        <h3 style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 10px" }}>Participants</h3>
+        <h3 style={{ ...GF, fontSize: 12, fontWeight: 700, color: ON_LIGHT.slate, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 10px" }}>Participants</h3>
         {mappings.filter(m => m.displayName.trim() || m.required).map((m, idx) => {
           const color = PARTICIPANT_ACCENT_COLORS[idx % PARTICIPANT_ACCENT_COLORS.length] ?? AZURE;
           return (
@@ -340,9 +344,9 @@ function ReviewStep({
               <div style={{ width: 9, height: 9, borderRadius: "50%", background: color, flexShrink: 0 }} />
               <div style={{ flex: 1 }}>
                 <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#0F172A" }}>{m.displayName || "(not mapped)"}</div>
-                <div style={{ ...GF, fontSize: 11, color: "#94A3B8" }}>{m.email || "—"} · {m.placeholderLabel}</div>
+                <div style={{ ...GF, fontSize: 11, color: ON_LIGHT.muted }}>{m.email || "—"} · {m.placeholderLabel}</div>
               </div>
-              <div style={{ ...GF, fontSize: 11, color: "#64748B" }}>{authLabel(m.authMethod)}</div>
+              <div style={{ ...GF, fontSize: 11, color: ON_LIGHT.slate }}>{authLabel(m.authMethod)}</div>
             </div>
           );
         })}
@@ -351,12 +355,12 @@ function ReviewStep({
       {/* Variables */}
       {template.variables.length > 0 && (
         <div style={{ background: "white", border: "1px solid #E2E8F0", borderRadius: 10, padding: "14px 16px", marginBottom: 14 }}>
-          <h3 style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 10px" }}>Variables</h3>
+          <h3 style={{ ...GF, fontSize: 12, fontWeight: 700, color: ON_LIGHT.slate, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 10px" }}>Variables</h3>
           {template.variables.map(v => (
             <div key={v.id} style={{ display: "flex", justifyContent: "space-between", paddingBottom: 7, marginBottom: 7, borderBottom: "1px solid #F1F5F9" }}>
-              <span style={{ ...GF, fontSize: 12, color: "#64748B" }}>{v.label}</span>
+              <span style={{ ...GF, fontSize: 12, color: ON_LIGHT.slate }}>{v.label}</span>
               <span style={{ ...GF, fontSize: 12, color: "#334155", fontWeight: 600, textAlign: "right", maxWidth: 200 }}>
-                {(variableValues[v.internalKey] as string) || <span style={{ color: "#94A3B8" }}>—</span>}
+                {(variableValues[v.internalKey] as string) || <span style={{ color: ON_LIGHT.muted }}>—</span>}
               </span>
             </div>
           ))}
@@ -389,7 +393,7 @@ const textareaStyle: React.CSSProperties = {
 function FormField({ label, required, htmlFor, children }: { label: string; required?: boolean; htmlFor?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label htmlFor={htmlFor} style={{ ...GF, fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 4 }}>
+      <label htmlFor={htmlFor} style={{ ...GF, fontSize: 11, fontWeight: 600, color: ON_LIGHT.slate, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 4 }}>
         {label}{required && <span style={{ color: RED }}> *</span>}
       </label>
       {children}
@@ -529,7 +533,12 @@ function UseTemplateInner() {
     }
     if (step === "variables") {
       if (t) {
-        const missing = t.variables.filter(v => v.required && !varValues[v.internalKey]);
+        const missing = t.variables.filter(v => {
+          if (!v.required) return false;
+          const value = varValues[v.internalKey];
+          return value === undefined || value === null
+            || (typeof value === "string" && value.trim() === "");
+        });
         if (missing.length) return `Please fill in required variable: ${missing.map(v => v.label).join(", ")}.`;
       }
     }
@@ -686,7 +695,7 @@ function UseTemplateInner() {
       <div style={{ padding: isNarrow ? "40px 16px" : "40px 24px", textAlign: "center" }}>
         <AlertCircle size={32} color={RED} />
         <p style={{ ...GF, fontSize: 14, color: "#0F172A" }}>{state.activeError ?? "Template not found"}</p>
-        <Link to="/app/templates" style={{ color: AZURE }}>← Templates</Link>
+        <Link to="/app/templates" style={{ color: ON_LIGHT.azure }}>← Templates</Link>
       </div>
     );
   }
@@ -697,8 +706,8 @@ function UseTemplateInner() {
       <div style={{ padding: isNarrow ? "40px 16px" : "40px 24px", textAlign: "center" }}>
         <AlertCircle size={32} color={GOLD} />
         <p style={{ ...GF, fontSize: 14, color: "#0F172A", fontWeight: 600, marginBottom: 6 }}>Template Not Available</p>
-        <p style={{ ...GF, fontSize: 13, color: "#64748B" }}>This template is currently {TEMPLATE_STATUS_LABELS[t.status]}.</p>
-        <Link to={`/app/templates/${t.id}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 12, color: AZURE, ...GF, fontSize: 13 }}>
+        <p style={{ ...GF, fontSize: 13, color: ON_LIGHT.slate }}>This template is currently {TEMPLATE_STATUS_LABELS[t.status]}.</p>
+        <Link to={`/app/templates/${t.id}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 12, color: ON_LIGHT.azure, ...GF, fontSize: 13 }}>
           ← Back to Template
         </Link>
       </div>
@@ -716,19 +725,19 @@ function UseTemplateInner() {
           <h2 style={{ ...GF, fontSize: 20, fontWeight: 800, color: "#0F172A", margin: "0 0 8px", letterSpacing: "-0.02em" }}>
             Draft Created
           </h2>
-          <p style={{ ...GF, fontSize: 14, color: "#64748B", margin: "0 0 6px" }}>
+          <p style={{ ...GF, fontSize: 14, color: ON_LIGHT.slate, margin: "0 0 6px" }}>
             A signing request draft has been created from <strong>{t.name}</strong>,
             with {launchParticipantCount} {launchParticipantCount === 1 ? "participant" : "participants"} across{" "}
             {launchStepCount} {launchStepCount === 1 ? "routing step" : "routing steps"}.
           </p>
-          <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: "0 0 10px" }}>
+          <p style={{ ...GF, fontSize: 12, color: ON_LIGHT.muted, margin: "0 0 10px" }}>
             Nothing has been sent yet. Give it a title on the next step, then review
             everything before sending.
           </p>
           {/* Says plainly that the draft is now independent of the template.
               Someone who edits the template afterwards should not have to guess
               whether this draft changes with it. It does not. */}
-          <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: "0 0 28px" }}>
+          <p style={{ ...GF, fontSize: 12, color: ON_LIGHT.muted, margin: "0 0 28px" }}>
             This draft now has its own copy of the document, roles and routing. Later changes to
             the template will not affect it.
           </p>
@@ -740,7 +749,7 @@ function UseTemplateInner() {
               <p style={{ ...GF, fontSize: 12.5, fontWeight: 700, color: "#0F172A", margin: "0 0 4px" }}>
                 Authentication was not applied for {authDowngrades.length === 1 ? "one role" : `${authDowngrades.length} roles`}
               </p>
-              <p style={{ ...GF, fontSize: 12, color: "#64748B", margin: 0, lineHeight: 1.6 }}>
+              <p style={{ ...GF, fontSize: 12, color: ON_LIGHT.slate, margin: 0, lineHeight: 1.6 }}>
                 {authDowngrades.map(d => d.label).join(", ")} — this template asks for a
                 stronger check that is not enforced yet. {authDowngrades.length === 1 ? "That recipient" : "Those recipients"} will
                 receive a secure invitation link instead. You can review this on the
@@ -783,7 +792,7 @@ function UseTemplateInner() {
             <ChevronLeft size={14} aria-hidden style={{ flexShrink: 0 }} />
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{t.name}</span>
           </Link>
-          <span aria-hidden style={{ color: "#94A3B8", flexShrink: 0 }}>/</span>
+          <span aria-hidden style={{ color: ON_LIGHT.muted, flexShrink: 0 }}>/</span>
           <span aria-current="page" style={{ ...GF, fontSize: 13, color: "#0F172A", fontWeight: 600, flexShrink: 0 }}>Use Template</span>
         </nav>
         {/* The stepper sits on the same centred column as the step below it. */}

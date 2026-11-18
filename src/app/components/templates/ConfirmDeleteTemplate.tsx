@@ -23,6 +23,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, X } from "lucide-react";
 import { Z } from "../../utils/z-index";
+import { useModalFocus } from "../../hooks/useModalFocus";
 import { useViewport } from "../../hooks/useViewport";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -41,6 +42,8 @@ export function ConfirmDeleteTemplate({
   const { isNarrow } = useViewport();
   const [typed, setTyped] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalFocus(dialogRef, onCancel, busy);
 
   // Compared trimmed and case-insensitively. Requiring an exact match on
   // capitalisation tests transcription, not intent, and a name ending in a
@@ -49,19 +52,10 @@ export function ConfirmDeleteTemplate({
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
-  // Escape closes, as every dialog should. Not while the delete is in flight:
-  // the request has already left and dismissing would imply it was cancelled.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !busy) onCancel();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => { window.removeEventListener("keydown", onKey); };
-  }, [busy, onCancel]);
 
   return (
     <div
-      role="dialog"
+      ref={dialogRef} tabIndex={-1} className="platform-task-dialog" role="dialog"
       aria-modal="true"
       aria-label={`Delete ${templateName}`}
       onClick={() => { if (!busy) onCancel(); }}
@@ -81,7 +75,7 @@ export function ConfirmDeleteTemplate({
           background: "white",
           borderRadius: isNarrow ? "16px 16px 0 0" : 14,
           width: "100%", maxWidth: 460,
-          maxHeight: isNarrow ? "92vh" : "88vh",
+          maxHeight: isNarrow ? "92dvh" : "88dvh",
           overflowY: "auto",
           boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
           padding: isNarrow ? "18px 18px 24px" : "22px 24px 24px",

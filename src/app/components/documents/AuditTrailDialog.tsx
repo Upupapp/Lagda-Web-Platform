@@ -1,3 +1,5 @@
+import { useModalFocus } from "../../hooks/useModalFocus";
+import { ON_LIGHT } from "../../utils/on-light";
 // The audit trail for one signing request: what happened, when, and by whom.
 //
 // Reads GET /workspaces/:id/signing-requests/:id/audit — the backend's
@@ -13,7 +15,7 @@
 // summarised into a friendlier sentence, because the friendlier sentence is
 // exactly what somebody disputing a signature would ask us to justify.
 
-import { useState, useEffect, type CSSProperties } from "react";
+import { useRef, useState, useEffect, type CSSProperties } from "react";
 import { X, User, Mail, Cog, ShieldCheck, FileCheck, IdCard, FlaskConical, MessageSquare, type LucideIcon } from "lucide-react";
 import { Link } from "react-router";
 import {
@@ -28,9 +30,8 @@ const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 const GM: CSSProperties = { fontFamily: "'Geist Mono', monospace" };
 
 const NAVY   = "#07111F";
-const AZURE  = "#0078D4";
-const SLATE6 = "#64748B";
-const SLATE4 = "#94A3B8";
+const SLATE6 = ON_LIGHT.slate;
+const SLATE4 = ON_LIGHT.muted;
 const SLATE2 = "#E2E8F0";
 
 /** Absolute, with the timezone shown — an evidentiary timestamp is useless
@@ -226,19 +227,11 @@ export function AuditTrailDialog({
   workspaceId, signingRequestId, documentTitle, onClose,
 }: AuditTrailDialogProps) {
   const [data, setData] = useState<AuditTrail | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
 
-  useEffect(() => {
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = previous; };
-  }, []);
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  useModalFocus(dialogRef, onClose, false);
 
   useEffect(() => {
     let cancelled = false;
@@ -250,7 +243,7 @@ export function AuditTrailDialog({
 
   return (
     <div
-      role="dialog" aria-modal="true" aria-label={`Audit trail for ${documentTitle}`}
+      ref={dialogRef} tabIndex={-1} className="platform-task-dialog" role="dialog" aria-modal="true" aria-label={`Audit trail for ${documentTitle}`}
       style={{
         position: "fixed", inset: 0, zIndex: Z.modal, display: "flex",
         alignItems: "center", justifyContent: "center",
@@ -260,7 +253,7 @@ export function AuditTrailDialog({
     >
       <div style={{
         background: "#fff", borderRadius: 12, width: "min(600px, 100%)",
-        maxHeight: "min(85vh, 760px)", display: "flex", flexDirection: "column",
+        maxHeight: "min(85dvh, 760px)", display: "flex", flexDirection: "column",
         boxShadow: "0 8px 32px rgba(0,0,0,0.22)",
       }}>
         <div style={{
@@ -293,7 +286,7 @@ export function AuditTrailDialog({
           </button>
         </div>
 
-        <div style={{ overflowY: "auto", padding: "4px 18px 18px" }}>
+        <div tabIndex={0} role="region" aria-label="Audit trail events" style={{ overflowY: "auto", padding: "4px 18px 18px" }}>
           {failed && (
             <p style={{ fontSize: 13, color: SLATE6, padding: "24px 0", ...GF }}>
               This document&apos;s audit trail could not be loaded.
@@ -325,7 +318,7 @@ export function AuditTrailDialog({
               <p style={{ fontSize: 11, color: SLATE4, margin: "14px 0 0", ...GF }}>
                 This record is read-only. The same trail backs the document&rsquo;s public
                 verification page —{" "}
-                <Link to="/app/verify" onClick={onClose} style={{ color: AZURE, textDecoration: "underline" }}>Verify a Document</Link>{" "}
+                <Link to="/app/verify" onClick={onClose} style={{ color: ON_LIGHT.azure, textDecoration: "underline", display: "inline-flex", alignItems: "center" }}>Verify a Document</Link>{" "}
                 in the sidebar.
               </p>
             </>

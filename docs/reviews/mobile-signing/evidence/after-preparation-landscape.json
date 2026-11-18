@@ -1,0 +1,389 @@
+[
+  {
+    "tag": "demo-upload",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "prep-title",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-description",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-folder",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "demo-participants",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "demo-routing",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "Label for routing step 1",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "demo-settings",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "first-reminder",
+          "fontSize": 16
+        },
+        {
+          "label": "repeat-interval",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/settings",
+    "violations": []
+  },
+  {
+    "tag": "demo-fields",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "demo-authentication",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/authentication",
+    "violations": []
+  },
+  {
+    "tag": "demo-review",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  },
+  {
+    "tag": "demo-authorization",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/authorization",
+    "violations": []
+  },
+  {
+    "tag": "worst-upload",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "prep-title",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-description",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-folder",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "worst-participants",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "worst-routing",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "Label for routing step 1",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "worst-settings",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "first-reminder",
+          "fontSize": 16
+        },
+        {
+          "label": "repeat-interval",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/settings",
+    "violations": []
+  },
+  {
+    "tag": "worst-fields",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "worst-authentication",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/authentication",
+    "violations": []
+  },
+  {
+    "tag": "worst-review",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  },
+  {
+    "tag": "worst-authorization",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/authorization",
+    "violations": []
+  },
+  {
+    "tag": "empty-upload",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "prep-title",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-description",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-folder",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "empty-participants",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "many-participants",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "many-routing",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "Label for routing step 1",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "many-review",
+    "profile": "landscape",
+    "width": 844,
+    "height": 390,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  }
+]

@@ -14,7 +14,7 @@
 
 import { useState } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SignatureCapture, type SignatureValue } from "../SignatureCapture";
 
@@ -267,6 +267,34 @@ describe("drawn signatures", () => {
     const base64 = value?.method === "drawn" ? value.base64 : "";
     expect(base64.startsWith("data:")).toBe(false);
     expect(base64).toMatch(/^[A-Za-z0-9+/]+={0,2}$/u);
+  });
+
+  it("ignores a second touch, including its release, until the active finger lifts", () => {
+    const { onChange } = setup();
+    const canvas = screen.getByLabelText("Draw your signature");
+    const pointer = (type: string, id: number, primary: boolean) => {
+      const event = new MouseEvent(type, { bubbles: true, button: 0, clientX: 10 * id, clientY: 20 });
+      Object.defineProperties(event, { pointerId: { value: id }, isPrimary: { value: primary } });
+      fireEvent(canvas, event);
+    };
+    pointer("pointerdown", 1, true);
+    pointer("pointerdown", 2, false);
+    pointer("pointermove", 2, false);
+    pointer("pointerup", 2, false);
+    expect(onChange).not.toHaveBeenCalled();
+    pointer("pointermove", 1, true);
+    pointer("pointerup", 1, true);
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(lastValue(onChange)?.method).toBe("drawn");
+  });
+
+  it("does not treat a right mouse click as an adopted signature", () => {
+    const { onChange } = setup();
+    const canvas = screen.getByLabelText("Draw your signature");
+    // user-event's pointerdown omits the mouse button; use explicit native fields.
+    fireEvent(canvas, new MouseEvent("pointerdown", { bubbles: true, button: 2, clientX: 10, clientY: 10 }));
+    fireEvent(canvas, new MouseEvent("pointerup", { bubbles: true, button: 2, clientX: 10, clientY: 10 }));
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it("does not let a touch drag scroll the page instead of drawing", () => {

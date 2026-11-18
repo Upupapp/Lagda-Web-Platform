@@ -19,7 +19,7 @@ import type { PreparationStepId, PreparationStepState, PrepValidationIssue } fro
 describe("step label / route helpers", () => {
   it("resolves a known step's route and label", () => {
     expect(stepRouteFor("participants")).toBe("/app/prepare/participants");
-    expect(stepLabelFor("participants")).toBe("Signers");
+    expect(stepLabelFor("participants")).toBe("Participants");
   });
   it("labels a route by its prefix", () => {
     expect(stepLabelFromRoute("/app/prepare/fields?showValidation=1")).toBe("Place Fields");

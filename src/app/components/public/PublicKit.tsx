@@ -98,7 +98,7 @@ export function PublicHeading({ eyebrow, id, heading, sub, center }: PublicHeadi
       </h2>
       {sub && (
         <p style={{
-          color: "#64748B", ...GF, fontSize: 16, lineHeight: 1.65,
+          color: ON_LIGHT.slate, ...GF, fontSize: 16, lineHeight: 1.65,
           margin: center ? "0 auto" : 0, maxWidth: 640,
         }}>
           {sub}

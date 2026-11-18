@@ -656,7 +656,7 @@ export function SField({ label, help, required, children, htmlFor }: {
         <LabelTag {...(htmlFor ? { htmlFor } : {})} style={{ ...GF, fontSize: 13, fontWeight: 600, color: SET.NAVY, display: "block" }}>
           {label}{required && <span aria-label="required" style={{ color: SET.DANGER, marginLeft: 3 }}>*</span>}
         </LabelTag>
-        {help && <div style={{ ...GF, fontSize: 12.5, color: SET.SLATE, marginTop: 3, lineHeight: 1.45 }}>{help}</div>}
+        {help && <div id={htmlFor ? `${htmlFor}-help` : undefined} style={{ ...GF, fontSize: 12.5, color: SET.SLATE, marginTop: 3, lineHeight: 1.45 }}>{help}</div>}
       </div>
       <div style={{ flex: "1 1 260px", minWidth: 0 }}>{children}</div>
     </div>

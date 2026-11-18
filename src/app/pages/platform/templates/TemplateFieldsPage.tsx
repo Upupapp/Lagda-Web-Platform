@@ -1,3 +1,4 @@
+import { useFlowViewport } from "../../../hooks/useFlowViewport";
 // /app/templates/:templateId/fields — Template field editor.
 // Self-contained local-state field editor (does not use PrepDraft-specific FieldEditorContext).
 // Reuses field type labels/icons/constants from field-editor.ts.
@@ -134,7 +135,7 @@ function editorReducer(s: EditorState, a: EditorAction): EditorState {
 
 // ── Color for placeholder ─────────────────────────────────────────────────────
 function phColor(ph: TemplateRolePlaceholder[], placeholderId: string | null): string {
-  if (!placeholderId) return "#94A3B8";
+  if (!placeholderId) return "#5B6776";
   const idx = ph.findIndex(p => p.id === placeholderId);
   return PARTICIPANT_ACCENT_COLORS[idx >= 0 ? idx % PARTICIPANT_ACCENT_COLORS.length : 0] ?? AZURE;
 }
@@ -313,7 +314,7 @@ function PageCanvas({
     // width. Centred by its parent it shrank to fit its own content, the
     // content was sized from it, and on a phone the two settled on a
     // thumbnail about 20px wide.
-    <div ref={ref} style={{ flex: 1, alignSelf: "stretch", width: "100%", boxSizing: "border-box", overflowY: "auto", background: BGCANVAS, padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
+    <div ref={ref} tabIndex={0} role="region" aria-label="Template document page" style={{ flex: 1, alignSelf: "stretch", width: "100%", boxSizing: "border-box", overflowY: "auto", background: BGCANVAS, padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
       <div
         data-page-surface={pageId}
         style={{
@@ -439,7 +440,7 @@ function RightPanel({
     // Beside the document on a wide screen. On a phone it sits UNDER it, at a
     // fixed share of the height: side by side, a 220px panel left the document
     // a strip about 100px wide and placing a field on it was not possible.
-    <div style={isNarrow
+    <div className="template-field-palette" style={isNarrow
       ? { width: "100%", flexShrink: 0, height: "38dvh", borderTop: "1px solid rgba(0,0,0,0.12)", background: "#ffffff", overflowY: "auto" }
       : { width: 220, flexShrink: 0, borderLeft: "1px solid rgba(0,0,0,0.08)", background: "#ffffff", overflowY: "auto" }}>
       {sel ? (
@@ -448,9 +449,9 @@ function RightPanel({
             <span style={{ color: SILVER, ...GF, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", flex: 1 }}>Properties</span>
             <button onClick={onDeselectAll} style={{ color: SILVER, background: "none", border: "none", cursor: "pointer", fontSize: 14, lineHeight: 1 }}>×</button>
           </div>
-          <div style={{ color: "#94A3B8", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Type</div>
+          <div style={{ color: "#5B6776", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Type</div>
           <div style={{ color: NAVY, ...GF, fontSize: 12, marginBottom: 10 }}>{FIELD_TYPE_ICONS[sel.type]} {FIELD_TYPE_LABELS[sel.type]}</div>
-          <div style={{ color: "#94A3B8", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Label</div>
+          <div style={{ color: "#5B6776", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Label</div>
           <input
             value={sel.label}
             onChange={e => onUpdateField(sel._localId, { label: e.target.value })}
@@ -469,7 +470,7 @@ function RightPanel({
             `placeholderId: null`, and those fields were SILENTLY DROPPED on
             save. It is kept as an explicit option, and now warns.
           */}
-          <div style={{ color: "#94A3B8", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Filled by</div>
+          <div style={{ color: "#5B6776", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Filled by</div>
           <select
             value={
               sel.variableRef !== undefined && sel.variableRef !== ""
@@ -541,7 +542,7 @@ function RightPanel({
           )}
           {FIELD_TYPE_GROUPS.map(group => (
             <div key={group.label} style={{ marginBottom: 10 }}>
-              <div style={{ color: "#94A3B8", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>{group.label}</div>
+              <div style={{ color: "#5B6776", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>{group.label}</div>
               {group.types.map(type => (
                 <button
                   key={type}
@@ -561,8 +562,6 @@ function RightPanel({
                     cursor:      "pointer",
                     textAlign:   "left",
                   }}
-                  onMouseEnter={e => { if (pendingType !== type) (e.currentTarget as HTMLElement).style.background = "#F1F5F9"; }}
-                  onMouseLeave={e => { if (pendingType !== type) (e.currentTarget as HTMLElement).style.background = "none"; }}
                 >
                   <span style={{ fontSize: 12 }}>{FIELD_TYPE_ICONS[type]}</span>
                   {FIELD_TYPE_LABELS[type]}
@@ -578,6 +577,7 @@ function RightPanel({
 
 // ── Fields editor inner ───────────────────────────────────────────────────────
 function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
+  useFlowViewport();
   const { isNarrow } = useViewport();
   usePageMeta();
   const platform = usePlatform();
@@ -690,12 +690,12 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100dvh", background: "#ffffff", ...GF }}>
+    <div className="template-task" style={{ display: "flex", flexDirection: "column", height: "100dvh", background: "#ffffff", ...GF }}>
       {/* Top bar */}
-      <div style={{ height: 52, background: "#ffffff", borderBottom: "1px solid rgba(0,0,0,0.08)", display: "flex", alignItems: "center", padding: "0 16px", gap: 10, flexShrink: 0 }}>
-        <Link to={`/app/templates/${template.id}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, color: SILVER, ...GF, fontSize: 12, textDecoration: "none" }}>
-          <ChevronLeft size={13} />
-          {template.name}
+      <div className="template-fields-header" style={{ minHeight: 52, background: "#ffffff", borderBottom: "1px solid rgba(0,0,0,0.08)", display: "flex", flexWrap: "wrap", alignItems: "center", padding: "8px 16px", gap: 8, flexShrink: 0 }}>
+        <Link to={`/app/templates/${template.id}`} title={template.name} style={{ display: "inline-flex", flex: "1 1 120px", minWidth: 0, alignItems: "center", gap: 5, color: SILVER, ...GF, fontSize: 12, textDecoration: "none" }}>
+          <ChevronLeft size={13} style={{ flexShrink: 0 }} />
+          <span style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "anywhere", lineHeight: 1.5 }}>{template.name}</span>
         </Link>
         <span style={{ color: "#CBD5E1" }}>/</span>
         <span style={{ color: NAVY, ...GF, fontSize: 12 }}>Fields</span>
@@ -707,7 +707,7 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
           <span style={{ ...GF, fontSize: 11.5, color: "#B91C1C", maxWidth: 340 }}>{saveError}</span>
         )}
         {saved && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#34D399", ...GF, fontSize: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#166534", ...GF, fontSize: 12 }}>
             <CheckCircle2 size={12} />
             {isReal ? "Saved" : "Saved (in-session)"}
           </div>
@@ -715,7 +715,7 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
         <button
           onClick={() => { void handleSave(); }}
           disabled={saving}
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: saving ? "#93C5FD" : AZURE, color: "white", border: "none", borderRadius: 7, ...GF, fontSize: 12, fontWeight: 700, cursor: saving ? "default" : "pointer" }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0, whiteSpace: "nowrap", padding: "7px 14px", background: saving ? "#93C5FD" : AZURE, color: "white", border: "none", borderRadius: 7, ...GF, fontSize: 12, fontWeight: 700, cursor: saving ? "default" : "pointer" }}
         >
           <Save size={13} />
           {saving ? "Saving…" : "Save Fields"}
@@ -752,10 +752,10 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
       )}
 
       {/* Assign-to role bar + doc tabs */}
-      <div style={{ background: "#f8fafb", borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "8px 16px", display: "flex", alignItems: "center", gap: 16, flexShrink: 0, flexWrap: "wrap" }}>
+      <div className="template-role-bar" style={{ background: "#f8fafb", borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "8px 16px", display: "flex", alignItems: "center", gap: 16, flexShrink: 0, flexWrap: "wrap" }}>
         {template.placeholders.length > 0 && (
-          /* Wraps: eleven roles in one row made the whole page 1020px wide. */
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", minWidth: 0 }}>
+          /* Wrap on desktop; a bounded native-scrolling strip preserves phone canvas space. */
+          <div className="template-role-chips" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", minWidth: 0 }}>
             <span style={{ color: SILVER, ...GF, fontSize: 11 }}>Assign to:</span>
             {template.placeholders.map((ph, idx) => {
               const color = PARTICIPANT_ACCENT_COLORS[idx % PARTICIPANT_ACCENT_COLORS.length] ?? AZURE;
@@ -764,7 +764,7 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
                 <button
                   key={ph.id}
                   onClick={() => setActivePlaceholder(ph.id)}
-                  style={{ ...GF, fontSize: 11, padding: "4px 10px", border: `1px solid ${active ? color : "#CBD5E1"}`, borderRadius: 99, background: active ? `${color}18` : "none", color: active ? color : SILVER, cursor: "pointer" }}
+                  style={{ ...GF, fontSize: 11, padding: "4px 10px", border: `1px solid ${active ? color : "#CBD5E1"}`, borderRadius: 99, background: active ? `${color}18` : "none", color: active ? "#0063B1" : SILVER, cursor: "pointer" }}
                 >
                   {ph.label}
                 </button>

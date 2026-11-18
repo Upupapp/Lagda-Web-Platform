@@ -1,0 +1,99 @@
+{
+  "mode": "skip",
+  "title": "Roles skip QA 2026-11-18T11-47-58-941Z",
+  "startedAt": "2026-11-18T11:47:58.942Z",
+  "workspaceId": "ws_c5824282ea614104ad7c3e6821903e93",
+  "sourceSha256": "cc4ebccb83aada7d1ab6352d49c3884029674a55a0c1711498c426ef568f9b9b",
+  "documentId": "doc_1b6778a5977c46679c620755b250fd03",
+  "signingRequestId": "sr_4deb2a8c96614e13bfe9ea50304091e8",
+  "sentAt": "2026-11-18T11:48:14.463Z",
+  "recipients": [
+    {
+      "recipientId": "srr_4a8b672718964e9796beb57e4e32553d",
+      "name": "LAGDA Workflow QA approver",
+      "email": "multi.signer.1.20261118@example.test",
+      "organization": null,
+      "type": "approver",
+      "isRequired": true,
+      "orderIndex": 0,
+      "routingOrder": 1
+    },
+    {
+      "recipientId": "srr_614c37ea03f544b1a79d5e8726849a3b",
+      "name": "LAGDA Workflow QA reviewer",
+      "email": "multi.signer.2.20261118@example.test",
+      "organization": null,
+      "type": "reviewer",
+      "isRequired": true,
+      "orderIndex": 1,
+      "routingOrder": 2
+    },
+    {
+      "recipientId": "srr_8a9a7b4df6d64b70999a1c827b8ccede",
+      "name": "LAGDA Workflow QA signer",
+      "email": "multi.signer.3.20261118@example.test",
+      "organization": null,
+      "type": "signer",
+      "isRequired": true,
+      "orderIndex": 2,
+      "routingOrder": 3
+    }
+  ],
+  "fields": [
+    {
+      "fieldId": "srf_106e6bdf1fb9411abc17b0d9129bef05",
+      "type": "signature-block",
+      "pageNumber": 2,
+      "rect": {
+        "x": 0.332,
+        "y": 0.855,
+        "width": 0.336,
+        "height": 0.095
+      },
+      "required": true,
+      "label": "Signature over Name",
+      "layer": 1,
+      "recipientId": "srr_8a9a7b4df6d64b70999a1c827b8ccede",
+      "staticValue": null
+    },
+    {
+      "fieldId": "srf_feefcd0137a045afb164ceb9fe07e2b8",
+      "type": "review-block",
+      "pageNumber": 2,
+      "rect": {
+        "x": 0.332,
+        "y": 0.75,
+        "width": 0.336,
+        "height": 0.095
+      },
+      "required": true,
+      "label": "Reviewed over Name",
+      "layer": 2,
+      "recipientId": "srr_614c37ea03f544b1a79d5e8726849a3b",
+      "staticValue": null
+    },
+    {
+      "fieldId": "srf_f5f9de10396341fb855be16632591bc0",
+      "type": "approval-block",
+      "pageNumber": 2,
+      "rect": {
+        "x": 0.332,
+        "y": 0.645,
+        "width": 0.336,
+        "height": 0.095
+      },
+      "required": false,
+      "label": "Approved over Name",
+      "layer": 3,
+      "recipientId": "srr_4a8b672718964e9796beb57e4e32553d",
+      "staticValue": null
+    }
+  ],
+  "routingMode": "sequential",
+  "finalSha256": "8371b851adefb65489e0c07b083d6b9de232f9ebb9ca9759aa30aeaa8ea69340",
+  "finalBytes": 937874,
+  "verificationId": "LAGDA-VER-2026-PQgzRyitCR",
+  "completed": true,
+  "auditEntries": 15,
+  "completedAt": "2026-11-18T11:56:11.263Z"
+}

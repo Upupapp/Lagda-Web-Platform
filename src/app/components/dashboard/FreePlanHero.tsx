@@ -84,7 +84,7 @@ export function FreePlanHero({ plan }: { plan: MyPlan }) {
           <div className="fp-status">
             <Meter used={used} limit={plan.freeDocumentLimit} />
             <div className="fp-status-text">
-              <h1 className="fp-title">{headline}</h1>
+              <h2 className="fp-title">{headline}</h2>
               <p className="fp-lead">{lead}</p>
             </div>
           </div>

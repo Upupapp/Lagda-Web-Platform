@@ -1,0 +1,11 @@
+{
+  "mode": "parallel",
+  "stage": "final",
+  "state": "completed",
+  "signedCount": 3,
+  "requiredCount": 3,
+  "active": [],
+  "waiting": [],
+  "invitationCount": 3,
+  "checks": []
+}

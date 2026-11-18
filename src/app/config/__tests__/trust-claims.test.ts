@@ -62,8 +62,15 @@ function userFacingFiles(): string[] {
   return out;
 }
 
+// One immutable source snapshot per run. Re-reading the whole tree for every
+// phrase made the first assertion time out on a cold Windows/OneDrive checkout.
+const sourceCache = new Map<string, string>();
 function read(file: string): string {
-  return fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+  const cached = sourceCache.get(file);
+  if (cached !== undefined) return cached;
+  const source = fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+  sourceCache.set(file, source);
+  return source;
 }
 
 function rel(file: string): string {
@@ -90,6 +97,8 @@ function publicFiles(): string[] {
 }
 
 const PUBLIC_FILES = publicFiles();
+// Snapshot during collection, outside individual assertion time budgets.
+for (const file of new Set([...FILES, ...PUBLIC_FILES])) read(file);
 
 describe("trust invariants", () => {
   it("has files to check", () => {

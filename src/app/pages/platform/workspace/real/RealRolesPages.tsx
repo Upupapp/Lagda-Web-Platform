@@ -50,7 +50,7 @@ function countFor(roster: WorkspaceMemberSummary[] | null | "loading", role: Bac
 
 function MatrixTable() {
   return (
-    <div style={{ ...cardStyle, overflowX: "auto" }}>
+    <div role="region" aria-label="Role permissions comparison" tabIndex={0} style={{ ...cardStyle, overflowX: "auto" }}>
       <table data-testid="roles-matrix" style={{ width: "100%", borderCollapse: "collapse", minWidth: 760 }}>
         <caption style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>What each role can do</caption>
         <thead style={{ background: "#F8FAFC", borderBottom: `2px solid ${BORDER}` }}>

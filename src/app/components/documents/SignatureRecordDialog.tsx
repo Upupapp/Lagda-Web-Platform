@@ -1,3 +1,5 @@
+import { useModalFocus } from "../../hooks/useModalFocus";
+import { ON_LIGHT } from "../../utils/on-light";
 // The participant record for one signing request: everyone who takes part —
 // signers, approvers, reviewers — what each has done, and when.
 //
@@ -38,10 +40,10 @@ import {
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 
 const NAVY   = "#07111F";
-const SLATE6 = "#64748B";
-const SLATE4 = "#94A3B8";
+const SLATE6 = ON_LIGHT.slate;
+const SLATE4 = ON_LIGHT.muted;
 const SLATE2 = "#E2E8F0";
-const GREEN  = "#059669";
+const GREEN  = ON_LIGHT.success;
 const AMBER  = "#B45309";
 const RED    = "#DC2626";
 const AZURE  = "#0078D4";
@@ -168,7 +170,7 @@ const DIALOG_STYLES = `
 
 const ACTION_BUTTON: CSSProperties = {
   ...GF, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, boxSizing: "border-box",
-  fontSize: 12.5, fontWeight: 600, color: AZURE, background: "#fff", textAlign: "center", lineHeight: 1.3,
+  fontSize: 12.5, fontWeight: 600, color: ON_LIGHT.azure, background: "#fff", textAlign: "center", lineHeight: 1.3,
   border: "1px solid #BFDBFE", borderRadius: 7, padding: "7px 12px", cursor: "pointer",
 };
 
@@ -447,8 +449,8 @@ function SignatoryRow({ signatory, link, identity, reminder, note, accountVerifi
               background: "#EFF6FF", border: `1px solid #BFDBFE`,
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <ShieldCheck size={13} aria-hidden style={{ color: AZURE, flexShrink: 0 }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: AZURE, ...GF }}>
+                <ShieldCheck size={13} aria-hidden style={{ color: ON_LIGHT.azure, flexShrink: 0 }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: ON_LIGHT.azure, ...GF }}>
                   Signed in with a LAGDA account
                 </span>
               </div>
@@ -892,17 +894,8 @@ export function SignatureRecordDialog({
     setFocusResolved(null);
   }, [focusResolved]);
 
-  useEffect(() => {
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = previous; };
-  }, []);
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  useModalFocus(overlayRef, onClose, resolveBusy);
 
   useEffect(() => {
     let cancelled = false;
@@ -915,7 +908,7 @@ export function SignatureRecordDialog({
   return (
     <div
       ref={overlayRef}
-      role="dialog" aria-modal="true" aria-label={`Participants for ${documentTitle}`}
+      tabIndex={-1} className="platform-task-dialog" role="dialog" aria-modal="true" aria-label={`Participants for ${documentTitle}`}
       style={{
         position: "fixed", inset: 0, zIndex: Z.modal, display: "flex",
         alignItems: "center", justifyContent: "center",
@@ -925,7 +918,7 @@ export function SignatureRecordDialog({
     >
       <div style={{
         background: "#fff", borderRadius: 12, width: "min(560px, 100%)",
-        maxHeight: "min(85vh, 760px)", display: "flex", flexDirection: "column",
+        maxHeight: "min(85dvh, 760px)", display: "flex", flexDirection: "column",
         boxShadow: "0 8px 32px rgba(0,0,0,0.22)",
       }}>
         <div style={{
@@ -960,7 +953,7 @@ export function SignatureRecordDialog({
 
         <style>{DIALOG_STYLES}</style>
         <div role="status" aria-live="polite" data-testid="participants-announcement" style={SR_ONLY}>{announcement}</div>
-        <div style={{ overflowY: "auto", padding: "4px 18px 18px" }}>
+        <div tabIndex={0} role="region" aria-label="Participant records" style={{ overflowY: "auto", padding: "4px 18px 18px" }}>
           {failed && (
             <p style={{ fontSize: 13, color: SLATE6, padding: "24px 0", ...GF }}>
               This document&apos;s participants could not be loaded.

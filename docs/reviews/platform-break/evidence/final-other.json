@@ -1,0 +1,149 @@
+[
+  {
+    "tag": "-app-documents",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/documents",
+    "violations": []
+  },
+  {
+    "tag": "-app-contacts",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/contacts",
+    "violations": []
+  },
+  {
+    "tag": "-app-templates",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/templates",
+    "violations": []
+  },
+  {
+    "tag": "-app-shared-documents",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/shared-documents/by-me",
+    "violations": []
+  },
+  {
+    "tag": "-app-notifications",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/notifications",
+    "violations": []
+  },
+  {
+    "tag": "-app-settings-profile",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/settings/profile",
+    "violations": []
+  },
+  {
+    "tag": "-app-settings-security",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/settings/security",
+    "violations": []
+  },
+  {
+    "tag": "-app-documents",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/documents",
+    "violations": []
+  },
+  {
+    "tag": "-app-contacts",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/contacts",
+    "violations": []
+  },
+  {
+    "tag": "-app-templates",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/templates",
+    "violations": []
+  },
+  {
+    "tag": "-app-shared-documents",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/shared-documents/by-me",
+    "violations": []
+  },
+  {
+    "tag": "-app-notifications",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/notifications",
+    "violations": []
+  },
+  {
+    "tag": "-app-settings-profile",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/settings/profile",
+    "violations": []
+  },
+  {
+    "tag": "-app-settings-security",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/settings/security",
+    "violations": []
+  },
+  {
+    "tag": "-app-documents",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/documents",
+    "violations": []
+  },
+  {
+    "tag": "-app-contacts",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/contacts",
+    "violations": []
+  },
+  {
+    "tag": "-app-templates",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/templates",
+    "violations": []
+  },
+  {
+    "tag": "-app-shared-documents",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/shared-documents/by-me",
+    "violations": []
+  },
+  {
+    "tag": "-app-notifications",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/notifications",
+    "violations": []
+  },
+  {
+    "tag": "-app-settings-profile",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/settings/profile",
+    "violations": []
+  },
+  {
+    "tag": "-app-settings-security",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/settings/security",
+    "violations": []
+  }
+]

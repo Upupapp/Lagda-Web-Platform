@@ -1,0 +1,15 @@
+{
+  "scenario": "skip",
+  "stage": "final",
+  "requestState": "completed",
+  "states": [
+    "skipped",
+    "signed",
+    "signed"
+  ],
+  "completedCount": 3,
+  "requiredCount": 3,
+  "invitationCount": 3,
+  "deniedChecks": [],
+  "completedPdfUnavailable": false
+}

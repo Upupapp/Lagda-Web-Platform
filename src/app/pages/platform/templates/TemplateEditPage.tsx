@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../../utils/on-light";
 // /app/templates/:templateId/edit — Template configuration editor.
 // Sections: Details, Documents, Role Placeholders, Routing, Auth Defaults, Request Settings, Variables.
 // Tab-based layout. All mutations are in-session only. demonstrationOnly.
@@ -64,19 +65,19 @@ const TABS = [
 type TabId = typeof TABS[number]["id"];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function FormField({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
+function FormField({ label, required, hint, children, htmlFor }: { htmlFor?: string; label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 18 }}>
-      <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#64748B", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+      <label htmlFor={htmlFor} style={{ ...GF, fontSize: 12, fontWeight: 600, color: ON_LIGHT.slate, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
         {label}{required && <span style={{ color: RED }}> *</span>}
       </label>
       {children}
-      {hint && <p style={{ ...GF, fontSize: 11, color: "#94A3B8", margin: "4px 0 0" }}>{hint}</p>}
+      {hint && <p style={{ ...GF, fontSize: 11, color: ON_LIGHT.muted, margin: "4px 0 0" }}>{hint}</p>}
     </div>
   );
 }
 
-function Input({ value, onChange, placeholder, multiline, rows }: {
+function Input({ value, onChange, placeholder, multiline, rows, id }: { id?: string;
   value: string; onChange: (v: string) => void; placeholder?: string; multiline?: boolean; rows?: number;
 }) {
   const style = {
@@ -93,13 +94,13 @@ function Input({ value, onChange, placeholder, multiline, rows }: {
     outline:      "none",
     fontFamily:   "inherit",
   };
-  if (multiline) return <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows ?? 4} style={style} />;
-  return <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={{ ...style, height: 38 }} />;
+  if (multiline) return <textarea id={id} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows ?? 4} style={style} />;
+  return <input id={id} type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={{ ...style, height: 38 }} />;
 }
 
-function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: [string, string][] }) {
+function Select({ value, onChange, options, id }: { id?: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
   return (
-    <select value={value} onChange={e => onChange(e.target.value)} style={{ width: "100%", height: 38, padding: "0 10px", border: "1px solid #E2E8F0", borderRadius: 8, ...GF, fontSize: 13, color: "#0F172A", background: "white" }}>
+    <select id={id} value={value} onChange={e => onChange(e.target.value)} style={{ width: "100%", height: 38, padding: "0 10px", border: "1px solid #E2E8F0", borderRadius: 8, ...GF, fontSize: 13, color: "#0F172A", background: "white" }}>
       {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
     </select>
   );
@@ -109,27 +110,29 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
 function DetailsTab({ draft, onChange }: { draft: DocumentTemplate; onChange: (patch: Partial<DocumentTemplate>) => void }) {
   return (
     <div>
-      <FormField label="Template Name" required>
-        <Input value={draft.name} onChange={v => onChange({ name: v })} placeholder="e.g. Engagement Letter — Standard" />
+      <FormField htmlFor="template-edit-name" label="Template Name" required>
+        <Input id="template-edit-name" value={draft.name} onChange={v => onChange({ name: v })} placeholder="e.g. Engagement Letter — Standard" />
       </FormField>
-      <FormField label="Description" hint="Displayed in the template library and Use Template flow.">
-        <Input value={draft.description} onChange={v => onChange({ description: v })} multiline rows={4} placeholder="Describe what this template is for…" />
+      <FormField htmlFor="template-edit-description" label="Description" hint="Displayed in the template library and Use Template flow.">
+        <Input id="template-edit-description" value={draft.description} onChange={v => onChange({ description: v })} multiline rows={4} placeholder="Describe what this template is for…" />
       </FormField>
-      <FormField label="Category">
+      <FormField htmlFor="template-edit-category" label="Category">
         <Select
+          id="template-edit-category"
           value={draft.category}
           onChange={v => onChange({ category: v as TemplateCategory })}
           options={TEMPLATE_CATEGORIES.map(c => [c, TEMPLATE_CATEGORY_LABELS[c]])}
         />
       </FormField>
-      <FormField label="Scope">
+      <FormField htmlFor="template-edit-scope" label="Scope">
         <Select
+          id="template-edit-scope"
           value={draft.scope}
           onChange={v => onChange({ scope: v as TemplateScope })}
           options={[["personal", "Personal — only I can use this"], ["workspace", "Workspace — visible to team members"]]}
         />
       </FormField>
-      <FormField label="Tags" hint="Space or comma-separated. Used for search.">
+      <FormField htmlFor="template-edit-tags" label="Tags" hint="Space or comma-separated. Used for search.">
         <Input
           value={draft.tags.join(", ")}
           onChange={v => onChange({ tags: v.split(/[,\s]+/).map(t => t.trim()).filter(Boolean) })}
@@ -168,13 +171,13 @@ function AuthorTab({ draft, canWrite }: { draft: DocumentTemplate; canWrite: boo
             <div style={{ ...GF, fontSize: 13, fontWeight: 600, color: "#0F172A" }}>
               Authored in this workspace
             </div>
-            <div style={{ ...GF, fontSize: 11, color: "#94A3B8" }}>
+            <div style={{ ...GF, fontSize: 11, color: ON_LIGHT.muted }}>
               {draft.contentPageCount} page{draft.contentPageCount !== 1 ? "s" : ""}
             </div>
           </div>
         </div>
       ) : (
-        <p style={{ ...GF, fontSize: 13, color: "#94A3B8", margin: "0 0 14px" }}>
+        <p style={{ ...GF, fontSize: 13, color: ON_LIGHT.muted, margin: "0 0 14px" }}>
           Nothing authored yet.
         </p>
       )}
@@ -188,7 +191,7 @@ function AuthorTab({ draft, canWrite }: { draft: DocumentTemplate; canWrite: boo
           {authored ? "Edit the document" : "Author a document"}
         </Link>
       ) : (
-        <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: 0, lineHeight: 1.5 }}>
+        <p style={{ ...GF, fontSize: 12, color: ON_LIGHT.muted, margin: 0, lineHeight: 1.5 }}>
           Open a workspace to author a document for this template.
         </p>
       )}
@@ -221,9 +224,9 @@ function RoleResolutionField({ placeholder, units, onChange }: {
     // resolve against. Shown as a quiet note rather than an empty toggle
     // that turns on to a picker with nothing in it.
     return (
-      <p style={{ ...GF, fontSize: 11.5, color: "#94A3B8", margin: "8px 0 0", lineHeight: 1.5 }}>
+      <p style={{ ...GF, fontSize: 11.5, color: ON_LIGHT.muted, margin: "8px 0 0", lineHeight: 1.5 }}>
         This role is filled by hand each time. Create an{" "}
-        <Link to="/app/workspace/organization" style={{ color: AZURE }}>organization unit</Link>{" "}
+        <Link to="/app/workspace/organization" style={{ color: ON_LIGHT.azure }}>organization unit</Link>{" "}
         to route it automatically by title instead.
       </p>
     );
@@ -245,7 +248,7 @@ function RoleResolutionField({ placeholder, units, onChange }: {
 
       {automatic && (
         units === null ? (
-          <p style={{ ...GF, fontSize: 11.5, color: "#94A3B8", margin: "8px 0 0" }}>Loading units…</p>
+          <p style={{ ...GF, fontSize: 11.5, color: ON_LIGHT.muted, margin: "8px 0 0" }}>Loading units…</p>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8, marginTop: 8 }}>
             <select
@@ -315,19 +318,19 @@ function PlaceholdersTab({ draft, workspaceId, onChange }: {
 
   return (
     <div>
-      <p style={{ ...GF, fontSize: 12.5, color: "#64748B", margin: "0 0 14px", lineHeight: 1.6 }}>
+      <p style={{ ...GF, fontSize: 12.5, color: ON_LIGHT.slate, margin: "0 0 14px", lineHeight: 1.6 }}>
         Name the roles, not the people. You choose who fills each one every time
         you use this template.
       </p>
 
       {slots.length === 0 ? (
-        <p style={{ ...GF, fontSize: 13, color: "#94A3B8" }}>No roles yet. Add the first one below.</p>
+        <p style={{ ...GF, fontSize: 13, color: ON_LIGHT.muted }}>No roles yet. Add the first one below.</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {slots.map(ph => (
             <div key={ph.id} style={{ padding: "14px 16px", background: "white", border: "1px solid #E2E8F0", borderRadius: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                <span style={{ ...GF, fontSize: 11, fontWeight: 700, color: "#94A3B8" }}>
+                <span style={{ ...GF, fontSize: 11, fontWeight: 700, color: ON_LIGHT.muted }}>
                   STEP {ph.routingStep}
                 </span>
                 {slots.length > 1 && (
@@ -381,7 +384,7 @@ function PlaceholdersTab({ draft, workspaceId, onChange }: {
                 </span>
               </label>
               {!ph.required && (
-                <p style={{ ...GF, fontSize: 11.5, color: "#94A3B8", margin: "6px 0 0 21px", lineHeight: 1.5 }}>
+                <p style={{ ...GF, fontSize: 11.5, color: ON_LIGHT.muted, margin: "6px 0 0 21px", lineHeight: 1.5 }}>
                   They will still receive the document at the same time as the
                   next step — it just will not wait for them.
                 </p>
@@ -399,7 +402,7 @@ function PlaceholdersTab({ draft, workspaceId, onChange }: {
 
       <button
         onClick={add}
-        style={{ ...GF, marginTop: 10, fontSize: 13, fontWeight: 600, color: AZURE, background: "none", border: "1px dashed #C8E1F5", borderRadius: 8, padding: "9px 14px", cursor: "pointer", width: "100%" }}
+        style={{ ...GF, marginTop: 10, fontSize: 13, fontWeight: 600, color: ON_LIGHT.azure, background: "none", border: "1px dashed #C8E1F5", borderRadius: 8, padding: "9px 14px", cursor: "pointer", width: "100%" }}
       >
         + Add a role
       </button>
@@ -425,16 +428,16 @@ function RoutingTab({ draft, onChange }: { draft: DocumentTemplate; onChange: (p
         />
       </FormField>
       <div style={{ marginTop: 8 }}>
-        <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#64748B", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Routing Groups</div>
+        <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: ON_LIGHT.slate, marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Routing Groups</div>
         {draft.routing.groups.length === 0 ? (
-          <p style={{ ...GF, fontSize: 13, color: "#94A3B8" }}>No routing groups defined.</p>
+          <p style={{ ...GF, fontSize: 13, color: ON_LIGHT.muted }}>No routing groups defined.</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {draft.routing.groups.map(g => (
               <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 9 }}>
-                <span style={{ width: 22, height: 22, background: "#EEF4FB", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", ...GF, fontSize: 10, fontWeight: 700, color: AZURE, flexShrink: 0 }}>{g.step}</span>
+                <span style={{ width: 22, height: 22, background: "#EEF4FB", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", ...GF, fontSize: 10, fontWeight: 700, color: ON_LIGHT.azure, flexShrink: 0 }}>{g.step}</span>
                 <span style={{ ...GF, fontSize: 13, color: "#0F172A", fontWeight: 600, flex: 1 }}>{g.label}</span>
-                <span style={{ ...GF, fontSize: 12, color: "#94A3B8" }}>
+                <span style={{ ...GF, fontSize: 12, color: ON_LIGHT.muted }}>
                   {g.placeholderIds.map(pid => draft.placeholders.find(p => p.id === pid)?.label ?? pid).join(", ")}
                 </span>
               </div>
@@ -464,7 +467,7 @@ function AuthTab({ draft, onChange }: { draft: DocumentTemplate; onChange: (patc
       </FormField>
       {draft.placeholders.length > 0 && (
         <div style={{ marginTop: 8 }}>
-          <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#64748B", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Per-Role Overrides</div>
+          <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: ON_LIGHT.slate, marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Per-Role Overrides</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {draft.placeholders.map(ph => {
               const override = draft.authentication.placeholderOverrides[ph.id] ?? draft.authentication.globalDefault;
@@ -516,7 +519,7 @@ function SettingsTab({
     <div>
       {readOnly && (
         <div style={{ marginBottom: 16, padding: "10px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8 }}>
-          <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: 0 }}>
+          <p style={{ ...GF, fontSize: 12, color: ON_LIGHT.muted, margin: 0 }}>
             Only “Send completion copy to sender” is saved today. The rest of
             this tab describes behaviour the backend does not have yet, and is
             shown read-only rather than accepting input that would be
@@ -533,47 +536,47 @@ function SettingsTab({
       </FormField>
       <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "1fr 1fr", gap: 14 }}>
         <div>
-          <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#64748B", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Reminders</div>
+          <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: ON_LIGHT.slate, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Reminders</div>
           <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
             <input type="checkbox" checked={s.reminderEnabled} onChange={e => patchSettings({ reminderEnabled: e.target.checked })} />
             <span style={{ ...GF, fontSize: 13 }}>Enable reminders</span>
           </label>
           {s.reminderEnabled && (
             <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ ...GF, fontSize: 12, color: "#64748B" }}>Every</span>
+              <span style={{ ...GF, fontSize: 12, color: ON_LIGHT.slate }}>Every</span>
               <input
                 type="number" min={1} max={30}
                 value={s.reminderIntervalDays}
                 onChange={e => patchSettings({ reminderIntervalDays: Number(e.target.value) })}
                 style={{ width: 56, height: 34, border: "1px solid #E2E8F0", borderRadius: 7, ...GF, fontSize: 12, padding: "0 8px" }}
               />
-              <span style={{ ...GF, fontSize: 12, color: "#64748B" }}>days</span>
+              <span style={{ ...GF, fontSize: 12, color: ON_LIGHT.slate }}>days</span>
             </div>
           )}
         </div>
         <div>
-          <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#64748B", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Expiration</div>
+          <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: ON_LIGHT.slate, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Expiration</div>
           <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
             <input type="checkbox" checked={s.expirationEnabled} onChange={e => patchSettings({ expirationEnabled: e.target.checked })} />
             <span style={{ ...GF, fontSize: 13 }}>Enable expiration</span>
           </label>
           {s.expirationEnabled && (
             <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ ...GF, fontSize: 12, color: "#64748B" }}>Expires after</span>
+              <span style={{ ...GF, fontSize: 12, color: ON_LIGHT.slate }}>Expires after</span>
               <input
                 type="number" min={1} max={365}
                 value={s.expirationDays}
                 onChange={e => patchSettings({ expirationDays: Number(e.target.value) })}
                 style={{ width: 56, height: 34, border: "1px solid #E2E8F0", borderRadius: 7, ...GF, fontSize: 12, padding: "0 8px" }}
               />
-              <span style={{ ...GF, fontSize: 12, color: "#64748B" }}>days</span>
+              <span style={{ ...GF, fontSize: 12, color: ON_LIGHT.slate }}>days</span>
             </div>
           )}
         </div>
       </div>
       </fieldset>
       <div style={{ marginTop: 14 }}>
-        <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#64748B", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Completion Options</div>
+        <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: ON_LIGHT.slate, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Completion Options</div>
         <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, cursor: "pointer" }}>
           <input type="checkbox" checked={s.completionCopySender} onChange={e => patchSettings({ completionCopySender: e.target.checked })} />
           <span style={{ ...GF, fontSize: 13 }}>Send completion copy to sender</span>
@@ -646,11 +649,11 @@ function VariablesTab({
 
   return (
     <div>
-      <p style={{ ...GF, fontSize: 12.5, color: "#64748B", margin: "0 0 14px", lineHeight: 1.6 }}>
+      <p style={{ ...GF, fontSize: 12.5, color: ON_LIGHT.slate, margin: "0 0 14px", lineHeight: 1.6 }}>
         Name a value a sender will fill in once, when they use this template.
       </p>
       <div style={{ marginBottom: 16, padding: "10px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8 }}>
-        <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: 0 }}>
+        <p style={{ ...GF, fontSize: 12, color: ON_LIGHT.muted, margin: 0 }}>
           To make a variable appear in the document, open Field Placement and
           set a field's &ldquo;Filled by&rdquo; to that variable. A variable
           with no field placed for it is collected when the template is used,
@@ -659,7 +662,7 @@ function VariablesTab({
       </div>
 
       {vars.length === 0 ? (
-        <p style={{ ...GF, fontSize: 13, color: "#94A3B8" }}>No variables yet. Add the first one below.</p>
+        <p style={{ ...GF, fontSize: 13, color: ON_LIGHT.muted }}>No variables yet. Add the first one below.</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
           {vars.map(v => {
@@ -667,7 +670,7 @@ function VariablesTab({
             return (
               <div key={v.id} style={{ padding: "14px 16px", background: "white", border: "1px solid #E2E8F0", borderRadius: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                  <code style={{ ...GF, fontSize: 11, background: "#EEF4FB", color: AZURE, padding: "2px 7px", borderRadius: 5 }}>
+                  <code style={{ ...GF, fontSize: 11, background: "#EEF4FB", color: ON_LIGHT.azure, padding: "2px 7px", borderRadius: 5 }}>
                     {`{{${v.internalKey.trim() || "key"}}}`}
                   </code>
                   <button
@@ -710,7 +713,7 @@ function VariablesTab({
 
       <button
         onClick={add}
-        style={{ display: "inline-flex", alignItems: "center", gap: 6, ...GF, fontSize: 13, fontWeight: 600, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, ...GF, fontSize: 13, fontWeight: 600, color: ON_LIGHT.azure, background: "none", border: "none", cursor: "pointer", padding: 0 }}
       >
         <Plus size={14} />
         Add variable
@@ -830,7 +833,7 @@ function TemplateEditInner() {
   }
 
   if (state.activeError) {
-    return <div style={{ padding: 24 }}><AlertCircle size={18} color={RED} /><p style={{ ...GF, fontSize: 14 }}>{state.activeError}</p><Link to="/app/templates" style={{ color: AZURE }}>← Templates</Link></div>;
+    return <div style={{ padding: 24 }}><AlertCircle size={18} color={RED} /><p style={{ ...GF, fontSize: 14 }}>{state.activeError}</p><Link to="/app/templates" style={{ color: ON_LIGHT.azure }}>← Templates</Link></div>;
   }
 
   return (
@@ -839,7 +842,7 @@ function TemplateEditInner() {
       <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: isNarrow ? "16px 16px" : "16px 24px" }}>
         <CenteredColumn max={EDIT_COLUMN}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <Link to={`/app/templates/${templateId}`} style={{ ...GF, fontSize: 12, color: "#64748B", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <Link to={`/app/templates/${templateId}`} style={{ ...GF, fontSize: 12, color: ON_LIGHT.slate, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
             <ChevronLeft size={13} />
             {draft.name}
           </Link>

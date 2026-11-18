@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../utils/on-light";
 // The shared design system.
 //
 // ── Why this exists ────────────────────────────────────────────────────────
@@ -37,7 +38,7 @@ import type { LucideIcon } from "lucide-react";
 export const T = {
   ink: "#07111F",
   inkSoft: "#33414F",
-  silver: "#8A9BAE",
+  silver: ON_LIGHT.muted,
   azure: "#0078D4",
   azureDeep: "#005A9E",
   azureWash: "#EAF4FC",
@@ -48,7 +49,7 @@ export const T = {
 
   success: "#1E7F4F",
   successWash: "#EAF7EF",
-  warn: "#9A6B00",
+  warn: ON_LIGHT.gold,
   warnWash: "#FFF8E6",
   danger: "#C0392B",
   dangerWash: "#FEF2F2",
@@ -403,17 +404,18 @@ export function ProgressRail({
   return (
     <ol
       ref={railRef}
+      tabIndex={oneLine ? 0 : undefined}
       aria-label={label}
       style={{
-        ...GF, display: "flex", alignItems: "center", gap: isMobileS ? 4 : 8,
-        listStyle: "none", margin: "0 0 18px", padding: 0,
+        ...GF, display: "flex", alignItems: "center", columnGap: isMobileS ? 4 : 8, rowGap: oneLine ? 0 : 6,
+        listStyle: "none", margin: "0 0 18px", paddingTop: 0, paddingRight: 0, paddingBottom: oneLine ? 2 : 0, paddingLeft: 0,
         // A seven-step onboarding rail does not fit 320px even with the
         // labels dropped. Wrapping keeps every dot reachable rather than
         // pushing the last ones off-screen. A rail that opts into one line
         // scrolls sideways instead, so every step stays reachable that way.
         ...(oneLine
-          ? { flexWrap: "nowrap", overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 2 }
-          : { flexWrap: "wrap", rowGap: 6 }),
+          ? { flexWrap: "nowrap", overflowX: "auto", WebkitOverflowScrolling: "touch" }
+          : { flexWrap: "wrap" }),
       }}
     >
       {steps.map((step, position) => {

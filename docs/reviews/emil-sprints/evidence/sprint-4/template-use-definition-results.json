@@ -1,0 +1,17 @@
+[
+  {
+    "tag": "template-use-roles",
+    "path": "/app/templates/wft_e47e71a53733493782c9ede46f79d415/use",
+    "violations": []
+  },
+  {
+    "tag": "template-use-review",
+    "path": "/app/templates/wft_e47e71a53733493782c9ede46f79d415/use",
+    "violations": []
+  },
+  {
+    "tag": "template-draft-created",
+    "path": "/app/templates/wft_e47e71a53733493782c9ede46f79d415/use",
+    "violations": []
+  }
+]

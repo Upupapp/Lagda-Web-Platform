@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../../utils/on-light";
 // Documents — file selection and transaction details.
 // PRIVACY / SECURITY:
 //   • browser File objects are NEVER put into PrepFile/draft state — that
@@ -50,7 +51,7 @@ export function pageCountText(file: Pick<PrepFile, "pageCount" | "demoPageCount"
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
-const SILVER = "#8A9BAE";
+const SILVER = ON_LIGHT.muted;
 const GOLD   = "#C9960C";
 const humanSize = humanFileSize;
 
@@ -67,11 +68,11 @@ function UploadStatusLine({ file, onRetry, onReselect }: {
 
   switch (file.uploadStatus) {
     case "uploading":
-      return <div style={{ ...GF, fontSize: 11.5, color: AZURE, marginTop: 3 }}>Uploading…</div>;
+      return <div style={{ ...GF, fontSize: 11.5, color: ON_LIGHT.azure, marginTop: 3 }}>Uploading…</div>;
     case "processing":
       // Truthful, generic wording — the backend doesn't expose separate
       // scan-progress stages, so no percentage/stage is fabricated here.
-      return <div style={{ ...GF, fontSize: 11.5, color: AZURE, marginTop: 3 }}>Securely processing your document…</div>;
+      return <div style={{ ...GF, fontSize: 11.5, color: ON_LIGHT.azure, marginTop: 3 }}>Securely processing your document…</div>;
     case "uploaded":
       return <div style={{ ...GF, fontSize: 11.5, color: "#2E7D32", marginTop: 3 }}>✓ Uploaded and verified</div>;
     case "failed":
@@ -80,7 +81,7 @@ function UploadStatusLine({ file, onRetry, onReselect }: {
           <span style={{ ...GF, fontSize: 11.5, color: "#C0392B" }}>{file.uploadError ?? "Upload failed."}</span>
           <button
             onClick={() => onRetry(file.id)}
-            style={{ ...GF, fontSize: 11.5, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
+            style={{ ...GF, fontSize: 11.5, color: ON_LIGHT.azure, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
           >
             Retry
           </button>
@@ -94,7 +95,7 @@ function UploadStatusLine({ file, onRetry, onReselect }: {
           </span>
           <button
             onClick={() => reselectRef.current?.click()}
-            style={{ ...GF, fontSize: 11.5, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", flexShrink: 0 }}
+            style={{ ...GF, fontSize: 11.5, color: ON_LIGHT.azure, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", flexShrink: 0 }}
           >
             Select file
           </button>
@@ -919,7 +920,7 @@ export function UploadStep() {
                   onClick={() => { void saveTitle(); }}
                   style={{
                     ...GF, minHeight: 44, minWidth: 44, background: "none", border: "none", padding: "0 4px",
-                    fontSize: 12.5, fontWeight: 700, color: AZURE, textDecoration: "underline", cursor: "pointer",
+                    fontSize: 12.5, fontWeight: 700, color: ON_LIGHT.azure, textDecoration: "underline", cursor: "pointer",
                   }}
                 >
                   Try again

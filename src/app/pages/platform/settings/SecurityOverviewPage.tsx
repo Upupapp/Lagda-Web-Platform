@@ -51,7 +51,7 @@ export function SecurityOverviewPage() {
       {!mfa.enabled && (
         <Notice tone="warning" icon={ShieldAlert}>
           Two-step verification is off. Turn it on so a stolen password alone cannot open your account.{" "}
-          <Link to="/app/settings/security/mfa" style={{ color: "#78350F", fontWeight: 700 }}>Set it up</Link>
+          <Link to="/app/settings/security/mfa" style={{ color: "#78350F", fontWeight: 700, display: "inline-flex", alignItems: "center" }}>Set it up</Link>
         </Notice>
       )}
       <SCard>

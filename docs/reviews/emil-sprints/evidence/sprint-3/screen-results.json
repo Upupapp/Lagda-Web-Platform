@@ -1,0 +1,78 @@
+{
+  "errors": [],
+  "results": [
+    {
+      "path": "/app/templates",
+      "tag": "empty-library",
+      "title": "Templates — LAGDA",
+      "url": "/app/templates",
+      "headings": [
+        "Templates",
+        "Templates",
+        "My Templates",
+        "No templates yet"
+      ],
+      "text": "LR\n\nLAGDA Local Replica\n\nFree\n\nPrepare Document\nHome\nDocuments\nShared Documents\nInvitations\nTemplates\nContacts\nVerify a Document\nNotary Directory\n\nWORKSPACE\n\nMy Settings\nLO\n\nLocal Owner\n\nOwner\n\nTemplates\nSearch…\nCtrl K\n1\nSkip to main content\nTemplates\n\nReusable document workflows for your team\n\nNew Template\nStart faster with 46 ready-made templates\nAcross 15 purposes — Recruitment, Sales, Procurement, Finance and more — with roles and signing order already set up.\nBrowse\nMy Templates\nFilters\nSort:\nLast Updated\nName (A–Z)\nLast Used\nMost Used\nStatus\nCategory\n↓\nNo templates yet\n\nCreate your first template to build reusable signing workflows for your team.\n\nCreate Template\nWRITE TEMPLATES WITH THE LAGDA CHATBOT\nPERSONAL PLAN\nYou\nA service agreement for a web design project. The client and the designer sign.\nA new template in seconds\nRoles and signing order included\nEdit it like any template\nIncluded with Personal and Business\nUnlock the Chatbot",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "violations": []
+    },
+    {
+      "path": "/app/prepare",
+      "tag": "390-upload",
+      "width": 390,
+      "scrollWidth": 390,
+      "violations": []
+    },
+    {
+      "path": "/app/prepare/participants",
+      "tag": "390-participants",
+      "width": 390,
+      "scrollWidth": 390,
+      "violations": []
+    },
+    {
+      "path": "/app/prepare/routing",
+      "tag": "390-order",
+      "width": 390,
+      "scrollWidth": 390,
+      "violations": []
+    },
+    {
+      "path": "/app/prepare/settings",
+      "tag": "390-settings",
+      "width": 390,
+      "scrollWidth": 390,
+      "violations": []
+    },
+    {
+      "path": "/app/prepare/fields",
+      "tag": "390-fields",
+      "width": 390,
+      "scrollWidth": 390,
+      "violations": []
+    },
+    {
+      "path": "/app/prepare/authentication",
+      "tag": "390-authentication",
+      "width": 390,
+      "scrollWidth": 390,
+      "violations": []
+    },
+    {
+      "path": "/app/prepare/review",
+      "tag": "390-review",
+      "width": 390,
+      "scrollWidth": 390,
+      "violations": []
+    },
+    {
+      "path": "/app/prepare/authorization",
+      "tag": "390-authorization",
+      "width": 390,
+      "scrollWidth": 390,
+      "violations": []
+    }
+  ]
+}

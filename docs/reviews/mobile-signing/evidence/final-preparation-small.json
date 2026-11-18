@@ -1,0 +1,401 @@
+[
+  {
+    "tag": "demo-upload",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "prep-title",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-description",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-folder",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "demo-participants",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "demo-routing",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "Label for routing step 1",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "demo-settings",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "first-reminder",
+          "fontSize": 16
+        },
+        {
+          "label": "repeat-interval",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/settings",
+    "violations": []
+  },
+  {
+    "tag": "demo-fields",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "More editor actions",
+          "width": 38,
+          "height": 44
+        }
+      ],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "demo-authentication",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/authentication",
+    "violations": []
+  },
+  {
+    "tag": "demo-review",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  },
+  {
+    "tag": "demo-authorization",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/authorization",
+    "violations": []
+  },
+  {
+    "tag": "worst-upload",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "prep-title",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-description",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-folder",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "worst-participants",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "worst-routing",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "Label for routing step 1",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "worst-settings",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "first-reminder",
+          "fontSize": 16
+        },
+        {
+          "label": "repeat-interval",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/settings",
+    "violations": []
+  },
+  {
+    "tag": "worst-fields",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "More editor actions",
+          "width": 38,
+          "height": 44
+        }
+      ],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "worst-authentication",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/authentication",
+    "violations": []
+  },
+  {
+    "tag": "worst-review",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  },
+  {
+    "tag": "worst-authorization",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/authorization",
+    "violations": []
+  },
+  {
+    "tag": "empty-upload",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "prep-title",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-description",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-folder",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "empty-participants",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "many-participants",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "many-routing",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "Label for routing step 1",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "many-review",
+    "profile": "small",
+    "width": 320,
+    "height": 640,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  }
+]

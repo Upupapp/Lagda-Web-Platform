@@ -1,0 +1,1115 @@
+{
+  "date": "2026-11-18",
+  "environment": "localhost only, authenticated QA workspace, read-only response fixtures",
+  "screens": 131,
+  "axeViolations": 0,
+  "pageOverflow": 0,
+  "criticalHeaderClipping": 0,
+  "coarseInputsUnder16px": 0,
+  "coarseTargetsUnder44px": 0,
+  "tests": {
+    "passed": 321,
+    "failed": 0,
+    "files": 31
+  },
+  "physicalHardwareVerified": false,
+  "screensChecked": [
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-dashboard",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-documents",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-contacts",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-templates",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-templates-new",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-templates-gallery",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-shared-documents",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-settings-profile",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-settings-security",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-workspace-people",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-workspace-activity",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-workspace",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-workspace-roles",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-workspace-settings",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-workspace-settings-branding",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-workspace-settings-billing",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-workspace-settings-usage",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-settings-notifications",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-documents_list_completed",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-documents_participants_sr_f21467d921a54cd0b1ae4c402b28b8eb",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-edit",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-preview",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-use",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-author",
+      "evidenceFile": "verified-other-small.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-dashboard",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-documents",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-contacts",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-templates",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-templates-new",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-templates-gallery",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-shared-documents",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-notifications",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-settings-profile",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-settings-security",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-workspace-people",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-workspace-activity",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-workspace",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-workspace-roles",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-workspace-settings",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-workspace-settings-branding",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-workspace-settings-billing",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-workspace-settings-usage",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-settings-notifications",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-documents_list_completed",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-documents_participants_sr_f21467d921a54cd0b1ae4c402b28b8eb",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-edit",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-fields",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-preview",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-use",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "landscape",
+      "width": 844,
+      "height": 390,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-author",
+      "evidenceFile": "verified-other-landscape.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-dashboard",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-documents",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-contacts",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-templates",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-templates-new",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-templates-gallery",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-shared-documents",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-settings-profile",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-settings-security",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-workspace-people",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-workspace-activity",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-workspace",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-workspace-roles",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-workspace-settings",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-workspace-settings-branding",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-workspace-settings-billing",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-workspace-settings-usage",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-settings-notifications",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-documents_list_completed",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-documents_participants_sr_f21467d921a54cd0b1ae4c402b28b8eb",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-edit",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-preview",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-use",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-author",
+      "evidenceFile": "verified-keyboard-other-keyboard.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-dashboard",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-documents",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-contacts",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-templates",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-templates-new",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-templates-gallery",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-shared-documents",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-settings-profile",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-settings-security",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-workspace-people",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-workspace-activity",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-workspace",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-workspace-roles",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-workspace-settings",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-workspace-settings-branding",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-workspace-settings-billing",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-workspace-settings-usage",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-settings-notifications",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-documents_list_completed",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-documents_participants_sr_f21467d921a54cd0b1ae4c402b28b8eb",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-edit",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-preview",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-use",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-author",
+      "evidenceFile": "verified-large-other-desktop.json"
+    },
+    {
+      "profile": "phone",
+      "width": 390,
+      "height": 844,
+      "largeText": false,
+      "tag": "-app-templates",
+      "evidenceFile": "final-states-other-phone.json"
+    },
+    {
+      "profile": "phone",
+      "width": 390,
+      "height": 844,
+      "largeText": false,
+      "tag": "-app-templates-demo",
+      "evidenceFile": "final-states-other-phone.json"
+    },
+    {
+      "profile": "phone",
+      "width": 390,
+      "height": 844,
+      "largeText": false,
+      "tag": "-app-templates-empty",
+      "evidenceFile": "final-states-other-phone.json"
+    },
+    {
+      "profile": "phone",
+      "width": 390,
+      "height": 844,
+      "largeText": false,
+      "tag": "-app-templates-one",
+      "evidenceFile": "final-states-other-phone.json"
+    },
+    {
+      "profile": "phone",
+      "width": 390,
+      "height": 844,
+      "largeText": false,
+      "tag": "-app-templates-huge",
+      "evidenceFile": "final-states-other-phone.json"
+    },
+    {
+      "profile": "phone",
+      "width": 390,
+      "height": 844,
+      "largeText": false,
+      "tag": "-app-documents",
+      "evidenceFile": "final-states-other-phone.json"
+    },
+    {
+      "profile": "phone",
+      "width": 390,
+      "height": 844,
+      "largeText": false,
+      "tag": "-app-documents-demo",
+      "evidenceFile": "final-states-other-phone.json"
+    },
+    {
+      "profile": "phone",
+      "width": 390,
+      "height": 844,
+      "largeText": false,
+      "tag": "-app-documents-empty",
+      "evidenceFile": "final-states-other-phone.json"
+    },
+    {
+      "profile": "phone",
+      "width": 390,
+      "height": 844,
+      "largeText": false,
+      "tag": "-app-documents-one",
+      "evidenceFile": "final-states-other-phone.json"
+    },
+    {
+      "profile": "phone",
+      "width": 390,
+      "height": 844,
+      "largeText": false,
+      "tag": "-app-documents-huge",
+      "evidenceFile": "final-states-other-phone.json"
+    },
+    {
+      "profile": "phone",
+      "width": 390,
+      "height": 844,
+      "largeText": false,
+      "tag": "-app-workspace-people",
+      "evidenceFile": "final-states-other-phone.json"
+    },
+    {
+      "profile": "phone",
+      "width": 390,
+      "height": 844,
+      "largeText": false,
+      "tag": "-app-workspace-people-demo",
+      "evidenceFile": "final-states-other-phone.json"
+    },
+    {
+      "profile": "phone",
+      "width": 390,
+      "height": 844,
+      "largeText": false,
+      "tag": "-app-workspace-people-empty",
+      "evidenceFile": "final-states-other-phone.json"
+    },
+    {
+      "profile": "phone",
+      "width": 390,
+      "height": 844,
+      "largeText": false,
+      "tag": "-app-workspace-people-one",
+      "evidenceFile": "final-states-other-phone.json"
+    },
+    {
+      "profile": "phone",
+      "width": 390,
+      "height": 844,
+      "largeText": false,
+      "tag": "-app-workspace-people-huge",
+      "evidenceFile": "final-states-other-phone.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "tracking-participants",
+      "evidenceFile": "verified-dialogs-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "tracking-history",
+      "evidenceFile": "verified-dialogs-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "tracking-reminders",
+      "evidenceFile": "verified-dialogs-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "tracking-expiration",
+      "evidenceFile": "verified-dialogs-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "template-delete",
+      "evidenceFile": "verified-dialogs-other-keyboard.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": true,
+      "tag": "-app-notifications",
+      "evidenceFile": "verified-text-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": true,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415",
+      "evidenceFile": "verified-text-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": true,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-fields",
+      "evidenceFile": "verified-text-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-notifications",
+      "evidenceFile": "rechecked-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415",
+      "evidenceFile": "rechecked-other-small.json"
+    },
+    {
+      "profile": "small",
+      "width": 320,
+      "height": 640,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-fields",
+      "evidenceFile": "rechecked-other-small.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-notifications",
+      "evidenceFile": "rechecked-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415",
+      "evidenceFile": "rechecked-other-keyboard.json"
+    },
+    {
+      "profile": "keyboard",
+      "width": 390,
+      "height": 420,
+      "largeText": false,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-fields",
+      "evidenceFile": "rechecked-other-keyboard.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-notifications",
+      "evidenceFile": "rechecked-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415",
+      "evidenceFile": "rechecked-large-other-desktop.json"
+    },
+    {
+      "profile": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "largeText": true,
+      "tag": "-app-templates-wft_e47e71a53733493782c9ede46f79d415-fields",
+      "evidenceFile": "rechecked-large-other-desktop.json"
+    }
+  ],
+  "dialogChecks": {
+    "passed": true,
+    "checks": [
+      "tracking dialog Tab containment",
+      "Escape dismiss",
+      "trigger focus restore",
+      "template deletion dismiss"
+    ],
+    "mutationsBlocked": true
+  },
+  "toggleChecks": [
+    {
+      "mode": "demo",
+      "expected": "1 template",
+      "persisted": true
+    },
+    {
+      "mode": "worst",
+      "expected": "1 template",
+      "persisted": true
+    },
+    {
+      "mode": "empty",
+      "expected": "No templates yet",
+      "persisted": true
+    },
+    {
+      "mode": "one",
+      "expected": "1 template",
+      "persisted": true
+    },
+    {
+      "mode": "huge",
+      "expected": "1,284 templates",
+      "persisted": true
+    }
+  ],
+  "finalFocusedTests": {
+    "templateCountAndDeletion": 3,
+    "disabledControlFocusAndExpiration": 6,
+    "failed": 0
+  },
+  "checks": {
+    "typecheck": "passed",
+    "build": "passed",
+    "eslintErrors": 0,
+    "eslintWarnings": 17,
+    "diffCheck": "passed"
+  }
+}

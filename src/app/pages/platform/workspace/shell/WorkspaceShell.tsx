@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../../../utils/on-light";
 // The Workspace shell — mounted ONCE for /app/workspace/*.
 //
 // ── What it owns ───────────────────────────────────────────────────────────
@@ -54,8 +55,8 @@ import {
 
 const NAVY = "#07111F";
 const AZURE = "#0078D4";
-const SLATE = "#64748B";
-const SILVER = "#8A9BAE";
+const SLATE = ON_LIGHT.slate;
+const SILVER = ON_LIGHT.muted;
 const BORDER = "#E3E8EF";
 const LIGHT = "#F0F7FF";
 
@@ -252,7 +253,7 @@ function ShellFrame({ name, initials, roleLabel, access, counts, realOverview, r
           {/* Only this area waits for a section's code. The header, the parts
               and the tabs above it never unmount. */}
           <Suspense fallback={<SectionSkeleton />}>
-            <div key={location.pathname} className="ws-section-enter">
+            <div key={location.pathname} className="ws-section-content">
               <Outlet />
             </div>
           </Suspense>
@@ -482,18 +483,19 @@ const SHELL_CSS = `
   display: inline-flex; align-items: center; justify-content: center; color: #2F4A66; background: #FFFFFF; border: 1.5px solid #DCE4ED;
   text-decoration: none; outline: none; -webkit-tap-highlight-color: transparent;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease; }
-.ws-gear svg { transition: transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+
 .ws-gear:hover { border-color: #BAD7F5; color: ${AZURE}; background: ${LIGHT}; }
-.ws-gear:hover svg { transform: rotate(60deg); }
+
 .ws-gear:focus-visible { box-shadow: 0 0 0 3px rgba(0,120,212,0.35); border-color: ${AZURE}; }
 .ws-gear[data-active="true"] { background: ${AZURE}; border-color: ${AZURE}; color: #FFFFFF; box-shadow: 0 6px 16px -8px rgba(0,120,212,0.55); }
 .ws-gear-tip { position: absolute; top: calc(100% + 8px); right: 0; z-index: 5; pointer-events: none; white-space: nowrap;
   font-family: 'Geist', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.01em; color: #FFFFFF; background: ${NAVY};
   padding: 6px 10px; border-radius: 7px; box-shadow: 0 8px 20px -8px rgba(7,17,31,0.45);
-  opacity: 0; transform: translateY(-3px); transition: opacity 140ms ease, transform 140ms ease; }
+  opacity: 0; transition: opacity 140ms ease; }
 .ws-gear-tip::before { content: ""; position: absolute; top: -4px; right: 16px; width: 8px; height: 8px; background: ${NAVY}; transform: rotate(45deg); border-radius: 1px; }
-.ws-gear:hover .ws-gear-tip, .ws-gear:focus-visible .ws-gear-tip { opacity: 1; transform: translateY(0); }
-@media (hover: none) { .ws-gear:hover .ws-gear-tip { opacity: 0; } .ws-gear:hover svg { transform: none; } }
+.ws-gear:hover .ws-gear-tip, .ws-gear:focus-visible .ws-gear-tip { opacity: 1; }
+.ws-gear:focus-visible .ws-gear-tip { transition: none; }
+@media (hover: none) { .ws-gear:hover .ws-gear-tip { opacity: 0; }  }
 
 /* Parts: four cards on a wide screen, a four-up icon bar on a phone. */
 .ws-parts-nav { min-width: 0; }
@@ -631,15 +633,8 @@ const SHELL_CSS = `
    programmatic target, not a control, so it takes no focus ring. */
 .ws-section-heading:focus, .st-section-heading:focus { outline: none; }
 
-/* backwards, not both: a retained transform would make this wrapper the
-   containing block for every position:fixed dialog inside a section (see
-   lagda-page-enter in theme.css). */
-.ws-section-enter { animation: ws-section-in 180ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
-@keyframes ws-section-in { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
-
 @media (prefers-reduced-motion: reduce) {
-  .ws-section-enter { animation: none; }
   .ws-part, .ws-part-icon, .ws-subtab, .ws-gear, .ws-gear svg, .ws-gear-tip, .ws-method-option { transition: none; }
-  .ws-gear:hover svg { transform: none; }
+
 }
 `;

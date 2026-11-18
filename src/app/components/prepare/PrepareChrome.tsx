@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../utils/on-light";
 // The preparation wizard's chrome — breadcrumb on top, Previous/Continue at
 // the bottom — extracted from PrepareLayout so it can be shaped per viewport
 // and tested at 320px without standing up the whole wizard.
@@ -40,7 +41,7 @@ import { useViewport } from "../system/design-system";
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
-const SILVER = "#8A9BAE";
+const SILVER = ON_LIGHT.muted;
 const GOLD   = "#8A6100"; // 5.6:1 on white — the lighter gold failed AA for text
 const DANGER = "#C0392B";
 

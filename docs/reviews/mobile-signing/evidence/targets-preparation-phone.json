@@ -1,0 +1,32 @@
+[
+  {
+    "tag": "demo-fields",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "worst-fields",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  }
+]

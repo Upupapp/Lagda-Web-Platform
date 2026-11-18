@@ -6,13 +6,8 @@ import { useEffect, useState } from "react";
 
 const TONES = ["#0078D4", "#7C3AED", "#0F766E", "#B45309", "#BE185D", "#1D4ED8", "#15803D", "#9333EA"];
 
-export function initialsFor(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  const first = parts[0]![0] ?? "";
-  const last = parts.length > 1 ? parts[parts.length - 1]![0] ?? "" : "";
-  return (first + last).toUpperCase();
-}
+export { personInitials as initialsFor } from "../../utils/person-initials";
+import { personInitials as initialsFor } from "../../utils/person-initials";
 
 function toneFor(name: string): string {
   let h = 0;

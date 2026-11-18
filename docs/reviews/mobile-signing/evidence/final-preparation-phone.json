@@ -1,0 +1,401 @@
+[
+  {
+    "tag": "demo-upload",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "prep-title",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-description",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-folder",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "demo-participants",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "demo-routing",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "Label for routing step 1",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "demo-settings",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "first-reminder",
+          "fontSize": 16
+        },
+        {
+          "label": "repeat-interval",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/settings",
+    "violations": []
+  },
+  {
+    "tag": "demo-fields",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "More editor actions",
+          "width": 38,
+          "height": 44
+        }
+      ],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "demo-authentication",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/authentication",
+    "violations": []
+  },
+  {
+    "tag": "demo-review",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  },
+  {
+    "tag": "demo-authorization",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/authorization",
+    "violations": []
+  },
+  {
+    "tag": "worst-upload",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "prep-title",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-description",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-folder",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "worst-participants",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "worst-routing",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "Label for routing step 1",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "worst-settings",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "first-reminder",
+          "fontSize": 16
+        },
+        {
+          "label": "repeat-interval",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/settings",
+    "violations": []
+  },
+  {
+    "tag": "worst-fields",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "More editor actions",
+          "width": 38,
+          "height": 44
+        }
+      ],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "worst-authentication",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/authentication",
+    "violations": []
+  },
+  {
+    "tag": "worst-review",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  },
+  {
+    "tag": "worst-authorization",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/authorization",
+    "violations": []
+  },
+  {
+    "tag": "empty-upload",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "prep-title",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-description",
+          "fontSize": 16
+        },
+        {
+          "label": "prep-folder",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "empty-participants",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "many-participants",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "many-routing",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "Label for routing step 1",
+          "fontSize": 16
+        }
+      ],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "many-review",
+    "profile": "phone",
+    "width": 390,
+    "height": 844,
+    "largeText": false,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [],
+      "coarse": true
+    },
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  }
+]

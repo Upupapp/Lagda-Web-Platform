@@ -1,0 +1,274 @@
+[
+  {
+    "tag": "demo-consent",
+    "width": 1440,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-ceremony",
+    "width": 1440,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-signature-capture",
+    "width": 1440,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-empty",
+    "width": 1440,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-consent",
+    "width": 1440,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-ceremony",
+    "width": 1440,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-signature-capture",
+    "width": 1440,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-empty",
+    "width": 1440,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-consent",
+    "width": 390,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "nodes": [
+          {
+            "html": "<ol aria-label=\"Signing progress\" style=\"font-family: Geist, sans-serif; display: flex; align-items: center; gap: 8px; list-style: none; margin: 0px 0px 18px; padding: 0px 0px 2px; flex-wrap: nowrap; overflow-x: auto;\">",
+            "target": [
+              "ol"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "demo-ceremony",
+    "width": 390,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "nodes": [
+          {
+            "html": "<ol aria-label=\"Signing progress\" style=\"font-family: Geist, sans-serif; display: flex; align-items: center; gap: 8px; list-style: none; margin: 0px 0px 18px; padding: 0px 0px 2px; flex-wrap: nowrap; overflow-x: auto;\">",
+            "target": [
+              "ol"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "demo-signature-capture",
+    "width": 390,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "nodes": [
+          {
+            "html": "<ol aria-label=\"Signing progress\" style=\"font-family: Geist, sans-serif; display: flex; align-items: center; gap: 8px; list-style: none; margin: 0px 0px 18px; padding: 0px 0px 2px; flex-wrap: nowrap; overflow-x: auto;\">",
+            "target": [
+              "ol"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "demo-empty",
+    "width": 390,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "nodes": [
+          {
+            "html": "<ol aria-label=\"Signing progress\" style=\"font-family: Geist, sans-serif; display: flex; align-items: center; gap: 8px; list-style: none; margin: 0px 0px 18px; padding: 0px 0px 2px; flex-wrap: nowrap; overflow-x: auto;\">",
+            "target": [
+              "ol"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "worst-consent",
+    "width": 390,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "nodes": [
+          {
+            "html": "<ol aria-label=\"Signing progress\" style=\"font-family: Geist, sans-serif; display: flex; align-items: center; gap: 8px; list-style: none; margin: 0px 0px 18px; padding: 0px 0px 2px; flex-wrap: nowrap; overflow-x: auto;\">",
+            "target": [
+              "ol"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "worst-ceremony",
+    "width": 390,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "nodes": [
+          {
+            "html": "<ol aria-label=\"Signing progress\" style=\"font-family: Geist, sans-serif; display: flex; align-items: center; gap: 8px; list-style: none; margin: 0px 0px 18px; padding: 0px 0px 2px; flex-wrap: nowrap; overflow-x: auto;\">",
+            "target": [
+              "ol"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "worst-signature-capture",
+    "width": 390,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "nodes": [
+          {
+            "html": "<ol aria-label=\"Signing progress\" style=\"font-family: Geist, sans-serif; display: flex; align-items: center; gap: 8px; list-style: none; margin: 0px 0px 18px; padding: 0px 0px 2px; flex-wrap: nowrap; overflow-x: auto;\">",
+            "target": [
+              "ol"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "worst-empty",
+    "width": 390,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "nodes": [
+          {
+            "html": "<ol aria-label=\"Signing progress\" style=\"font-family: Geist, sans-serif; display: flex; align-items: center; gap: 8px; list-style: none; margin: 0px 0px 18px; padding: 0px 0px 2px; flex-wrap: nowrap; overflow-x: auto;\">",
+            "target": [
+              "ol"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "demo-consent",
+    "width": 320,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-ceremony",
+    "width": 320,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-signature-capture",
+    "width": 320,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "demo-empty",
+    "width": 320,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-consent",
+    "width": 320,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-ceremony",
+    "width": 320,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-signature-capture",
+    "width": 320,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  },
+  {
+    "tag": "worst-empty",
+    "width": 320,
+    "overflow": false,
+    "url": "/sign/[redacted]",
+    "violations": []
+  }
+]

@@ -1,0 +1,89 @@
+{
+  "signingRequestId": "sr_9d3c9147c38e4ca49b1dc70676004da9",
+  "state": "completed",
+  "signedCount": 3,
+  "requiredCount": 3,
+  "completion": null,
+  "shareFinalCopy": true,
+  "reminders": {
+    "enabled": true,
+    "firstAfterDays": 3,
+    "everyDays": 3,
+    "maxAutomatic": 3,
+    "maxManualPerTurn": 10
+  },
+  "signatories": [
+    {
+      "recipientId": "srr_4d88600b50994e66ad4308299be1d0ca",
+      "name": "LAGDA Multi QA Signer 1",
+      "email": "multi.signer.1.20261118@example.test",
+      "organization": null,
+      "type": "approver",
+      "isRequired": true,
+      "routingOrder": 1,
+      "state": "approved",
+      "signedAt": null,
+      "approvedAt": "2026-11-18T14:28:22.398Z",
+      "skippedAt": null,
+      "declinedAt": null,
+      "declineReason": null,
+      "linkedAccountName": "LAGDA Multi QA Signer 1",
+      "linkedAccountEmail": "multi.signer.1.20261118@example.test",
+      "linkExpiresAt": null,
+      "reminders": {
+        "sentCount": 0,
+        "manualSentCount": 0,
+        "lastSentAt": null,
+        "nextDueAt": null
+      }
+    },
+    {
+      "recipientId": "srr_19011789255848d19152168ebf3a8374",
+      "name": "LAGDA Multi QA Signer 2",
+      "email": "multi.signer.2.20261118@example.test",
+      "organization": null,
+      "type": "reviewer",
+      "isRequired": true,
+      "routingOrder": 1,
+      "state": "signed",
+      "signedAt": "2026-11-18T14:27:58.262Z",
+      "approvedAt": null,
+      "skippedAt": null,
+      "declinedAt": null,
+      "declineReason": null,
+      "linkedAccountName": "LAGDA Multi QA Signer 2",
+      "linkedAccountEmail": "multi.signer.2.20261118@example.test",
+      "linkExpiresAt": null,
+      "reminders": {
+        "sentCount": 0,
+        "manualSentCount": 0,
+        "lastSentAt": null,
+        "nextDueAt": null
+      }
+    },
+    {
+      "recipientId": "srr_ee9f1acf2d6943d89342c5e89fe10f17",
+      "name": "LAGDA Multi QA Signer 3",
+      "email": "multi.signer.3.20261118@example.test",
+      "organization": null,
+      "type": "signer",
+      "isRequired": true,
+      "routingOrder": 1,
+      "state": "signed",
+      "signedAt": "2026-11-18T14:27:31.930Z",
+      "approvedAt": null,
+      "skippedAt": null,
+      "declinedAt": null,
+      "declineReason": null,
+      "linkedAccountName": "LAGDA Multi QA Signer 3",
+      "linkedAccountEmail": "multi.signer.3.20261118@example.test",
+      "linkExpiresAt": null,
+      "reminders": {
+        "sentCount": 0,
+        "manualSentCount": 0,
+        "lastSentAt": null,
+        "nextDueAt": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,2305 @@
+[
+  {
+    "tag": "demo-upload",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "prep-title",
+          "fontSize": 14
+        },
+        {
+          "label": "prep-description",
+          "fontSize": 14
+        },
+        {
+          "label": "prep-folder",
+          "fontSize": 14
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps right",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move \"Training agreement.pdf\" up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move \"Training agreement.pdf\" down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Remove \"Training agreement.pdf\"",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Urgent",
+          "width": 65,
+          "height": 30
+        },
+        {
+          "label": "NDA",
+          "width": 51,
+          "height": 30
+        },
+        {
+          "label": "Contract",
+          "width": 77,
+          "height": 30
+        },
+        {
+          "label": "HR",
+          "width": 43,
+          "height": 30
+        },
+        {
+          "label": "Compliance",
+          "width": 94,
+          "height": 30
+        },
+        {
+          "label": "Reviewed",
+          "width": 82,
+          "height": 30
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "demo-participants",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps right",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Ana Reyes up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Ana Reyes down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Ana Reyes",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Ana Reyes",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "+ Add participant",
+          "width": 972,
+          "height": 43
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "demo-routing",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "Label for routing step 1",
+          "fontSize": 13
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps right",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move step up",
+          "width": 26,
+          "height": 26
+        },
+        {
+          "label": "Move step down",
+          "width": 26,
+          "height": 26
+        },
+        {
+          "label": "+ Add routing step",
+          "width": 972,
+          "height": 42
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "demo-settings",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "first-reminder",
+          "fontSize": 13
+        },
+        {
+          "label": "repeat-interval",
+          "fontSize": 13
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps left",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Scroll steps right",
+          "width": 34,
+          "height": 34
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/settings",
+    "violations": []
+  },
+  {
+    "tag": "demo-fields",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps left",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Scroll steps right",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Back to Review step",
+          "width": 79,
+          "height": 34
+        },
+        {
+          "label": "Undo",
+          "width": 65,
+          "height": 34
+        },
+        {
+          "label": "Redo",
+          "width": 65,
+          "height": 34
+        },
+        {
+          "label": "Copy selected fields",
+          "width": 52,
+          "height": 34
+        },
+        {
+          "label": "Paste copied fields",
+          "width": 55,
+          "height": 34
+        },
+        {
+          "label": "Add field using keyboard placement",
+          "width": 86,
+          "height": 34
+        },
+        {
+          "label": "Place fields for everyone",
+          "width": 129,
+          "height": 34
+        },
+        {
+          "label": "Show field list",
+          "width": 43,
+          "height": 34
+        },
+        {
+          "label": "Zoom out",
+          "width": 28,
+          "height": 34
+        },
+        {
+          "label": "Zoom in",
+          "width": 29,
+          "height": 34
+        },
+        {
+          "label": "Fit the page to the width of the screen",
+          "width": 37,
+          "height": 34
+        },
+        {
+          "label": "Validate field placement",
+          "width": 81,
+          "height": 34
+        },
+        {
+          "label": "Continue to final review",
+          "width": 110,
+          "height": 34
+        },
+        {
+          "label": "About this field: Signature for Ana Reyes",
+          "width": 24,
+          "height": 24
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "demo-authentication",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps left",
+          "width": 34,
+          "height": 34
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/authentication",
+    "violations": []
+  },
+  {
+    "tag": "demo-review",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps left",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "○Secure Invitation Link is the only access control. Consider Email Cod",
+          "width": 972,
+          "height": 38
+        },
+        {
+          "label": "Edit",
+          "width": 38,
+          "height": 26
+        },
+        {
+          "label": "Edit",
+          "width": 38,
+          "height": 26
+        },
+        {
+          "label": "Edit",
+          "width": 38,
+          "height": 26
+        },
+        {
+          "label": "Edit",
+          "width": 38,
+          "height": 26
+        },
+        {
+          "label": "Edit",
+          "width": 38,
+          "height": 26
+        },
+        {
+          "label": "Documents",
+          "width": 318,
+          "height": 30
+        },
+        {
+          "label": "Participants",
+          "width": 318,
+          "height": 30
+        },
+        {
+          "label": "Order",
+          "width": 318,
+          "height": 30
+        },
+        {
+          "label": "Settings",
+          "width": 318,
+          "height": 30
+        },
+        {
+          "label": "Authentication",
+          "width": 318,
+          "height": 30
+        },
+        {
+          "label": "Authorization",
+          "width": 318,
+          "height": 30
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  },
+  {
+    "tag": "demo-authorization",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps left",
+          "width": 34,
+          "height": 34
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/authorization",
+    "violations": []
+  },
+  {
+    "tag": "worst-upload",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "prep-title",
+          "fontSize": 14
+        },
+        {
+          "label": "prep-description",
+          "fontSize": 14
+        },
+        {
+          "label": "prep-folder",
+          "fontSize": 14
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps right",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move \"Professional Services Agreement — International Legal Affairs, Compliance and Information Security — Asia Pacific Regional Operations — revised final approval copy.pdf\" up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move \"Professional Services Agreement — International Legal Affairs, Compliance and Information Security — Asia Pacific Regional Operations — revised final approval copy.pdf\" down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Remove \"Professional Services Agreement — International Legal Affairs, Compliance and Information Security — Asia Pacific Regional Operations — revised final approval copy.pdf\"",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Urgent",
+          "width": 65,
+          "height": 30
+        },
+        {
+          "label": "NDA",
+          "width": 51,
+          "height": 30
+        },
+        {
+          "label": "Contract",
+          "width": 77,
+          "height": 30
+        },
+        {
+          "label": "HR",
+          "width": 43,
+          "height": 30
+        },
+        {
+          "label": "Compliance",
+          "width": 94,
+          "height": 30
+        },
+        {
+          "label": "Reviewed",
+          "width": 82,
+          "height": 30
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "worst-participants",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps right",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 王秀英 up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 王秀英 down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Jo up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Jo down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "+ Add participant",
+          "width": 972,
+          "height": 43
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "worst-routing",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "Label for routing step 1",
+          "fontSize": 13
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps right",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move step up",
+          "width": 26,
+          "height": 26
+        },
+        {
+          "label": "Move step down",
+          "width": 26,
+          "height": 26
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "worst-settings",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "first-reminder",
+          "fontSize": 13
+        },
+        {
+          "label": "repeat-interval",
+          "fontSize": 13
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps left",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Scroll steps right",
+          "width": 34,
+          "height": 34
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/settings",
+    "violations": []
+  },
+  {
+    "tag": "worst-fields",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps left",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Scroll steps right",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Back to Review step",
+          "width": 79,
+          "height": 34
+        },
+        {
+          "label": "Undo",
+          "width": 65,
+          "height": 34
+        },
+        {
+          "label": "Redo",
+          "width": 65,
+          "height": 34
+        },
+        {
+          "label": "Copy selected fields",
+          "width": 52,
+          "height": 34
+        },
+        {
+          "label": "Paste copied fields",
+          "width": 55,
+          "height": 34
+        },
+        {
+          "label": "Add field using keyboard placement",
+          "width": 86,
+          "height": 34
+        },
+        {
+          "label": "Place fields for everyone",
+          "width": 129,
+          "height": 34
+        },
+        {
+          "label": "Show field list",
+          "width": 43,
+          "height": 34
+        },
+        {
+          "label": "Zoom out",
+          "width": 28,
+          "height": 34
+        },
+        {
+          "label": "Zoom in",
+          "width": 29,
+          "height": 34
+        },
+        {
+          "label": "Fit the page to the width of the screen",
+          "width": 37,
+          "height": 34
+        },
+        {
+          "label": "Validate field placement",
+          "width": 81,
+          "height": 34
+        },
+        {
+          "label": "Continue to final review",
+          "width": 110,
+          "height": 34
+        },
+        {
+          "label": "About this field: Signature for Aleksandra Wiśniewska-Kowalczyk",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "label": "About this field: Signature for 王秀英",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "label": "About this field: Signature for Đặng Thị Ngọc Hân",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "label": "About this field: Signature for Jo",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "label": "About this field: Signature for نور الهدى عبد الرحمن",
+          "width": 24,
+          "height": 24
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/fields",
+    "violations": []
+  },
+  {
+    "tag": "worst-authentication",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps left",
+          "width": 34,
+          "height": 34
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/authentication",
+    "violations": []
+  },
+  {
+    "tag": "worst-review",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps left",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "○Secure Invitation Link is the only access control. Consider Email Cod",
+          "width": 972,
+          "height": 38
+        },
+        {
+          "label": "Edit",
+          "width": 38,
+          "height": 26
+        },
+        {
+          "label": "Edit",
+          "width": 38,
+          "height": 26
+        },
+        {
+          "label": "Edit",
+          "width": 38,
+          "height": 26
+        },
+        {
+          "label": "Edit",
+          "width": 38,
+          "height": 26
+        },
+        {
+          "label": "Edit",
+          "width": 38,
+          "height": 26
+        },
+        {
+          "label": "Documents",
+          "width": 318,
+          "height": 30
+        },
+        {
+          "label": "Participants",
+          "width": 318,
+          "height": 30
+        },
+        {
+          "label": "Order",
+          "width": 318,
+          "height": 30
+        },
+        {
+          "label": "Settings",
+          "width": 318,
+          "height": 30
+        },
+        {
+          "label": "Authentication",
+          "width": 318,
+          "height": 30
+        },
+        {
+          "label": "Authorization",
+          "width": 318,
+          "height": 30
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  },
+  {
+    "tag": "worst-authorization",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps left",
+          "width": 34,
+          "height": 34
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/authorization",
+    "violations": []
+  },
+  {
+    "tag": "empty-upload",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "prep-title",
+          "fontSize": 14
+        },
+        {
+          "label": "prep-description",
+          "fontSize": 14
+        },
+        {
+          "label": "prep-folder",
+          "fontSize": 14
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps right",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Urgent",
+          "width": 65,
+          "height": 30
+        },
+        {
+          "label": "NDA",
+          "width": 51,
+          "height": 30
+        },
+        {
+          "label": "Contract",
+          "width": 77,
+          "height": 30
+        },
+        {
+          "label": "HR",
+          "width": 43,
+          "height": 30
+        },
+        {
+          "label": "Compliance",
+          "width": 94,
+          "height": 30
+        },
+        {
+          "label": "Reviewed",
+          "width": 82,
+          "height": 30
+        },
+        {
+          "label": "This step is not finished — see what’s missing",
+          "width": 280,
+          "height": 31
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/upload",
+    "violations": []
+  },
+  {
+    "tag": "empty-participants",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps right",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "+ Add participant",
+          "width": 972,
+          "height": 43
+        },
+        {
+          "label": "This step is not finished — see what’s missing",
+          "width": 280,
+          "height": 31
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "many-participants",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps right",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 王秀英 up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 王秀英 down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Jo up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Jo down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 王秀英 up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 王秀英 down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Jo up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Jo down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 王秀英 up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 王秀英 down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Jo up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Jo down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 王秀英 up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 王秀英 down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Jo up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Jo down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 王秀英 up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 王秀英 down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Jo up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Jo down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 王秀英 up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 王秀英 down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Jo up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Jo down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 王秀英 up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 王秀英 down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Jo up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Jo down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 王秀英 up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 王秀英 down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 王秀英",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Đặng Thị Ngọc Hân down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Đặng Thị Ngọc Hân",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Jo up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Jo down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Jo",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move نور الهدى عبد الرحمن down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove نور الهدى عبد الرحمن",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move Aleksandra Wiśniewska-Kowalczyk down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove Aleksandra Wiśniewska-Kowalczyk",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya up",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Move 👩🏽‍💻 Priya down",
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Edit 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Remove 👩🏽‍💻 Priya",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "+ Add participant",
+          "width": 972,
+          "height": 43
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/participants",
+    "violations": []
+  },
+  {
+    "tag": "many-routing",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [
+        {
+          "label": "Label for routing step 1",
+          "fontSize": 13
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps right",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "Move step up",
+          "width": 26,
+          "height": 26
+        },
+        {
+          "label": "Move step down",
+          "width": 26,
+          "height": 26
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/routing",
+    "violations": []
+  },
+  {
+    "tag": "many-review",
+    "profile": "desktop",
+    "width": 1440,
+    "height": 1000,
+    "largeText": true,
+    "mobile": {
+      "inputs": [],
+      "smallTargets": [
+        {
+          "label": "Documents",
+          "width": 70,
+          "height": 20
+        },
+        {
+          "label": "Scroll steps left",
+          "width": 34,
+          "height": 34
+        },
+        {
+          "label": "○Secure Invitation Link is the only access control. Consider Email Cod",
+          "width": 972,
+          "height": 38
+        },
+        {
+          "label": "Edit",
+          "width": 38,
+          "height": 26
+        },
+        {
+          "label": "Edit",
+          "width": 38,
+          "height": 26
+        },
+        {
+          "label": "Edit",
+          "width": 38,
+          "height": 26
+        },
+        {
+          "label": "Edit",
+          "width": 38,
+          "height": 26
+        },
+        {
+          "label": "Edit",
+          "width": 38,
+          "height": 26
+        },
+        {
+          "label": "Documents",
+          "width": 318,
+          "height": 30
+        },
+        {
+          "label": "Participants",
+          "width": 318,
+          "height": 30
+        },
+        {
+          "label": "Order",
+          "width": 318,
+          "height": 30
+        },
+        {
+          "label": "Settings",
+          "width": 318,
+          "height": 30
+        },
+        {
+          "label": "Authentication",
+          "width": 318,
+          "height": 30
+        },
+        {
+          "label": "Authorization",
+          "width": 318,
+          "height": 30
+        }
+      ],
+      "coarse": false
+    },
+    "overflow": false,
+    "url": "/app/prepare/review",
+    "violations": []
+  }
+]

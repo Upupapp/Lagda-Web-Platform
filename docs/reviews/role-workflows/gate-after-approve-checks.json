@@ -1,0 +1,15 @@
+{
+  "scenario": "gate",
+  "stage": "after-approve",
+  "requestState": "partially-completed",
+  "states": [
+    "approved",
+    "signed",
+    "active"
+  ],
+  "completedCount": 2,
+  "requiredCount": 3,
+  "invitationCount": 3,
+  "deniedChecks": [],
+  "completedPdfUnavailable": true
+}

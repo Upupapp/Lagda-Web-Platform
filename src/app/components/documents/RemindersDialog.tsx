@@ -1,3 +1,4 @@
+import { useModalFocus } from "../../hooks/useModalFocus";
 // Switch a sent document's reminders on or off, or change their days (111).
 //
 // Opened from the same line of the Sent card as the expiration. The server
@@ -8,7 +9,7 @@
 // The current settings are read from the participants view, which is the
 // only place the server reports them; the list row does not carry them.
 
-import { useEffect, useId, useState, type CSSProperties } from "react";
+import { useRef, useEffect, useId, useState, type CSSProperties } from "react";
 import { X, BellRing, Loader2, AlertCircle } from "lucide-react";
 import {
   realSigningRequestService, REMINDER_DEFAULTS, REMINDER_DAYS_MIN, REMINDER_DAYS_MAX,
@@ -44,6 +45,7 @@ export function RemindersDialog({
   // server's defaults — what it was sent with, unless it predates reminders.
   const [settings, setSettings] = useState<ReminderSettings | null>(null);
   const [busy, setBusy] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -59,11 +61,7 @@ export function RemindersDialog({
     return () => { cancelled = true; };
   }, [workspaceId, signingRequestId]);
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === "Escape" && !busy) onClose(); }
-    document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("keydown", onKey); };
-  }, [onClose, busy]);
+  useModalFocus(dialogRef, onClose, busy);
 
   async function save() {
     if (settings === null) return;
@@ -89,7 +87,7 @@ export function RemindersDialog({
 
   return (
     <div
-      role="dialog" aria-modal="true" aria-label={`Reminders for ${documentTitle}`}
+      ref={dialogRef} tabIndex={-1} className="platform-task-dialog" role="dialog" aria-modal="true" aria-label={`Reminders for ${documentTitle}`}
       style={{
         position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center",
         justifyContent: "center", background: "rgba(7,17,31,0.55)", padding: 16,

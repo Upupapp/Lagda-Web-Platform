@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../../utils/on-light";
 // /app/contacts — Contacts library page ("All Contacts").
 // One view — every ACTIVE contact — with search, tag filter, sort and cards.
 // (Multi-select and its bulk bar — Add Tag, Archive, Add to Group — were
@@ -44,8 +45,8 @@ const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
 const NAVY  = "#07111F";
 const AZURE = "#0078D4";
-const SLATE = "#64748B";
-const SILVER= "#8A9BAE";
+const SLATE = ON_LIGHT.slate;
+const SILVER= ON_LIGHT.muted;
 const LIGHT = "#F0F7FF";
 const PAGE_BG = "#F8FAFC";
 
@@ -59,7 +60,7 @@ function TagChip({ tagId }: { tagId: ContactTagId }) {
   const tag = getContactTagById(tagId);
   if (!tag) return null;
   return (
-    <span style={{ ...GM, fontSize: 9, padding: "2px 6px", borderRadius: 999, background: `${tag.color}18`, color: tag.color }}>
+    <span style={{ ...GM, fontSize: 9, padding: "2px 6px", borderRadius: 999, background: `${tag.color}18`, color: ON_LIGHT.slate }}>
       {tag.label}
     </span>
   );
@@ -329,7 +330,7 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
                     style={{
                       ...GM, fontSize: 10, padding: "3px 8px", borderRadius: 999, cursor: "pointer",
                       background: active ? `${tag.color}20` : "#F8FAFC",
-                      color: active ? tag.color : SLATE,
+                      color: ON_LIGHT.slate,
                       border: active ? `1.5px solid ${tag.color}` : "1.5px solid #E3E8EF",
                       fontWeight: active ? 700 : 500,
                     }}
@@ -565,11 +566,11 @@ const CARD_CSS = `
 .ct-card { background: #FFFFFF; border: 1px solid #E6EBF2; border-radius: 20px; padding: 0 16px 14px; min-width: 0; display: flex; flex-direction: column;
   gap: 12px; position: relative; overflow: hidden; box-shadow: 0 1px 2px rgba(7,17,31,0.04), 0 12px 28px -22px rgba(7,17,31,0.35);
   transition: box-shadow 180ms ease, transform 180ms ease, border-color 180ms ease; }
-.ct-card:hover { box-shadow: 0 18px 38px -24px rgba(7,17,31,0.45); transform: translateY(-2px); border-color: #D6DEE8; }
+@media (hover: hover) and (pointer: fine) { .ct-card:hover { box-shadow: 0 18px 38px -24px rgba(7,17,31,0.45); transform: translateY(-2px); border-color: #D6DEE8; } }
 .ct-card-band { position: relative; height: 92px; margin: 0 -16px; overflow: hidden; }
 .ct-card-controls { position: absolute; top: 10px; left: 12px; right: 10px; display: flex; justify-content: flex-end; align-items: flex-start; z-index: 1; }
 .ct-card-menu .ct-icon-btn { background: rgba(255,255,255,0.88); color: ${NAVY}; box-shadow: 0 1px 3px rgba(7,17,31,0.18); }
-.ct-card-menu .ct-icon-btn:hover, .ct-card-menu .ct-icon-btn[data-open="true"] { background: #FFFFFF; color: ${AZURE}; }
+ .ct-card-menu .ct-icon-btn[data-open="true"] { background: #FFFFFF; color: ${AZURE}; }@media (hover: hover) and (pointer: fine) { .ct-card-menu .ct-icon-btn:hover{ background: #FFFFFF; color: ${AZURE}; } }
 .ct-card-avatar { position: relative; align-self: center; margin-top: -62px; line-height: 0; }
 .ct-card-dot { position: absolute; right: 6px; bottom: 6px; width: 20px; height: 20px; border-radius: 50%; background: #16A34A; border: 3px solid #FFFFFF;
   box-shadow: 0 1px 3px rgba(7,17,31,0.25); }
@@ -577,9 +578,9 @@ const CARD_CSS = `
 .ct-name { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; font-family: 'Geist', sans-serif; color: ${NAVY}; font-weight: 800;
   font-size: 19px; line-height: 1.25; text-decoration: none; }
 .ct-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.ct-name:hover .ct-name-text { color: ${AZURE}; }
+@media (hover: hover) and (pointer: fine) { .ct-name:hover .ct-name-text { color: ${AZURE}; } }
 .ct-verified { flex-shrink: 0; color: #FFFFFF; fill: #2F80ED; }
-.ct-card-title { display: block; max-width: 100%; font-family: 'Geist', sans-serif; font-size: 13.5px; font-weight: 600; color: #7B8BA3; letter-spacing: 0.01em;
+.ct-card-title { display: block; max-width: 100%; font-family: 'Geist', sans-serif; font-size: 13.5px; font-weight: 600; color: ${ON_LIGHT.muted}; letter-spacing: 0.01em;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ct-card-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
 .ct-soft-pill { display: inline-flex; align-items: center; gap: 4px; font-family: 'Geist', sans-serif; font-size: 11px; font-weight: 600; color: ${SLATE};
@@ -589,23 +590,23 @@ const CARD_CSS = `
 .ct-detail-icon { width: 36px; height: 36px; border-radius: 50%; background: #E6F0FB; color: #1D6FD1; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .ct-detail-value { font-family: 'Geist', sans-serif; font-size: 13.5px; color: ${NAVY}; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
 .ct-detail-link { min-width: 0; text-decoration: none; display: flex; }
-.ct-detail-link:hover .ct-detail-value { color: ${AZURE}; }
+@media (hover: hover) and (pointer: fine) { .ct-detail-link:hover .ct-detail-value { color: ${AZURE}; } }
 .ct-card-tags { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
 .ct-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 12px; border-top: 1px solid #EDF1F6; margin-top: auto; }
-.ct-card-when { display: inline-flex; align-items: center; gap: 6px; font-family: 'Geist', sans-serif; font-size: 12.5px; color: #7B8BA3; }
+.ct-card-when { display: inline-flex; align-items: center; gap: 6px; font-family: 'Geist', sans-serif; font-size: 12.5px; color: ${ON_LIGHT.muted}; }
 .ct-card-open { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 12px 0 14px; border-radius: 12px; background: #EEF5FD;
   font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 700; color: #1D6FD1; text-decoration: none; white-space: nowrap; }
-.ct-card-open:hover { background: #E1EDFB; }
+@media (hover: hover) and (pointer: fine) { .ct-card-open:hover { background: #E1EDFB; } }
 .ct-card-open:focus-visible { outline: 3px solid rgba(0,120,212,0.35); outline-offset: 1px; }
 .ct-icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; color: ${SLATE}; background: transparent;
   border: none; border-radius: 8px; cursor: pointer; text-decoration: none; flex-shrink: 0; }
-.ct-icon-btn:hover, .ct-icon-btn[data-open="true"] { background: ${LIGHT}; color: ${AZURE}; }
+ .ct-icon-btn[data-open="true"] { background: ${LIGHT}; color: ${AZURE}; }@media (hover: hover) and (pointer: fine) { .ct-icon-btn:hover{ background: ${LIGHT}; color: ${AZURE}; } }
 .ct-icon-btn:focus-visible { outline: 2px solid rgba(0,120,212,0.5); outline-offset: 1px; }
 
 .ct-list { list-style: none; margin: 0; padding: 0; background: #FFFFFF; border: 1.5px solid #E3E8EF; border-radius: 14px; overflow: hidden; }
 .ct-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #F0F2F5; min-width: 0; }
 .ct-row:last-child { border-bottom: none; }
-.ct-row:hover { background: #FAFBFD; }
+@media (hover: hover) and (pointer: fine) { .ct-row:hover { background: #FAFBFD; } }
 .ct-row-main { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; }
 .ct-row-sub { font-family: 'Geist', sans-serif; font-size: 12px; color: ${SLATE}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ct-row-email { flex: 1 1 200px; min-width: 0; font-family: 'Geist Mono', monospace; font-size: 12px; color: ${SLATE}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -613,6 +614,11 @@ const CARD_CSS = `
 @media (max-width: 900px) { .ct-row-email { display: none; } }
 @media (max-width: 600px) { .ct-row-badges, .ct-row-mail { display: none; } }
 
+@media (pointer: coarse), (max-width: 640px) {
+  .ct-toolbar button, .ct-toolbar input, .ct-toolbar select { min-height: 44px; touch-action: manipulation; }
+  .ct-layout button { min-width: 44px; }
+}
+@media (pointer: coarse) { .ct-toolbar input, .ct-toolbar select { font-size: 16px !important; } }
 .ct-toolbar { background: #FFFFFF; border-bottom: 1px solid #F0F2F5; padding: 10px 24px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ct-layout { display: inline-flex; padding: 3px; gap: 2px; border-radius: 9px; background: #F1F5F9; border: 1px solid #E2E8F0; }
 .ct-layout button { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 30px; border: none; border-radius: 7px; background: transparent; color: ${SLATE}; cursor: pointer; }

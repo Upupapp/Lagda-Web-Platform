@@ -1,0 +1,227 @@
+[
+  {
+    "tag": "-app-documents",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/documents",
+    "violations": []
+  },
+  {
+    "tag": "-app-contacts",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/contacts",
+    "violations": []
+  },
+  {
+    "tag": "-app-templates",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/templates",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span style=\"display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; background: rgb(230, 244, 234); color: rgb(5, 150, 105); font-family: Geist, sans-serif;\">Available</span>",
+            "target": [
+              "div:nth-child(1) > span"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.31 (foreground color: #059669, background color: #e6f4ea, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "-app-shared-documents",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/shared-documents/by-me",
+    "violations": []
+  },
+  {
+    "tag": "-app-notifications",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/notifications",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span style=\"font-family: Geist, sans-serif; font-size: 10px; font-weight: 500; color: rgb(217, 119, 6); background: rgba(217, 119, 6, 0.07); border-radius: 4px; padding: 2px 6px;\">Warning</span>",
+            "target": [
+              "div:nth-child(2) > div:nth-child(3) > span:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.8 (foreground color: #d97706, background color: #f3f0ec, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "-app-settings-profile",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/settings/profile",
+    "violations": []
+  },
+  {
+    "tag": "-app-settings-security",
+    "width": 1440,
+    "overflow": false,
+    "url": "/app/settings/security",
+    "violations": []
+  },
+  {
+    "tag": "-app-documents",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/documents",
+    "violations": []
+  },
+  {
+    "tag": "-app-contacts",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/contacts",
+    "violations": []
+  },
+  {
+    "tag": "-app-templates",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/templates",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span style=\"display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; background: rgb(230, 244, 234); color: rgb(5, 150, 105); font-family: Geist, sans-serif;\">Available</span>",
+            "target": [
+              "div:nth-child(1) > span"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.31 (foreground color: #059669, background color: #e6f4ea, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "-app-shared-documents",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/shared-documents/by-me",
+    "violations": []
+  },
+  {
+    "tag": "-app-notifications",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/notifications",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span style=\"font-family: Geist, sans-serif; font-size: 10px; font-weight: 500; color: rgb(217, 119, 6); background: rgba(217, 119, 6, 0.07); border-radius: 4px; padding: 2px 6px;\">Warning</span>",
+            "target": [
+              "div:nth-child(2) > div:nth-child(3) > span:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.8 (foreground color: #d97706, background color: #f3f0ec, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "-app-settings-profile",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/settings/profile",
+    "violations": []
+  },
+  {
+    "tag": "-app-settings-security",
+    "width": 390,
+    "overflow": false,
+    "url": "/app/settings/security",
+    "violations": []
+  },
+  {
+    "tag": "-app-documents",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/documents",
+    "violations": []
+  },
+  {
+    "tag": "-app-contacts",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/contacts",
+    "violations": []
+  },
+  {
+    "tag": "-app-templates",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/templates",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span style=\"display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; background: rgb(230, 244, 234); color: rgb(5, 150, 105); font-family: Geist, sans-serif;\">Available</span>",
+            "target": [
+              "div:nth-child(1) > span"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.31 (foreground color: #059669, background color: #e6f4ea, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "-app-shared-documents",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/shared-documents/by-me",
+    "violations": []
+  },
+  {
+    "tag": "-app-notifications",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/notifications",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "html": "<span style=\"font-family: Geist, sans-serif; font-size: 10px; font-weight: 500; color: rgb(217, 119, 6); background: rgba(217, 119, 6, 0.07); border-radius: 4px; padding: 2px 6px;\">Warning</span>",
+            "target": [
+              "div:nth-child(2) > div:nth-child(3) > span:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.8 (foreground color: #d97706, background color: #f3f0ec, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "-app-settings-profile",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/settings/profile",
+    "violations": []
+  },
+  {
+    "tag": "-app-settings-security",
+    "width": 320,
+    "overflow": false,
+    "url": "/app/settings/security",
+    "violations": []
+  }
+]

@@ -392,57 +392,9 @@
   }
 }
 
-/* ── Page entrance animation ─────────────────────────────────────────────────
-   Applied via .lagda-page-enter class on the route content wrapper.
-   Subtle upward fade-in on each navigation so pages feel intentional.     */
-@keyframes lagda-page-enter {
-  from { opacity: 0; translate: 0 4px; }
-  to   { opacity: 1; translate: 0 0; }
-}
-
-/* ── `backwards`, not `both`, and it is load-bearing ──────────────────────
-   *
-   * This wrapper broke every modal in the app. A transform-like value other
-   * than `none` makes an element the containing block for its
-   * `position: fixed` descendants — and the final frame here is an offset of
-   * zero, which is still a value. `both` retains that final frame forever, so
-   * long after the 220ms animation ended the wrapper was still trapping every
-   * dialog rendered inside a routed page.
-   *
-   * The symptom: modals positioned against the page content instead of the
-   * viewport, so on a phone you had to scroll down to find the dialog you had
-   * just opened. /app/prepare was unaffected only because it routes outside
-   * this layout.
-   *
-   * `backwards` fills only BEFORE the animation, so once it finishes the
-   * element carries no offset at all and stops being a containing block.
-   * Nothing flashes, because the natural state and the final frame are the
-   * same. The 220ms while it runs still traps a dialog, which no interaction
-   * can reach: the animation plays on navigation, and a modal is opened by a
-   * click that comes after it.
-   *
-   * Deliberately NOT relying on `translate` being exempt from the
-   * containing-block rule. The individual transform properties are specified
-   * to contribute to the transform, so they very likely are not exempt —
-   * this fix does not depend on the answer either way. */
-.lagda-page-enter {
-  animation: lagda-page-enter 220ms cubic-bezier(0, 0, 0.2, 1) backwards;
-  /* Full height of its scrollable parent (`.platform-main`), with its own
-     scroll, so in-flow full-height content (a file preview embedded directly
-     in the page rather than in a dialog) stretches instead of collapsing to
-     its content's natural height.
-     *
-     * This comment used to claim a fixed-position overlay "escapes this by
-     * design". It did not — see the keyframes above. It does now. */
-  height: 100%;
-  overflow: auto;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .lagda-page-enter {
-    animation: none;
-  }
-}
+/* Route content stays immediately visible during frequent navigation, including keyboard use.
+   Keep its own scroll and full height for embedded document previews. */
+.lagda-page-content { height: 100%; overflow: auto; }
 
 /* ── Tab strip ───────────────────────────────────────────────────────────────
    The scrolling container behind <TabStrip>. Twenty-six surfaces render a row
@@ -531,3 +483,114 @@
 @media (prefers-reduced-motion: reduce) {
   .lagda-skeleton { animation: none; opacity: 0.7; }
 }
+
+/* Admin UI standards: scoped to existing Workspace surfaces and their portalled dialogs. */
+.ws-shell :is(input, select, textarea, button, a):focus-visible,
+.ws-admin-dialog :is(input, select, textarea, button, a):focus-visible,
+.pt-panel :is(input, select, textarea, button, a):focus-visible {
+  outline: 2px solid #0063B1 !important;
+  outline-offset: 3px;
+  transition: none !important;
+}
+.ws-shell :is(input, select, textarea), .ws-admin-dialog :is(input, select, textarea), .pt-panel :is(input, select, textarea) { min-width: 0; }
+@media (pointer: coarse) {
+  .ws-shell :is(button, select, input:not([type="checkbox"]):not([type="radio"])),
+  .ws-admin-dialog :is(button, select, input:not([type="checkbox"]):not([type="radio"])),
+  .pt-panel :is(button, select, input:not([type="checkbox"]):not([type="radio"])) { min-height: 44px; }
+  .ws-shell :is(input, select, textarea), .ws-admin-dialog :is(input, select, textarea), .pt-panel :is(input, select, textarea) { font-size: 16px !important; }
+  .ws-shell :is(.pt-view button, .pt-icon-only), .pt-panel :is(.pt-panel-close, .pt-carousel-arrow, .pt-carousel-dot) { min-width: 44px; }
+}
+
+@media (pointer: coarse) {
+  .pt-carousel-dots { flex-wrap: wrap; justify-content: center; max-width: 100%; }
+}
+.pt-panel button:not(.pt-panel-close):not(.pt-carousel-arrow):not(.pt-carousel-dot) {
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+
+/* Task-flow mobile foundation; PDF rectangles/drag handles keep their true size. */
+:is(.prep-layout-root, .recipient-flow) {
+  -webkit-text-size-adjust: 100%;
+  box-sizing: border-box;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+.prep-layout-root, .prep-field-editor { padding-top: env(safe-area-inset-top, 0px); }
+.prep-field-editor {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  box-sizing: border-box;
+}
+.recipient-flow > header { height: calc(56px + env(safe-area-inset-top, 0px)) !important; padding-top: env(safe-area-inset-top, 0px) !important; }
+.recipient-flow > main { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.prep-nav-bar { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 768px) { .prep-nav-bar { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); } }
+:is(.prep-step-area, .prep-field-editor [role="region"], .recipient-capture-layer > div, .recipient-confirm-layer > div) { overscroll-behavior: contain; }
+:is(.recipient-capture-layer, .recipient-confirm-layer) {
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)) !important;
+}
+:is(.prep-layout-root, .recipient-flow) :is(button, a) { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+:is(.prep-layout-root, .recipient-flow) button { -webkit-user-select: none; user-select: none; }
+:is(.prep-layout-root, .recipient-flow) button:not(:disabled):not([aria-disabled="true"]):active { filter: brightness(0.96); }
+:is(.prep-layout-root, .recipient-flow) :is(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid #0063B1; outline-offset: 3px; transition: none;
+}
+@media (pointer: coarse) {
+  :is(.prep-layout-root, .recipient-flow) :is(input, select, textarea) { font-size: 16px !important; }
+  :is(.prep-layout-root, .recipient-flow) button:not([data-field-id] *) { min-height: 44px; min-width: 44px; }
+  :is(.prep-layout-root, .recipient-flow) a { min-height: 44px; display: inline-flex; align-items: center; }
+}
+
+:is(.recipient-capture-layer, .recipient-confirm-layer) > div {
+  max-height: calc(100dvh - max(16px, env(safe-area-inset-top, 0px)) - max(16px, env(safe-area-inset-bottom, 0px))) !important;
+}
+
+@media (pointer: coarse) {
+  .prep-layout-root :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([data-field-id] *),
+  .recipient-flow :is(input, select, textarea):not(.recipient-field-text):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]) { min-height: 44px; }
+  :is(.prep-layout-root, .recipient-flow) label:has(> input:is([type="checkbox"], [type="radio"])) { min-height: 44px; }
+}
+
+@media (pointer: coarse) { .prep-layout-root .prep-editor-more { min-width: 44px !important; } }
+
+/* Authenticated workspace: native scrolling and controls, without changing PDF geometry. */
+.platform-shell { -webkit-text-size-adjust: 100%; }
+.platform-main { overscroll-behavior: contain; padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+#mobile-nav-drawer { overscroll-behavior: contain; }
+.platform-shell :is(button, a), .platform-task-dialog :is(button, a) { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.platform-shell button, .platform-task-dialog button { user-select: none; -webkit-user-select: none; }
+.platform-shell button:active:not(:disabled), .platform-task-dialog button:active:not(:disabled) { filter: brightness(.96); }
+.platform-task-dialog { box-sizing: border-box; padding-top: max(16px, env(safe-area-inset-top, 0px)) !important; padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important; padding-left: max(16px, env(safe-area-inset-left, 0px)) !important; padding-right: max(16px, env(safe-area-inset-right, 0px)) !important; }
+.platform-task-dialog > div { overflow-y: auto; min-width: 0; max-height: calc(100dvh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overscroll-behavior: contain; }
+@media (pointer: coarse) {
+  .platform-shell :is(input, textarea, select), .platform-task-dialog :is(input, textarea, select) { font-size: 16px !important; }
+  .platform-shell input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]), .platform-task-dialog input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]) { min-height: 44px; }
+}
+
+@media (pointer: coarse) {
+  .platform-shell :is(button, select, a:not(.platform-skip-link)):not([data-page-surface] *):not([data-field-id] *), .platform-task-dialog :is(button, select, a) { min-height: 44px !important; min-width: 44px !important; }
+  .platform-shell :is(.notif-title-link, .notif-action-link, .ct-name) { display: inline-flex; align-items: center; }
+  .platform-shell .ct-detail-link { align-items: center; }
+}
+
+/* Full-screen template tools sit outside the workspace shell. */
+.template-task { box-sizing: border-box; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); -webkit-text-size-adjust: 100%; }
+.template-task :is(button, a) { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.template-task button { user-select: none; -webkit-user-select: none; }
+.template-task button:active:not(:disabled) { filter: brightness(.96); }
+.template-task [role="region"] { overscroll-behavior: contain; }
+@media (pointer: coarse) {
+ .template-task :is(button, a):not([data-page-surface] *) { min-height: 44px !important; min-width: 44px !important; }
+ .template-task :is(input, textarea, select):not([data-page-surface] *) { font-size: 16px !important; }
+}
+
+@media (max-width: 640px) { .template-fields-header > a { flex-basis: 100% !important; } }
+
+@media (max-width: 640px) {
+ .template-role-bar { flex-wrap: nowrap !important; overflow-x: auto; overscroll-behavior-x: contain; }
+ .template-role-chips { flex-wrap: nowrap !important; flex-shrink: 0; }
+ .template-role-chips > * { flex-shrink: 0; white-space: nowrap; }
+}
+@media (max-width: 640px) and (max-height: 500px) { .template-field-palette { height: 30dvh !important; } }

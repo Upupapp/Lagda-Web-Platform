@@ -1,0 +1,23 @@
+[
+  {
+    "signer": 1,
+    "sha256": "14d15ae991abb6fe33315c883cfb7d6c32613ed7aba61e81329cea701392dea6",
+    "recipientDownloadMatches": true,
+    "auditVisible": true,
+    "workspaceSetupAfterSigning": false
+  },
+  {
+    "signer": 2,
+    "sha256": "14d15ae991abb6fe33315c883cfb7d6c32613ed7aba61e81329cea701392dea6",
+    "recipientDownloadMatches": true,
+    "auditVisible": true,
+    "workspaceSetupAfterSigning": false
+  },
+  {
+    "signer": 3,
+    "sha256": "14d15ae991abb6fe33315c883cfb7d6c32613ed7aba61e81329cea701392dea6",
+    "recipientDownloadMatches": true,
+    "auditVisible": true,
+    "workspaceSetupAfterSigning": false
+  }
+]

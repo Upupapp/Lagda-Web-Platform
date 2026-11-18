@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../../utils/on-light";
 // The last step before anyone is emailed.
 //
 // ── What this is, and what it is not ──────────────────────────────────────
@@ -39,8 +40,7 @@ import { stepEyebrow } from "../../../models/prepare";
 const GF = { fontFamily: "'Geist', sans-serif" } as const;
 const NAVY = "#07111F";
 const SLATE = "#4B5E70";
-const SILVER = "#8A9BAE";
-const AZURE = "#0078D4";
+const SILVER = ON_LIGHT.muted;
 
 function Fact({ icon: Icon, label, value }: {
   icon: typeof Mail; label: string; value: string;
@@ -50,7 +50,7 @@ function Fact({ icon: Icon, label, value }: {
       display: "flex", alignItems: "flex-start", gap: 10,
       padding: "12px 0", borderBottom: "1px solid #F0F2F5",
     }}>
-      <Icon size={16} aria-hidden style={{ color: AZURE, flexShrink: 0, marginTop: 1 }} />
+      <Icon size={16} aria-hidden style={{ color: ON_LIGHT.azure, flexShrink: 0, marginTop: 1 }} />
       <div style={{ minWidth: 0 }}>
         <div style={{ ...GF, fontSize: 11, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em" }}>
           {label}

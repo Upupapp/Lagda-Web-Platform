@@ -1,0 +1,31 @@
+{
+  "destination": "C:\\Users\\paulg\\.codex\\skills",
+  "installation": "Already installed; verified all upstream skill files by Git blob hash",
+  "verifiedAt": "2026-11-18T16:56:33.3671359+08:00",
+  "repository": "https://github.com/emilkowalski/skills",
+  "skills": [
+    "animate-expo",
+    "animate",
+    "animation-performance",
+    "animation-vocabulary",
+    "apple-design",
+    "ask-emil",
+    "ask-sonner",
+    "break-ui",
+    "choreograph",
+    "emil-design-eng",
+    "find-animation-opportunities",
+    "gestures",
+    "improve-animations",
+    "learn-taste",
+    "mobile-native",
+    "pick-ui-library",
+    "prototype",
+    "remove-animations",
+    "review-animations",
+    "write-swift"
+  ],
+  "verifiedFileCount": 29,
+  "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+  "skillCount": 20
+}

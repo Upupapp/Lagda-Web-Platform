@@ -1,3 +1,4 @@
+import { useFlowViewport } from "../../hooks/useFlowViewport";
 // The workspace half of the account-binding handoff.
 //
 // ── Why this page is under /app ───────────────────────────────────────────
@@ -59,6 +60,7 @@ type Phase = "asking" | "claiming" | "done" | "failed" | "missing";
 const ADDRESSED_ELSEWHERE = "SIGNING_LINK_ADDRESSED_ELSEWHERE";
 
 export function LinkSigningPage() {
+  useFlowViewport();
   const [params] = useSearchParams();
   const code = params.get("code");
   const [phase, setPhase] = useState<Phase>(code === null ? "missing" : "asking");

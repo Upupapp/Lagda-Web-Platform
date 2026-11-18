@@ -1,0 +1,128 @@
+
+ RUN  v3.2.4 C:/Users/paulg/OneDrive/Documents/ChatGPT/LAGDA
+
+ ✓ src/app/pages/platform/invitations/__tests__/MyInvitationsPage.test.tsx (20 tests) 2279ms
+   ✓ Invitations page > rejecting needs a reason of 1–500 characters, shows a counter, and sends the reason  653ms
+ ✓ src/app/pages/platform/workspace/__tests__/PeopleTeams.realmode.test.tsx (16 tests) 5362ms
+   ✓ the team tree > re-orders the page when a sort is chosen, and remembers it  303ms
+   ✓ a person's panel > shows one section at a time, Team first, with arrows and dots to move between them  309ms
+   ✓ a person's panel > keeps Remove as the panel's footer on every section  396ms
+   ✓ contacts into a team > adds a contact who is a member straight in, and invites one who is not  1240ms
+   ✓ contacts into a team > invites a contact who is not a member yet  1166ms
+   ✓ deleting a team, and the panels beside the title > offers Delete only for an empty team, saying why otherwise  343ms
+   ✓ search recovery > explains a no-match result and restores the teams when cleared  488ms
+ ✓ src/app/pages/platform/workspace/__tests__/Manage.realmode.test.tsx (23 tests) 2051ms
+   ✓ Teams — backend organization units > creates a team as a unit with a name and kind  375ms
+   ✓ Workspace settings — rename > renames through PATCH and updates the session, with no fake toggles  420ms
+ ✓ src/app/pages/platform/settings/__tests__/Branding.realmode.test.tsx (9 tests) 1203ms
+   ✓ branding with a real backend > saves only the changed fields and puts the result on the badge at once  389ms
+   ✓ branding with a real backend > renames the workspace through the display name  403ms
+ ✓ src/app/pages/platform/workspace/__tests__/WorkspaceShell.realmode.test.tsx (15 tests) 1007ms
+stderr | src/app/pages/platform/workspace/__tests__/TeamHierarchy.test.tsx > Team detail — hierarchy tree > is one Tab stop and moves, opens and closes with the keyboard
+Warning: An update to TeamHierarchyTree inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TeamHierarchyTree (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\workspace\real\TeamHierarchyTree.tsx:19:3)
+    at section
+    at div
+    at div
+    at ManageStandalone (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\workspace\real\manage-ui.tsx:149:29)
+    at ManagePage (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\workspace\real\manage-ui.tsx:23:60)
+    at RealTeamDetailPage (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\workspace\real\RealTeamDetailPage.tsx:297:31)
+    at TeamDetailPage (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\workspace\TeamDetailPage.tsx:494:57)
+    at RenderedRoute (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:7075:26)
+    at Routes (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9394:3)
+    at Router (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9335:13)
+    at MemoryRouter (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9251:3)
+
+ ✓ src/app/pages/platform/workspace/__tests__/TeamHierarchy.test.tsx (11 tests) 853ms
+   ✓ Team detail — hierarchy tree > is one Tab stop and moves, opens and closes with the keyboard  406ms
+ ✓ src/app/pages/platform/workspace/__tests__/MemberContacts.realmode.test.tsx (5 tests) 697ms
+ ✓ src/app/pages/platform/workspace/__tests__/Manage.demomode.test.tsx (2 tests) 508ms
+ ✓ src/app/hooks/__tests__/useWorkspaceDialog.test.tsx (2 tests) 352ms
+ ✓ src/app/pages/platform/workspace/__tests__/WorkspaceShell.demomode.test.tsx (3 tests) 453ms
+stderr | src/app/pages/platform/workspace/__tests__/WorkspaceShell.free.test.tsx > Workspace on a Free plan > Personal or Business: stays in Workspace
+Warning: An update to DemoWorkspaceShell inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at DemoWorkspaceShell (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\workspace\shell\WorkspaceShell.tsx:165:62)
+    at WorkspaceShell (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\workspace\shell\WorkspaceShell.tsx:74:19)
+    at RenderedRoute (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:7075:26)
+    at Routes (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9394:3)
+    at Router (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9335:13)
+    at MemoryRouter (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9251:3)
+Warning: An update to DemoWorkspaceShell inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at DemoWorkspaceShell (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\workspace\shell\WorkspaceShell.tsx:165:62)
+    at WorkspaceShell (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\workspace\shell\WorkspaceShell.tsx:74:19)
+    at RenderedRoute (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:7075:26)
+    at Routes (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9394:3)
+    at Router (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9335:13)
+    at MemoryRouter (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9251:3)
+
+stderr | src/app/pages/platform/workspace/__tests__/WorkspaceShell.free.test.tsx > Workspace on a Free plan > a plan not read yet: stays in Workspace
+Warning: An update to DemoWorkspaceShell inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at DemoWorkspaceShell (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\workspace\shell\WorkspaceShell.tsx:165:62)
+    at WorkspaceShell (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\workspace\shell\WorkspaceShell.tsx:74:19)
+    at RenderedRoute (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:7075:26)
+    at Routes (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9394:3)
+    at Router (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9335:13)
+    at MemoryRouter (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9251:3)
+Warning: An update to DemoWorkspaceShell inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at DemoWorkspaceShell (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\workspace\shell\WorkspaceShell.tsx:165:62)
+    at WorkspaceShell (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\src\app\pages\platform\workspace\shell\WorkspaceShell.tsx:74:19)
+    at RenderedRoute (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:7075:26)
+    at Routes (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9394:3)
+    at Router (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9335:13)
+    at MemoryRouter (C:\Users\paulg\OneDrive\Documents\ChatGPT\LAGDA\node_modules\react-router\dist\development\chunk-WICQJKU6.js:9251:3)
+
+ ✓ src/app/pages/platform/workspace/__tests__/WorkspaceShell.free.test.tsx (6 tests) 71ms
+ ✓ src/app/pages/platform/workspace/__tests__/InvitationFocus.test.tsx (4 tests) 310ms
+ ✓ src/app/utils/__tests__/person-initials.test.ts (8 tests) 8ms
+ ✓ src/app/pages/platform/workspace/__tests__/ActivitySentence.test.tsx (4 tests) 43ms
+ ✓ src/app/pages/platform/workspace/__tests__/overview-insights.test.ts (6 tests) 9ms
+
+ Test Files  15 passed (15)
+      Tests  134 passed (134)
+   Start at  18:34:05
+   Duration  18.76s (transform 1.44s, setup 5.68s, collect 8.80s, tests 15.20s, environment 4.82s, prepare 744ms)

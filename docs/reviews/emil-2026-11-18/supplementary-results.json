@@ -1,0 +1,63 @@
+{
+  "auth": [
+    {
+      "path": "sign-in",
+      "url": "http://localhost:5173/sign-in",
+      "overflow": false,
+      "violations": []
+    },
+    {
+      "path": "create-account",
+      "url": "http://localhost:5173/create-account",
+      "overflow": false,
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious"
+        }
+      ]
+    }
+  ],
+  "touchTargets": [
+    {
+      "name": "Notifications — 1 unread",
+      "height": 36,
+      "width": 36
+    },
+    {
+      "name": "",
+      "height": 41,
+      "width": 251
+    },
+    {
+      "name": "Filters",
+      "height": 36,
+      "width": 81.15625
+    },
+    {
+      "name": "Last Updated\nName (A–Z)\nLast Used\nMost Used\nStatus",
+      "height": 30,
+      "width": 114
+    },
+    {
+      "name": "Descending",
+      "height": 28.5,
+      "width": 25.8125
+    },
+    {
+      "name": "Grid view",
+      "height": 26,
+      "width": 34
+    },
+    {
+      "name": "List view",
+      "height": 26,
+      "width": 34
+    }
+  ],
+  "keyboardRouteAnimation": {
+    "animation": "0.22s cubic-bezier(0, 0, 0.2, 1) 0s 1 normal backwards running lagda-page-enter",
+    "activeAnimations": []
+  },
+  "reducedMotion": "none"
+}

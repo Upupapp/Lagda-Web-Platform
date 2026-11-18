@@ -116,7 +116,7 @@ describe("with signing requests", () => {
     });
     renderPage();
 
-    expect(await screen.findByRole("meter", { name: "1 of 4 signed" })).toBeTruthy();
+    expect(await screen.findByRole("meter", { name: "1 of 4 completed" })).toBeTruthy();
   });
 
   it("counts from what it fetched, and says so when the workspace has more", async () => {
@@ -193,7 +193,7 @@ describe("with signing requests", () => {
     const hero = await screen.findByTestId("free-hero");
     expect(screen.queryByTestId("profile-hero")).toBeNull();
     expect(within(hero).getByTestId("free-hero-badge").textContent).toContain("Free plan");
-    expect(within(hero).getByRole("heading", { level: 1, name: "Your free document is ready" })).toBeTruthy();
+    expect(within(hero).getByRole("heading", { level: 2, name: "Your free document is ready" })).toBeTruthy();
     expect(within(hero).getByTestId("free-hero-plan-link").getAttribute("href")).toBe("/app/settings/plan");
     expect(within(hero).getByTestId("free-hero-tile-business").getAttribute("href")).toBe("/app/settings/plan?choose=business");
     myPlan = PAID;
@@ -205,7 +205,7 @@ describe("with signing requests", () => {
     list.mockResolvedValue({ items: [req()], total: 1, page: 1, perPage: 100, hasNextPage: false });
     renderPage();
     const hero = await screen.findByTestId("free-hero");
-    expect(within(hero).getByRole("heading", { level: 1, name: "You've used your free document" })).toBeTruthy();
+    expect(within(hero).getByRole("heading", { level: 2, name: "You've used your free document" })).toBeTruthy();
     expect(within(hero).getByTestId("free-hero-pending").textContent).toContain("Business: payment being confirmed");
     expect(within(hero).queryByTestId("free-hero-tile-business")).toBeNull();
     myPlan = PAID;
@@ -248,6 +248,17 @@ describe("edge states", () => {
     expect(screen.getByRole("link", { name: /Prepare your first document/ }).getAttribute("href"))
       .toBe("/app/prepare");
     expect(screen.queryByText(/still being built out/)).toBeNull();
+  });
+
+  it("puts a Free account's document action before optional upgrades", async () => {
+    myPlan = { ...PAID, plan: "free", storedPlan: "free", autoRenew: false, freeDocumentsUsed: 0 };
+    list.mockResolvedValue({ items: [], total: 0, page: 1, perPage: 100, hasNextPage: false });
+    renderPage();
+    const action = await screen.findByRole("link", { name: "Prepare Document" });
+    const plan = await screen.findByTestId("free-hero");
+    expect(action.compareDocumentPosition(plan) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Dashboard" })).toBeTruthy();
+    myPlan = PAID;
   });
 
   it("reports a failed load instead of an empty dashboard", async () => {

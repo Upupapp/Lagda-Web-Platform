@@ -1,0 +1,36 @@
+[
+  {
+    "screen": "missing-name-member-panel",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "screen": "new-team-dialog",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "screen": "Invite by email",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "screen": "Join links",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "screen": "Requests",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "screen": "Waiting to Join",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "checks": "search reset, Unicode, missing-name detail, dialog focus trap / Escape / restore, 320px enlarged root text",
+    "passed": true
+  }
+]

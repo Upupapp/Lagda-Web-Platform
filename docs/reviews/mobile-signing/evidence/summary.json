@@ -1,0 +1,81 @@
+{
+  "scanCount": 147,
+  "files": [
+    "final-preparation-phone.json",
+    "final-preparation-small.json",
+    "after-preparation-landscape.json",
+    "large-text-preparation-desktop.json",
+    "after-recipient-small.json",
+    "after-recipient-landscape.json",
+    "after-recipient-desktop.json",
+    "large-text-recipient-phone.json",
+    "final-recipient-keyboard.json",
+    "edges-recipient-phone.json",
+    "dialogs-preparation-phone.json",
+    "targets-preparation-phone.json",
+    "targets-preparation-small.json"
+  ],
+  "overflowCount": 0,
+  "axeViolationCount": 0,
+  "coarseSmallInputs": 0,
+  "latestCheckpointCount": 142,
+  "resolvedAtRecheck": [
+    {
+      "tag": "demo-fields",
+      "profile": "phone",
+      "controls": [
+        {
+          "label": "More editor actions",
+          "width": 38,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "tag": "worst-fields",
+      "profile": "phone",
+      "controls": [
+        {
+          "label": "More editor actions",
+          "width": 38,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "tag": "demo-fields",
+      "profile": "small",
+      "controls": [
+        {
+          "label": "More editor actions",
+          "width": 38,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "tag": "worst-fields",
+      "profile": "small",
+      "controls": [
+        {
+          "label": "More editor actions",
+          "width": 38,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "tag": "worst-fields",
+      "profile": "phone",
+      "controls": [
+        {
+          "label": "More editor actions",
+          "width": 38,
+          "height": 44
+        }
+      ]
+    }
+  ],
+  "remainingCoarseSmallControls": [],
+  "smallTargetFollowup": "The 38px editor overflow button was rechecked at 44px in both ordinary and difficult-data phone fixtures."
+}

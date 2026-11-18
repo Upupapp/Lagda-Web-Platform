@@ -1,0 +1,26 @@
+[
+  {
+    "subject": "\"Roles skip QA 2026-11-18T11-47-58-941Z\" is fully signed",
+    "to": [
+      "local.business.qa@example.test"
+    ]
+  },
+  {
+    "subject": "LAGDA Local Business QA sent you \"Roles skip QA 2026-11-18T11-47-58-941Z\" to sign",
+    "to": [
+      "multi.signer.3.20261118@example.test"
+    ]
+  },
+  {
+    "subject": "LAGDA Local Business QA sent you \"Roles skip QA 2026-11-18T11-47-58-941Z\" to sign",
+    "to": [
+      "multi.signer.2.20261118@example.test"
+    ]
+  },
+  {
+    "subject": "LAGDA Local Business QA sent you \"Roles skip QA 2026-11-18T11-47-58-941Z\" to sign",
+    "to": [
+      "multi.signer.1.20261118@example.test"
+    ]
+  }
+]

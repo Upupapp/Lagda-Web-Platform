@@ -103,8 +103,8 @@ export function RealWorkspaceSettingsPage({ workspaceId }: { workspaceId: string
         <section style={{ ...cardStyle, padding: "16px 24px", marginTop: 16 }}>
           <h2 style={sectionHeadingStyle}>Elsewhere</h2>
           <p style={{ ...GF, fontSize: 13, color: SLATE, margin: 0, lineHeight: 1.7 }}>
-            How documents and emails look: <Link to="/app/workspace/settings/branding" style={{ color: AZURE, fontWeight: 600, textDecoration: "none" }}>Logo &amp; colours</Link>.
-            {" "}Who can do what: <Link to="/app/workspace/settings/roles" style={{ color: AZURE, fontWeight: 600, textDecoration: "none" }}>Roles</Link>.
+            How documents and emails look: <Link to="/app/workspace/settings/branding" style={{ color: AZURE, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>Logo &amp; colours</Link>.
+            {" "}Who can do what: <Link to="/app/workspace/settings/roles" style={{ color: AZURE, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>Roles</Link>.
           </p>
         </section>
       )}

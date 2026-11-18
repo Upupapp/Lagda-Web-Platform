@@ -35,9 +35,9 @@ import { processScreen } from "../../../config/process-screens";
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const AZURE = "#0078D4";
-const GOLD  = "#C9960C";
-const GREEN = "#059669";
-const RED   = "#DC2626";
+const GOLD  = "#7D5C06";
+const GREEN = "#166534";
+const RED   = "#B91C1C";
 
 const STATUS_BG: Record<string, string> = {
   available:   "#E6F4EA",
@@ -49,8 +49,8 @@ const STATUS_BG: Record<string, string> = {
 const STATUS_TEXT: Record<string, string> = {
   available:   GREEN,
   draft:       GOLD,
-  archived:    "#64748B",
-  unavailable: "#64748B",
+  archived:    "#5A6673",
+  unavailable: "#5A6673",
   invalid:     RED,
 };
 
@@ -227,7 +227,7 @@ function ActionStrip({
         <button
           onClick={onArchive}
           disabled={busy}
-          style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "#F1F5F9", color: "#64748B", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer", opacity: busy ? 0.55 : 1 }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "#F1F5F9", color: "#5A6673", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer", opacity: busy ? 0.55 : 1 }}
         >
           <Archive size={14} />
           {pendingOp === "archive" ? "Archiving…" : "Archive"}
@@ -337,7 +337,7 @@ function TemplateDetailInner() {
       <div style={{ padding: isNarrow ? "40px 16px" : "40px 24px", textAlign: "center" }}>
         <AlertCircle size={32} color={RED} style={{ marginBottom: 12 }} />
         <p style={{ ...GF, fontSize: 15, color: "#0F172A", fontWeight: 600 }}>Template Not Found</p>
-        <p style={{ ...GF, fontSize: 13, color: "#64748B", marginBottom: 16 }}>{state.activeError ?? "The requested template does not exist."}</p>
+        <p style={{ ...GF, fontSize: 13, color: "#5A6673", marginBottom: 16 }}>{state.activeError ?? "The requested template does not exist."}</p>
         <Link to="/app/templates" style={{ ...GF, fontSize: 13, color: AZURE, textDecoration: "underline" }}>← Back to Templates</Link>
       </div>
     );
@@ -361,7 +361,7 @@ function TemplateDetailInner() {
       {/* Breadcrumb header */}
       <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: isNarrow ? "18px 16px" : "18px 24px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-          <Link to="/app/templates" style={{ ...GF, fontSize: 12, color: "#64748B", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <Link to="/app/templates" style={{ ...GF, fontSize: 12, color: "#5A6673", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
             <ChevronLeft size={13} />
             Templates
           </Link>
@@ -377,10 +377,10 @@ function TemplateDetailInner() {
           <div style={{ flex: 1 }}>
             <h1 style={{ ...GF, fontSize: 20, fontWeight: 800, color: "#0F172A", margin: "0 0 4px", letterSpacing: "-0.02em" }}>{t.name}</h1>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              <span style={{ display: "inline-block", padding: "3px 9px", background: STATUS_BG[t.status] ?? "#F1F5F9", color: STATUS_TEXT[t.status] ?? "#64748B", borderRadius: 99, ...GF, fontSize: 11, fontWeight: 700 }}>
+              <span style={{ display: "inline-block", padding: "3px 9px", background: STATUS_BG[t.status] ?? "#F1F5F9", color: STATUS_TEXT[t.status] ?? "#5A6673", borderRadius: 99, ...GF, fontSize: 11, fontWeight: 700 }}>
                 {TEMPLATE_STATUS_LABELS[t.status]}
               </span>
-              <span style={{ ...GF, fontSize: 12, color: "#94A3B8" }}>
+              <span style={{ ...GF, fontSize: 12, color: "#5B6776" }}>
                 {TEMPLATE_CATEGORY_LABELS[t.category]} · {TEMPLATE_SCOPE_LABELS[t.scope]} · {t.ownerLabel}
               </span>
             </div>
@@ -476,7 +476,7 @@ function TemplateDetailInner() {
           {/* Role placeholders */}
           <SectionCard title="Role Placeholders">
             {t.placeholders.length === 0 ? (
-              <p style={{ ...GF, fontSize: 13, color: "#94A3B8", margin: 0 }}>No role placeholders defined.</p>
+              <p style={{ ...GF, fontSize: 13, color: "#5B6776", margin: 0 }}>No role placeholders defined.</p>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {t.placeholders.map((ph, idx) => (
@@ -487,12 +487,12 @@ function TemplateDetailInner() {
                     <div style={{ flex: 1 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                         <span style={{ ...GF, fontSize: 13, fontWeight: 700, color: "#0F172A" }}>{ph.label}</span>
-                        <Tag label={PREP_PARTICIPANT_ROLE_LABELS[ph.role] ?? ph.role} bg="#F1F5F9" color="#64748B" />
-                        {!ph.required && <Tag label="Optional" bg="#F1F5F9" color="#94A3B8" />}
+                        <Tag label={PREP_PARTICIPANT_ROLE_LABELS[ph.role] ?? ph.role} bg="#F1F5F9" color="#5A6673" />
+                        {!ph.required && <Tag label="Optional" bg="#F1F5F9" color="#5B6776" />}
                       </div>
-                      <p style={{ ...GF, fontSize: 12, color: "#64748B", margin: "3px 0 0", lineHeight: 1.5 }}>{ph.description}</p>
+                      <p style={{ ...GF, fontSize: 12, color: "#5A6673", margin: "3px 0 0", lineHeight: 1.5 }}>{ph.description}</p>
                     </div>
-                    <div style={{ ...GF, fontSize: 11, color: "#94A3B8", flexShrink: 0 }}>Step {ph.routingStep}</div>
+                    <div style={{ ...GF, fontSize: 11, color: "#5B6776", flexShrink: 0 }}>Step {ph.routingStep}</div>
                   </div>
                 ))}
               </div>
@@ -502,14 +502,14 @@ function TemplateDetailInner() {
           {/* Documents */}
           <SectionCard title="Documents">
             {t.documents.length === 0 ? (
-              <p style={{ ...GF, fontSize: 13, color: "#94A3B8", margin: 0 }}>No documents attached.</p>
+              <p style={{ ...GF, fontSize: 13, color: "#5B6776", margin: 0 }}>No documents attached.</p>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {t.documents.map(doc => (
                   <div key={doc.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "#F8FAFC", borderRadius: 8 }}>
-                    <FileText size={15} color="#64748B" />
+                    <FileText size={15} color="#5A6673" />
                     <span style={{ ...GF, fontSize: 13, color: "#0F172A", flex: 1 }}>{doc.displayName}</span>
-                    <span style={{ ...GF, fontSize: 11, color: "#94A3B8" }}>{doc.pageCount} page{doc.pageCount !== 1 ? "s" : ""}</span>
+                    <span style={{ ...GF, fontSize: 11, color: "#5B6776" }}>{doc.pageCount} page{doc.pageCount !== 1 ? "s" : ""}</span>
                   </div>
                 ))}
               </div>
@@ -519,14 +519,14 @@ function TemplateDetailInner() {
           {/* Fields summary */}
           <SectionCard title={`Fields (${t.fields.length})`}>
             {t.fields.length === 0 ? (
-              <p style={{ ...GF, fontSize: 13, color: "#94A3B8", margin: 0 }}>No fields defined yet.</p>
+              <p style={{ ...GF, fontSize: 13, color: "#5B6776", margin: 0 }}>No fields defined yet.</p>
             ) : (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {t.fields.map(f => (
                   <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "#F1F5F9", borderRadius: 7 }}>
-                    <PenLine size={11} color="#94A3B8" />
+                    <PenLine size={11} color="#5B6776" />
                     <span style={{ ...GF, fontSize: 11, color: "#334155" }}>{f.label}</span>
-                    <span style={{ ...GF, fontSize: 10, color: "#94A3B8" }}>({f.type})</span>
+                    <span style={{ ...GF, fontSize: 10, color: "#5B6776" }}>({f.type})</span>
                   </div>
                 ))}
               </div>
@@ -549,7 +549,7 @@ function TemplateDetailInner() {
                       {`{{${v.internalKey}}}`}
                     </code>
                     <span style={{ ...GF, fontSize: 12, color: "#0F172A", flex: 1 }}>{v.label}</span>
-                    <span style={{ ...GF, fontSize: 11, color: "#94A3B8" }}>{v.type}{v.required ? " *" : ""}</span>
+                    <span style={{ ...GF, fontSize: 11, color: "#5B6776" }}>{v.type}{v.required ? " *" : ""}</span>
                   </div>
                 ))}
               </div>
@@ -610,7 +610,7 @@ function TemplateDetailInner() {
                 aria-label="Close"
                 style={{
                   background: "none", border: "none", cursor: "pointer",
-                  color: "#94A3B8", width: 32, height: 32, display: "flex",
+                  color: "#5B6776", width: 32, height: 32, display: "flex",
                   alignItems: "center", justifyContent: "center", flexShrink: 0,
                 }}
               >
@@ -620,7 +620,7 @@ function TemplateDetailInner() {
           )}
           {/* Details card */}
           <div style={{ background: "white", border: "1px solid #E2E8F0", borderRadius: 12, padding: "16px 18px", marginBottom: 14 }}>
-            <h3 style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 14px" }}>Details</h3>
+            <h3 style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#5A6673", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 14px" }}>Details</h3>
             <DetailRow label="Routing" value={routingLabelMap[t.routing.mode] ?? t.routing.mode} />
             <DetailRow label="Documents" value={`${t.documents.length}`} />
             <DetailRow label="Role Placeholders" value={`${t.placeholders.length}`} />
@@ -637,16 +637,16 @@ function TemplateDetailInner() {
               that was never recorded. */}
           {!USE_REAL_BACKEND && (
           <div style={{ background: "white", border: "1px solid #E2E8F0", borderRadius: 12, padding: "16px 18px" }}>
-            <h3 style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 14px" }}>Usage</h3>
+            <h3 style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#5A6673", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 14px" }}>Usage</h3>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
               <Star size={16} color={GOLD} />
               <span style={{ ...GF, fontSize: 22, fontWeight: 800, color: "#0F172A", letterSpacing: "-0.02em" }}>{t.usageSummary.timesUsed}</span>
-              <span style={{ ...GF, fontSize: 12, color: "#64748B" }}>times used</span>
+              <span style={{ ...GF, fontSize: 12, color: "#5A6673" }}>times used</span>
             </div>
             <DetailRow label="Last Used" value={t.usageSummary.lastUsedDate ? new Date(t.usageSummary.lastUsedDate).toLocaleDateString() : "Never"} />
             <DetailRow label="Draft Starts" value={`${t.usageSummary.recentDraftStarts}`} isLast />
             {t.usageSummary.demonstrationOnly && (
-              <p style={{ ...GF, fontSize: 10, color: "#94A3B8", margin: "10px 0 0", fontStyle: "italic" }}>
+              <p style={{ ...GF, fontSize: 10, color: "#5B6776", margin: "10px 0 0", fontStyle: "italic" }}>
                 Demonstration counts only
               </p>
             )}
@@ -670,7 +670,7 @@ function TemplateDetailInner() {
 function DetailRow({ label, value, isLast }: { label: string; value: string; isLast?: boolean }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingBottom: isLast ? 0 : 10, marginBottom: isLast ? 0 : 10, borderBottom: isLast ? "none" : "1px solid #F1F5F9" }}>
-      <span style={{ ...GF, fontSize: 12, color: "#94A3B8" }}>{label}</span>
+      <span style={{ ...GF, fontSize: 12, color: "#5B6776" }}>{label}</span>
       <span style={{ ...GF, fontSize: 12, color: "#334155", fontWeight: 600, textAlign: "right", maxWidth: 160 }}>{value}</span>
     </div>
   );

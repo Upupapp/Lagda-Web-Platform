@@ -1,0 +1,10 @@
+// UI-only API fixtures. Never written to a backend. See admin-ui-review.md for limits.
+const now = Date.UTC(2026, 10, 18, 8);
+const names = ['Aleksandra Wiśniewska-Kowalczyk', 'Bartholomew Fitzgerald', 'Jo', '王秀英', 'نور الهدى عبد الرحمن', '👩🏽‍💻 Priya', '', 'Đặng Thị Ngọc Hân'];
+export function adminFixture(mode) {
+  const size = mode === 'empty' ? 0 : mode === 'one' ? 1 : mode === 'huge' ? 1284 : mode === 'demo' ? 3 : names.length;
+  const members = Array.from({length:size}, (_,i) => ({membershipId:`review-membership-${i}`,userId:`review-user-${i}`,displayName:mode==='demo'?['Ana Reyes','Jo Santos','Sam Lee'][i]:names[i%names.length],email:i===1?'bartholomew.fitzgerald@northwind-industries-holdings.example.com':`person.${i}@example.test`,role:i===0?'administrator':i===2?'template_administrator':'member',roleTitle:i===0?'Senior Product Design Engineer, Platform Infrastructure':null,joinedAt:now-i*86400000,isCurrentUser:false,canRequestDocuments:false,canAssignSigners:false}));
+  const units=size===0?[]:[{unitId:'review-team',parentUnitId:null,kind:'department',name:mode==='demo'?'Legal Operations':'Office of International Legal Affairs, Compliance and Information Security — Asia Pacific Operations',createdAt:now,archivedAt:null}];
+  const events=members.slice(0,50).map((m,i)=>({eventId:`review-event-${i}`,occurredAt:now-i*3600000,category:['people','access','links','teams','workspace'][i%5],action:'member.role_changed',actorUserId:m.userId,actorName:m.displayName,summary:`${m.displayName||m.email} updated the role of ${members[(i+1)%members.length]?.displayName||'Jo'} in the workspace.`,subjectLabel:m.email}));
+  return {members,units,events,unitMembers:members.slice(0,mode==='huge'?64:members.length).map(m=>({userId:m.userId,displayName:m.displayName,email:m.email,title:m.roleTitle})),invitations:members.slice(0,3).map((m,i)=>({invitationId:`review-invitation-${i}`,email:i===0&&mode==='worst'?'bartholomew.fitzgerald@northwind-industries-holdings.example.com':m.email,role:'member',state:['pending','expired','revoked'][i],createdAt:now,expiresAt:now+86400000}))};
+}

@@ -82,7 +82,7 @@ export function WorkspaceBrandCard({
         </dl>
         {showPrompt && (
           <p data-testid="brand-card-prompt" style={{ ...GF, fontSize: 12, color: SLATE, margin: "14px 0 0" }}>
-            <Link to="/app/workspace/settings/branding" style={{ color: AZURE, fontWeight: 600, textDecoration: "none" }}>Add your logo and colours</Link>
+            <Link to="/app/workspace/settings/branding" style={{ color: AZURE, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>Add your logo and colours</Link>
             {" "}so signers recognise documents from this workspace.
           </p>
         )}

@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../../utils/on-light";
 // Step: Confirmation — field-placement summary before sender submits the preparation.
 // Command 19 handoff to Command 20.
 //
@@ -13,7 +14,7 @@ import { usePlatform } from "../../../context/PlatformContext";
 import { FieldEditorProvider, useFieldEditor } from "../../../context/FieldEditorContext";
 import { FIELD_TYPE_LABELS, FIELD_TYPE_ICONS } from "../../../models/field-editor";
 import type { FieldDefinition } from "../../../models/field-editor";
-import { emailsFinalCopy, remindersForSend, type PrepParticipant } from "../../../models/prepare";
+import { COMPLETED_DOCUMENT_ACCESS_NOTE, emailsFinalCopy, remindersForSend, type PrepParticipant } from "../../../models/prepare";
 import { Z } from "../../../utils/z-index";
 import { mockDocumentService } from "../../../services/mock/document.service";
 import { mapPreparationDraftToDocumentListItem } from "../../../services/prepare/draft-to-document";
@@ -36,7 +37,7 @@ import { processScreen } from "../../../config/process-screens";
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
-const SILVER = "#8A9BAE";
+const SILVER = ON_LIGHT.muted;
 const WHITE  = "#FFFFFF";
 
 /**
@@ -310,7 +311,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
           <div style={{ fontSize: 32, marginBottom: 12 }}>📄</div>
           <h1 style={{ fontSize: 18, fontWeight: 700, color: NAVY, margin: "0 0 8px" }}>No Active Draft</h1>
           <p style={{ fontSize: 13, color: SILVER, margin: "0 0 20px" }}>Return to the Prepare workflow to set up your document.</p>
-          <a href="/app/prepare" style={{ ...GF, color: AZURE, fontSize: 13, fontWeight: 600, display: "inline-block" }}>← Go to Prepare</a>
+          <a href="/app/prepare" style={{ ...GF, color: ON_LIGHT.azure, fontSize: 13, fontWeight: 600, display: "inline-block" }}>← Go to Prepare</a>
         </div>
       </div>
     );
@@ -336,7 +337,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
         {/* Back */}
         <button
           onClick={() => navigate("/app/prepare/fields")}
-          style={{ ...GF, background: "none", border: "none", cursor: "pointer", color: AZURE, fontSize: 13, fontWeight: 600, padding: 0, marginBottom: 24, display: "flex", alignItems: "center", gap: 4 }}
+          style={{ ...GF, background: "none", border: "none", cursor: "pointer", color: ON_LIGHT.azure, fontSize: 13, fontWeight: 600, padding: 0, marginBottom: 24, display: "flex", alignItems: "center", gap: 4 }}
         >
           ← Back to Field Placement
         </button>
@@ -376,7 +377,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
             border:       "1px solid #C8E1F5",
             marginBottom: 28,
           }}>
-            <div style={{ ...GF, fontSize: 12, fontWeight: 700, color: AZURE, marginBottom: 4 }}>
+            <div style={{ ...GF, fontSize: 12, fontWeight: 700, color: ON_LIGHT.azure, marginBottom: 4 }}>
               Frontend Demonstration
             </div>
             <p style={{ ...GF, fontSize: 12, color: "#2C5F8A", margin: 0, lineHeight: 1.6 }}>
@@ -410,7 +411,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
                       type="button"
                       onClick={() => void navigate(buildActionUrl(b.action!))}
                       style={{
-                        ...GF, fontSize: 12, fontWeight: 700, color: AZURE,
+                        ...GF, fontSize: 12, fontWeight: 700, color: ON_LIGHT.azure,
                         background: "none", border: "none", padding: "2px 0",
                         cursor: "pointer", textDecoration: "underline",
                         whiteSpace: "nowrap", flex: "0 0 auto",
@@ -444,7 +445,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
               type="button"
               onClick={() => void navigate("/app/prepare/fields")}
               style={{
-                ...GF, fontSize: 12, fontWeight: 700, color: AZURE,
+                ...GF, fontSize: 12, fontWeight: 700, color: ON_LIGHT.azure,
                 background: "none", border: "none", padding: 0,
                 cursor: "pointer", textDecoration: "underline",
               }}
@@ -478,7 +479,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
                 </ul>
                 <button
                   onClick={() => navigate("/app/prepare/fields")}
-                  style={{ ...GF, marginTop: 10, fontSize: 12, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
+                  style={{ ...GF, marginTop: 10, fontSize: 12, color: ON_LIGHT.azure, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
                 >
                   Return to editor to fix →
                 </button>
@@ -573,13 +574,9 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
           )}
         </section>
 
-        {/* 073. Every participant's copy of the finished document. On by
-            default; off for a sensitive document. One switch for signers,
-            approvers, reviewers and copy recipients alike (viewers never
-            receive one). The switch is on the Settings step; this says how it
-            was left, before the request goes out. */}
+        {/* Completion access follows the current backend; demo keeps its legacy switch. */}
         <p data-testid="final-copy-note" style={{ ...GF, fontSize: 12.5, color: "#475569", margin: "0 0 16px", lineHeight: 1.5 }}>
-          {emailsFinalCopy(draft.settings)
+          {USE_REAL_BACKEND ? COMPLETED_DOCUMENT_ACCESS_NOTE : emailsFinalCopy(draft.settings)
             ? "When everyone has finished, each participant is emailed a link to the completed document. They can also open it in LAGDA under Records."
             : "Participants will not be emailed the completed document. They can still open it in LAGDA under Records."}
         </p>

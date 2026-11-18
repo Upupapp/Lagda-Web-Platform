@@ -1,3 +1,6 @@
+import { useRef } from "react";
+import { useModalFocus } from "../../hooks/useModalFocus";
+import { ON_LIGHT } from "../../utils/on-light";
 // Friendly "here's what's left" panel for the Prepare wizard.
 //
 // Replaces raw red error lists with a calmer amber "reminder" tone, and —
@@ -13,7 +16,7 @@ import { Z } from "../../utils/z-index";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY = "#07111F";
-const SILVER = "#8A9BAE";
+const SILVER = ON_LIGHT.muted;
 const AMBER_BG = "#FEF9EC";
 const AMBER_BORDER = "#F0D07A";
 const AMBER_TEXT = "#8A6A16";
@@ -34,6 +37,8 @@ export function MissingItemsModal({
   issues: PrepValidationIssue[];
   onGoToStep: (stepId: PreparationStepId) => void;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalFocus(panelRef, onClose, false, open);
   if (!open) return null;
 
   return (
@@ -48,6 +53,7 @@ export function MissingItemsModal({
       }}
     >
       <div
+        ref={panelRef} tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="missing-items-heading"
@@ -111,7 +117,7 @@ export function MissingItemsModal({
                   className="missing-item-row"
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: AMBER_ICON, marginBottom: 3 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: ON_LIGHT.gold, marginBottom: 3 }}>
                       {stepLabel(issue.stepId)}
                     </div>
                     <div style={{ fontSize: 13, color: NAVY, lineHeight: 1.45 }}>

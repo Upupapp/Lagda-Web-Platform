@@ -1,3 +1,4 @@
+import { ON_LIGHT } from "../../../../utils/on-light";
 // One team's people as a hierarchy: levels from the top down by workspace
 // role — Owner, Administrator, Template Administrator, Sender, Reviewer,
 // Auditor, New Comer (team-hierarchy.ts's ladder) — someone holding a title
@@ -28,7 +29,7 @@ export function TeamTreeView({ members, memberOf, photo, meId, onOpen, label }: 
     const member = memberOf(m.userId);
     return {
       id: m.userId,
-      name: m.displayName,
+      name: m.displayName.trim() || m.email,
       role: member ? ladderRole(member.roleId) : null,
       roleName: member ? REAL_ROLE_LABELS[ladderRole(member.roleId)] : null,
       roleTitle: member?.roleTitle ?? null,
@@ -54,8 +55,8 @@ export function TeamTreeView({ members, memberOf, photo, meId, onOpen, label }: 
                       <MemberAvatar name={p.name} url={photo(p.id)} size={44} ring />
                       {p.id === meId && <span className="tt-you" aria-hidden>You</span>}
                     </span>
-                    <span className="tt-name">{p.name}</span>
-                    <span className="tt-title">{p.unitTitle ?? p.roleTitle ?? p.roleName ?? level.title}</span>
+                    <span className="tt-name" title={p.name}>{p.name}</span>
+                    <span className="tt-title" title={p.unitTitle ?? p.roleTitle ?? p.roleName ?? level.title}>{p.unitTitle ?? p.roleTitle ?? p.roleName ?? level.title}</span>
                   </button>
                 </li>
               ))}
@@ -78,7 +79,7 @@ const TREE_CSS = `
 /* From the level above, down to this level's rail. */
 .tt-level:not([data-first])::before { content: ""; width: 2px; height: 14px; background: var(--tt-line); border-radius: 1px; }
 .tt-level-label { font-family: 'Geist Mono', monospace; font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-  color: #64748B; background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 999px; padding: 2px 9px; position: relative; z-index: 1; white-space: nowrap; }
+  color: ${ON_LIGHT.slate}; background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 999px; padding: 2px 9px; position: relative; z-index: 1; white-space: nowrap; }
 .tt-level-label::after { content: ""; position: absolute; left: 50%; top: 100%; width: 2px; height: 10px; background: var(--tt-line); transform: translateX(-1px); }
 .tt-row { list-style: none; margin: 10px 0 0; padding: 10px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--tt-gap);
   position: relative; max-width: 100%; }
@@ -89,8 +90,8 @@ const TREE_CSS = `
 .tt-slot::before { content: ""; position: absolute; top: -10px; left: 50%; width: 2px; height: 10px; background: var(--tt-line); transform: translateX(-1px); }
 .tt-node { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 6px 9px; box-sizing: border-box;
   background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; cursor: pointer; text-align: center; min-width: 0;
-  box-shadow: 0 1px 2px rgba(7,17,31,0.05); transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease; }
-.tt-node:hover { border-color: #93C5FD; box-shadow: 0 8px 18px -12px rgba(0,120,212,0.7); transform: translateY(-1px); }
+  box-shadow: 0 1px 2px rgba(7,17,31,0.05); transition: border-color 120ms ease, box-shadow 120ms ease; }
+@media (hover: hover) and (pointer: fine) { .tt-node:hover { border-color: #93C5FD; box-shadow: 0 8px 18px -12px rgba(0,120,212,0.7); } }
 .tt-node:focus-visible { outline: 3px solid rgba(0,120,212,0.4); outline-offset: 2px; }
 .tt-face { position: relative; display: inline-flex; }
 .tt-face > span:first-child { width: var(--tt-face) !important; height: var(--tt-face) !important; font-size: calc(var(--tt-face) * 0.36) !important; }
@@ -98,7 +99,7 @@ const TREE_CSS = `
   letter-spacing: 0.04em; text-transform: uppercase; color: #FFFFFF; background: #0078D4; border: 1.5px solid #FFFFFF; border-radius: 999px; padding: 0 5px; line-height: 1.5; white-space: nowrap; }
 .tt-name { font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 700; color: #07111F; line-height: 1.25; max-width: 100%;
   overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; margin-top: 2px; }
-.tt-title { font-family: 'Geist', sans-serif; font-size: 11px; color: #64748B; line-height: 1.25; max-width: 100%;
+.tt-title { font-family: 'Geist', sans-serif; font-size: 11px; color: ${ON_LIGHT.slate}; line-height: 1.25; max-width: 100%;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Phones: the same tree, small. */
 @media (max-width: 640px) {

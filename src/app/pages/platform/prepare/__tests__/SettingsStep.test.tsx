@@ -1,10 +1,4 @@
-// Settings offers only what the server takes.
-//
-// Five controls used to sit on this step and reach nothing: an invitation
-// subject, a personal note, a per-document sender name, "notify me when
-// complete" and "create a verification record". They are gone. The one
-// completion switch left is the server's `shareFinalCopy`, named for what it
-// does: it decides whether participants are emailed the completed document.
+// Real settings expose reminders and expiry; completed copies are accessed in Records.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -28,10 +22,9 @@ vi.mock("../../../../context/PrepareContext", () => ({ usePrepare: () => stable 
 vi.mock("../../../../context/PlatformContext", () => ({ usePlatform: () => platform }));
 
 import { SettingsStep } from "../SettingsStep";
-import { DEFAULT_PREP_SETTINGS, emailsFinalCopy } from "../../../../models/prepare";
+import { DEFAULT_PREP_SETTINGS, COMPLETED_DOCUMENT_ACCESS_NOTE } from "../../../../models/prepare";
 
 const open = () => render(<MemoryRouter><SettingsStep /></MemoryRouter>);
-const copySwitch = () => screen.getByRole("checkbox", { name: /Email participants the completed document/ });
 
 beforeEach(() => {
   updateSettings.mockReset();
@@ -75,8 +68,8 @@ describe("Settings: the controls that reached nothing are gone", () => {
   it("describes what is left: reminders, expiration and the completed copy", () => {
     open();
     expect(screen.getByText(
-      "Choose when participants are reminded, set an optional expiration date, and choose whether participants are emailed the completed document.")).toBeInTheDocument();
-    expect(screen.getByText("Reminders on · No expiration · Completed copy emailed")).toBeInTheDocument();
+      "Choose when participants are reminded and set an optional expiration date. Completed copies are available in LAGDA under Records.")).toBeInTheDocument();
+    expect(screen.getByText("Reminders on · No expiration · Completed copy in Records")).toBeInTheDocument();
     expect(screen.queryByText(/Configure how invitations are sent/)).toBeNull();
   });
 
@@ -113,7 +106,7 @@ describe("Settings: reminders (live build)", () => {
     expect(remindersSwitch()).not.toBeChecked();
     expect(screen.getByLabelText("First reminder after")).toBeDisabled();
     expect(screen.getByTestId("rail-reminders")).toHaveTextContent("Reminders are off.");
-    expect(screen.getByText("Reminders off · No expiration · Completed copy emailed")).toBeInTheDocument();
+    expect(screen.getByText("Reminders off · No expiration · Completed copy in Records")).toBeInTheDocument();
   });
 
   it("reads a draft with no reminder settings as on", () => {
@@ -123,47 +116,18 @@ describe("Settings: reminders (live build)", () => {
   });
 });
 
-describe("Settings: emailing participants the completed document", () => {
-  it("is on by default, and says so in the rail", () => {
+describe("Settings: current completed-document access", () => {
+  it("explains Records access instead of offering an ineffective email switch", () => {
     open();
-    expect(copySwitch()).toBeChecked();
-    expect(screen.getByTestId("rail-final-copy")).toHaveTextContent("Completed document emailed to participantsOn");
+    expect(screen.queryByRole("checkbox", { name: /Email participants/ })).toBeNull();
+    expect(screen.getByTestId("completed-document-access")).toHaveTextContent(COMPLETED_DOCUMENT_ACCESS_NOTE);
+    expect(screen.getByTestId("rail-final-copy")).toHaveTextContent("Completed document available in RecordsOn");
+    expect(updateSettings).not.toHaveBeenCalled();
   });
-
-  it("says what switching it off does and does not withhold", () => {
-    open();
-    expect(screen.getByText(/each participant is emailed a link to download the completed document/)).toBeInTheDocument();
-    expect(screen.getByText(/participants can still open it in LAGDA under Records/)).toBeInTheDocument();
-  });
-
-  it("saves the choice when switched off", async () => {
-    open();
-    await userEvent.click(copySwitch());
-    expect(updateSettings).toHaveBeenCalledTimes(1);
-    expect(updateSettings).toHaveBeenCalledWith({
-      ...DEFAULT_PREP_SETTINGS,
-      completion: { emailFinalCopy: false },
-    });
-  });
-
-  it("shows a saved off as off", () => {
+  it("does not repeat an email promise from an old saved setting", () => {
     stable.draft = { id: "draft_1", settings: { ...DEFAULT_PREP_SETTINGS, completion: { emailFinalCopy: false } } };
     open();
-    expect(copySwitch()).not.toBeChecked();
-    expect(screen.getByTestId("rail-final-copy")).toHaveTextContent("Completed document emailed to participantsOff");
-  });
-
-  it("reads a draft saved before the setting existed as on", () => {
-    // What this browser may still hold: the old completion flags, including
-    // the switch this one replaced, left off when it did nothing.
-    const saved = {
-      ...DEFAULT_PREP_SETTINGS,
-      completion: { notifySenderOnComplete: true, allowParticipantDownload: false, createVerificationRecord: true },
-    };
-    stable.draft = { id: "draft_1", settings: saved };
-    open();
-    expect(copySwitch()).toBeChecked();
-    expect(emailsFinalCopy(saved as never)).toBe(true);
-    expect(emailsFinalCopy({})).toBe(true);
+    expect(screen.getByTestId("completed-document-access")).toHaveTextContent(COMPLETED_DOCUMENT_ACCESS_NOTE);
+    expect(screen.queryByRole("checkbox", { name: /Email participants/ })).toBeNull();
   });
 });
