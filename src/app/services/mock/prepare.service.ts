@@ -33,6 +33,7 @@ import {
 } from "../../data/mock/prepare";
 import type { TemplateApplication, ResolvedTemplateField } from "../../models/templates";
 import { delay } from "./delay";
+import { USE_REAL_BACKEND } from "../backend-flag";
 
 // ── Validation helpers ────────────────────────────────────────────────────────
 
@@ -227,7 +228,9 @@ function validateDraftState(draft: PreparationDraft): PrepValidationResult {
   if (!draft.settings.reminders.enabled) {
     issues.push(mk("settings", "warning", "REMINDERS_DISABLED", "Reminders are disabled. Participants will not receive automated follow-up in production."));
   }
-  if (draft.auth.defaultMethod === "none") {
+  // Not on the real backend: the secure link is the only method it offers (the Authentication step shows no other),
+  // so a hint to pick another would point at nothing.
+  if (!USE_REAL_BACKEND && draft.auth.defaultMethod === "none") {
     issues.push(mk("authentication", "warning", "WEAKEST_AUTH",
       "Secure Invitation Link is the only access control. Consider Email Code for additional confirmation."));
   }
