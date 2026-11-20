@@ -117,6 +117,8 @@ export interface Invitation {
   document?: RequestDocument | null;
   /** 131. Why the notary declined, as they gave it. Absent from an older server. */
   declineReason?: string | null;
+  /** 132. Over, and can go to the trash (a notarized one only with no certified copy under way). Absent from an older server. */
+  canTrash?: boolean;
   /** When the client wants the notary. Absent from an older server. */
   booking?: RequestBooking | null;
   /** The request's number, EN-2026-000004. Absent from an older server. */

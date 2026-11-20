@@ -24,7 +24,7 @@ vi.mock("../../../../../services/real/enotary-invitations.service", async (origi
 
 import { ClientRequestPage, POLL_MS } from "../ClientRequestPage";
 import { describeRequestError } from "../request-errors";
-import { ClientRequestsPage } from "../ClientRequestsPage";
+import { ClientRequestsPage, canTrash } from "../ClientRequestsPage";
 import { ApiError } from "../../../../../services/api-client";
 import * as sessionsService from "../../../../../services/real/enotary-sessions.service";
 import type { Invitation } from "../../../../../services/real/enotary-invitations.service";
@@ -544,5 +544,20 @@ describe("the list", () => {
     await settle();
     expect(invoicePdf).toHaveBeenCalledWith("eni_2");
     expect(save).toHaveBeenCalledWith(expect.any(Blob), "EN-2026-000002-invoice.pdf");
+  });
+});
+
+describe("canTrash (132)", () => {
+  const notarized = { status: "accepted" as const, session: { id: "ens_1", status: "notarized" as const, hasDocument: true } };
+
+  it("follows the server, which knows whether a certified copy is still under way", () => {
+    expect(canTrash(invitation({ ...notarized, canTrash: false }))).toBe(false);
+    expect(canTrash(invitation({ ...notarized, canTrash: true }))).toBe(true);
+  });
+
+  it("falls back to the status with an older server that does not say", () => {
+    expect(canTrash(invitation({ ...notarized }))).toBe(true);
+    expect(canTrash(invitation({ status: "declined" }))).toBe(true);
+    expect(canTrash(invitation({ status: "accepted", session: null }))).toBe(false);
   });
 });

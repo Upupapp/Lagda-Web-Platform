@@ -110,8 +110,14 @@ export function deskCanTrash(request: DeskRequest): boolean {
   if (request.status === "declined" || request.status === "revoked" || request.status === "expired") return true;
   if (request.status !== "accepted") return false;
   if (request.session?.status === "cancelled") return true;
-  const copy = request.case?.copy?.status;
-  return request.session?.status === "notarized" && (copy === undefined || copy === null || ["received", "declined", "cancelled"].includes(copy));
+  const copy = request.case?.copy;
+  return request.session?.status === "notarized" && (copy === undefined || copy === null || !copyUnderWay(copy.status, copy.mode));
+}
+
+/** A certified copy still being made or on its way: an issued digital copy is done, a printed one once received. */
+function copyUnderWay(status: string, mode: "digital" | "physical"): boolean {
+  if (status === "received" || status === "declined" || status === "cancelled") return false;
+  return status !== "fulfilled" || mode === "physical";
 }
 
 /** 131. Which of the desk's groups is shown: every one, or one of the four the counts name. */

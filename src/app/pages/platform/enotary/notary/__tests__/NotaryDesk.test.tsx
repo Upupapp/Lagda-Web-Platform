@@ -36,7 +36,7 @@ vi.mock("../../../../../services/real/enotary-sessions.service", async (original
   },
 }));
 
-import { NotaryDeskPage, bannerFor } from "../NotaryDeskPage";
+import { NotaryDeskPage, bannerFor, deskCanTrash } from "../NotaryDeskPage";
 import { ApiError } from "../../../../../services/api-client";
 import type { DeskIncoming, DeskPayment, DeskRequest, NotaryDesk } from "../../../../../services/real/enotary-invitations.service";
 
@@ -516,5 +516,21 @@ describe("bookings (130)", () => {
     if (confirm !== undefined) press(confirm);
     await settle(2500);
     expect(document.body.textContent).toContain("You already accepted another booking at that time");
+  });
+});
+
+describe("deskCanTrash (132)", () => {
+  const notarizedWith = (copy: NonNullable<DeskRequest["case"]>["copy"]) => request({
+    id: "n", status: "accepted", session: { id: "ens_n", status: "notarized", hasDocument: true },
+    case: { documentName: "Deed of Sale", actLabel: "Acknowledgment", feeCentavos: 0, copy },
+  });
+
+  it("offers the trash for a notarized request once its digital copy is issued, and a printed one once received", () => {
+    expect(deskCanTrash(notarizedWith(null))).toBe(true);
+    expect(deskCanTrash(notarizedWith({ status: "paid", mode: "digital", stage: null }))).toBe(false);
+    expect(deskCanTrash(notarizedWith({ status: "fulfilled", mode: "digital", stage: null }))).toBe(true);
+    expect(deskCanTrash(notarizedWith({ status: "fulfilled", mode: "physical", stage: "in_transit" }))).toBe(false);
+    expect(deskCanTrash(notarizedWith({ status: "received", mode: "physical", stage: "delivered" }))).toBe(true);
+    expect(deskCanTrash(notarizedWith({ status: "declined", mode: "digital", stage: null }))).toBe(true);
   });
 });

@@ -134,8 +134,10 @@ type Loaded =
 
 type Filter = "all" | "open" | "notarized" | "closed";
 
-/** 132. A request that is over can go to the trash: declined, cancelled, ran out, a session called off, or notarized. */
+/** 132. A request that is over can go to the trash: declined, cancelled, ran out, a session called off, or notarized
+ *  with no certified copy under way. The server says so; an older server that does not falls back to the status. */
 export function canTrash(item: Invitation): boolean {
+  if (typeof item.canTrash === "boolean") return item.canTrash;
   return item.status === "declined" || item.status === "revoked" || item.status === "expired"
     || (item.status === "accepted" && (item.session?.status === "notarized" || item.session?.status === "cancelled"));
 }
