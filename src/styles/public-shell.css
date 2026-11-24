@@ -1,0 +1,125 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   The public site and its sign-in pages: type, section bands and motion.
+
+   Scope: :root[data-lagda-public], set by PublicLayout, AuthLayout and
+   CreateAccountLayout (hooks/useAppShellTheme.ts). The accents and the wave
+   backdrop the public site shares with the app are in app-shell.css; the
+   header's own rules live with it in components/shell/PublicHeader.tsx.
+
+   Motion is gated a second time by :root[data-motion] (hooks/usePublicMotion.ts),
+   which is set only for visitors who have not asked for reduced motion, and
+   never for automated browsers, so every test and capture sees a still page.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+:root[data-lagda-public] {
+  --pub-serif-display: "Libre Caslon Display", "Libre Caslon Text", Georgia, "Times New Roman", serif;
+  --pub-serif-text: "Libre Caslon Text", Georgia, "Times New Roman", serif;
+  --pub-sans: "Geist", system-ui, sans-serif;
+  /* The header's height: 64px at the top of a page, 54px once it scrolls
+     (PublicHeader sets the live value on <html>). Sticky section tabs and the
+     top-right wave sit under it. */
+  --phdr-h: 64px;
+  --pub-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Type ─────────────────────────────────────────────────────────────────────
+   Two families: Libre Caslon for headings, Geist for everything else (the
+   app's face). Large headings take the Display cut; a heading set small (a
+   card title marked up as h2) and every h3 take the sturdier Text cut. */
+:root[data-lagda-public] :is(#main-content, .auth-shell, .create-account-shell) :is(h1, h2) {
+  font-family: var(--pub-serif-display) !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.01em !important;
+}
+:root[data-lagda-public] :is(#main-content, .auth-shell, .create-account-shell) :is(h1, h2):is([style*="font-size: 1"], .pub-small-heading, .auth-proof-item h2),
+:root[data-lagda-public] :is(#main-content, .auth-shell, .create-account-shell) h3 {
+  font-family: var(--pub-serif-text) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+}
+/* A few headings are really small uppercase labels: they stay in Geist. */
+:root[data-lagda-public] :is(#main-content, .auth-shell, .create-account-shell) :is(.auth-mobile-modal-title, .pub-label-heading) {
+  font-family: var(--pub-sans) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.14em !important;
+}
+
+/* Small uppercase labels were set in Geist Mono as a "technical" costume; they
+   are labels, so they take Geist. Mono stays where it means something: a
+   Verification ID, a fingerprint, a code (none of which are letter-spaced). */
+:root[data-lagda-public] :is(#main-content, .auth-shell, .create-account-shell, footer[role="contentinfo"])
+  [style*='font-family: "Geist Mono"']:is([style*="letter-spacing: 0.0"], [style*="letter-spacing: 0.1"], [style*="text-transform: uppercase"]):not(code, kbd, samp, pre, [style*="tabular-nums"]) {
+  font-family: var(--pub-sans) !important;
+}
+
+/* ── Page planes become see-through ──────────────────────────────────────────
+   Section shells that painted a full-height white or grey page (Pricing,
+   Resources, eNotary, Legal) are cleared so the backdrop shows; their cards,
+   tables and forms keep their white. */
+:root[data-lagda-public] #main-content :is(
+  [style*="min-height: 100vh"][style*="background: rgb(255, 255, 255)"],
+  [style*="min-height: 100vh"][style*="background: rgb(248, 250, 252)"],
+  [style*="min-height: 100%"][style*="background: rgb(255, 255, 255)"],
+  [style*="min-height: 100%"][style*="background: rgb(248, 250, 252)"]
+) {
+  background: transparent !important;
+}
+
+/* The section tabs under the header follow the navy accent (eNotary keeps
+   its burgundy), and stay right under the header as it shrinks. */
+:root[data-lagda-public] .lsn:not([data-tone="enotary"]) {
+  --lsn-accent: #1b3a66;
+  --lsn-accent-strong: #14294d;
+  --lsn-tint: rgba(74, 154, 216, 0.1);
+  --lsn-tint-strong: rgba(74, 154, 216, 0.16);
+  --lsn-ring: rgba(27, 58, 102, 0.22);
+  --lsn-active-text: #14294d;
+}
+:root[data-lagda-public] .lsn { transition: top 0.28s var(--pub-ease); }
+
+/* The top-right wave starts under the fixed header and follows it. */
+.app-waves[data-under-header] { --app-wave-top: var(--phdr-h, 64px); }
+.app-waves[data-under-header] .app-wave-tr { transition: top 0.28s var(--pub-ease); }
+
+/* ── Motion ───────────────────────────────────────────────────────────────── */
+
+/* 1. Sections rise into view as the page scrolls (hooks/usePublicMotion.ts
+      marks each one below the fold "pending" and "shown" once it enters).
+      Nothing is hidden unless the script ran, and a section already on screen
+      is never touched. Cards and list items follow one another. */
+:root[data-motion] [data-reveal="pending"] { opacity: 0; transform: translateY(28px); }
+:root[data-motion] [data-reveal="shown"] {
+  opacity: 1; transform: none;
+  transition: opacity 0.75s var(--pub-ease), transform 0.9s var(--pub-ease);
+}
+:root[data-motion] [data-reveal="pending"] [data-reveal-item] { opacity: 0; transform: translateY(16px); }
+:root[data-motion] [data-reveal="shown"] [data-reveal-item] {
+  opacity: 1; transform: none;
+  transition: opacity 0.6s var(--pub-ease), transform 0.75s var(--pub-ease);
+  transition-delay: calc(var(--reveal-i, 0) * 70ms + 160ms);
+}
+
+/* 2. The page's opening: its main heading rises, then the lines after it. */
+@keyframes pub-rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+:root[data-motion] :is(#main-content, .auth-intro) :has(+ h1) { animation: pub-rise 0.8s var(--pub-ease) both; }
+:root[data-motion] :is(#main-content, .auth-intro, .create-account-card-header) h1 { animation: pub-rise 0.9s var(--pub-ease) 0.06s both; }
+:root[data-motion] :is(#main-content, .auth-intro) h1 + * { animation: pub-rise 0.9s var(--pub-ease) 0.18s both; }
+:root[data-motion] :is(#main-content, .auth-intro) h1 + * + * { animation: pub-rise 0.9s var(--pub-ease) 0.28s both; }
+
+/* 3. The waves ease in from their corners when the site first opens. */
+@keyframes pub-wave-tr { from { opacity: 0; transform: translate(32px, -24px); } to { opacity: 1; transform: none; } }
+@keyframes pub-wave-bl { from { opacity: 0; transform: translate(-32px, 24px); } to { opacity: 1; transform: none; } }
+@keyframes pub-wave-br { from { opacity: 0; transform: translate(32px, 24px); } to { opacity: 1; transform: none; } }
+:root[data-motion] .app-waves[data-enter] .app-wave-tr { animation: pub-wave-tr 1.4s var(--pub-ease) 0.3s both; }
+:root[data-motion] .app-waves[data-enter] .app-wave-bl { animation: pub-wave-bl 1.4s var(--pub-ease) 0.45s both; }
+:root[data-motion] .app-waves[data-enter] .app-wave-br { animation: pub-wave-br 1.4s var(--pub-ease) 0.55s both; }
+
+/* Belt and braces: a visitor who asks for less motion gets none, even if a
+   mark was left behind. */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal], [data-reveal-item] { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .app-waves .app-wave, #main-content h1, #main-content h1 ~ *, .auth-intro h1 ~ * { animation: none !important; }
+}
+@media print {
+  [data-reveal], [data-reveal-item] { opacity: 1 !important; transform: none !important; }
+}
