@@ -20,6 +20,8 @@ import { TourProvider } from "../tour/TourContext";
 import { buildSignInUrl } from "../utils/authReturnPath";
 import { rememberAppPage } from "../services/last-app-page";
 import { refreshNavCountsOnNavigation } from "../hooks/useNavCounts";
+import { AppWaveBackdrop } from "../components/platform/AppWaveBackdrop";
+import { useAppShellTheme } from "../hooks/useAppShellTheme";
 
 // ── Route loading fallback ────────────────────────────────────────────────────
 function PlatformPageLoader() {
@@ -27,7 +29,7 @@ function PlatformPageLoader() {
     <div
       role="status"
       aria-label="Loading page"
-      style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh", background: "#F8FAFC" }}
+      style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}
     >
       <LagdaLoader mode="inline" theme="light" size={28} ariaLabel="Loading page" />
       <style>{SKELETON_STYLE}</style>
@@ -183,6 +185,8 @@ function pageKeyFor(pathname: string): string {
 export function PlatformLayout() {
   useFlowViewport();
   const { sessionStatus, workspaceStatus } = usePlatform();
+  // The navy accents and the wave backdrop's colours (styles/app-shell.css).
+  useAppShellTheme();
   // 082. The current workspace's saved branding, kept current on its badge.
   useWorkspaceBrandingSync();
   const location = useLocation();
@@ -277,7 +281,7 @@ export function PlatformLayout() {
               e.currentTarget.style.width = "auto";
               e.currentTarget.style.height = "auto";
               e.currentTarget.style.zIndex = "9999";
-              e.currentTarget.style.background = "#0078D4";
+              e.currentTarget.style.background = "#1b3a66";
               e.currentTarget.style.color = "white";
               e.currentTarget.style.padding = "8px 16px";
               e.currentTarget.style.borderRadius = "6px";
@@ -292,24 +296,36 @@ export function PlatformLayout() {
             Skip to main content
           </a>
 
-          <main
-            id="plat-main"
-            ref={mainRef}
-            tabIndex={-1}
-            style={{
-              flex: 1,
-              overflowY: "auto",
-              overflowX: "hidden",
-              outline: "none",
-            }}
-            className="platform-main"
-          >
-            <Suspense fallback={<PlatformPageLoader />}>
-              <div key={pageKeyFor(location.pathname)} className="lagda-page-content">
-                <Outlet />
-              </div>
-            </Suspense>
-          </main>
+          {/* The stage: the main area beside the sidebar and under the
+              header. It does not scroll — `main` inside it does — so the wave
+              backdrop stays put behind long pages while the content scrolls
+              over it. `main` is positioned and comes after the backdrop, so
+              it paints above it (z-index 0) WITHOUT a z-index of its own: one
+              would make it a stacking context and trap the pages' own
+              fixed-position dialogs under the sidebar and header (z 30). */}
+          <div className="platform-stage" style={{ position: "relative", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <AppWaveBackdrop />
+            <main
+              id="plat-main"
+              ref={mainRef}
+              tabIndex={-1}
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: "auto",
+                overflowX: "hidden",
+                outline: "none",
+                position: "relative",
+              }}
+              className="platform-main"
+            >
+              <Suspense fallback={<PlatformPageLoader />}>
+                <div key={pageKeyFor(location.pathname)} className="lagda-page-content">
+                  <Outlet />
+                </div>
+              </Suspense>
+            </main>
+          </div>
         </div>
 
         <style>{`
@@ -326,6 +342,8 @@ export function PlatformLayout() {
             .platform-mobile-nav     { display: block !important; }
             .platform-desktop-header { display: none  !important; }
             .platform-main           { padding-top: calc(56px + env(safe-area-inset-top, 0px)) !important; }
+            /* The waves start under the fixed top bar, not behind it. */
+            .platform-stage > .app-waves { top: calc(56px + env(safe-area-inset-top, 0px)); }
             /* Room for the bottom bar (MobileNav). On the column, not on
                main, so a page's own sticky footer rests above the bar. */
             .platform-content-column { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); box-sizing: border-box; }

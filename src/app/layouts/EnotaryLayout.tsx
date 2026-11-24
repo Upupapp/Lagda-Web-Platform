@@ -25,6 +25,8 @@ import { NavCountBubble } from "../components/platform/InvitationCountBubble";
 import { E, SERIF } from "../pages/platform/enotary/EnotaryChrome";
 import { Z } from "../utils/z-index";
 import { useEnotaryCardSync } from "../hooks/useEnotaryCardSync";
+import { AppWaveBackdrop } from "../components/platform/AppWaveBackdrop";
+import { useAppShellTheme } from "../hooks/useAppShellTheme";
 
 const FOOTER = {
   client: "The Notary Directory: choose a notary public, meet online, and keep your notarized documents in one place.",
@@ -32,7 +34,10 @@ const FOOTER = {
 } as const;
 
 const STYLES = `
-  .eno-strip { background: ${E.navy}; }
+  .eno-strip { background: ${E.navy}; position: relative; }
+  /* Positioned and after the backdrop, so above it, with no z-index of their own: one would trap a page's
+     fixed-position dialogs under the sticky menu row and the footer. */
+  .eno-layer { position: relative; }
   .eno-strip a { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 clamp(12px, 3vw, 28px); color: #FFFFFF; font-size: 13.5px; font-weight: 700; text-decoration: none; letter-spacing: 0.01em; transition: background 140ms ease; }
   .eno-strip a:hover { background: rgba(255,255,255,0.12); }
   .eno-strip a:active { background: rgba(255,255,255,0.2); }
@@ -72,6 +77,8 @@ const isCurrent = (item: NavItem, pathname: string): boolean =>
 
 export function EnotaryLayout() {
   const { sessionStatus, user } = usePlatform();
+  // The signed-in app's accents and wave backdrop, as in PlatformLayout.
+  useAppShellTheme();
   const features = useAccountFeatures();
   const counts = useNavCounts();
   const location = useLocation();
@@ -153,12 +160,16 @@ export function EnotaryLayout() {
   return (
     <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", background: E.ground, fontFamily: "'Geist', sans-serif" }}>
       <style>{STYLES}</style>
+      {/* The wave backdrop, pinned to the window (this shell scrolls the
+          window). The bars and the page paint above it; the white header and
+          the navy footer cover it where they are. */}
+      <AppWaveBackdrop fixed />
       {notary && (
         <div className="eno-strip">
           <Link to="/app/dashboard" data-testid="back-to-dashboard"><ArrowLeft size={16} aria-hidden /> Back to E-signature Dashboard</Link>
         </div>
       )}
-      <header style={{ background: "#FFFFFF", borderBottom: `1px solid ${E.line}` }}>
+      <header className="eno-layer" style={{ background: "#FFFFFF", borderBottom: `1px solid ${E.line}` }}>
         <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 clamp(12px, 3vw, 28px)", minHeight: 60, display: "flex", alignItems: "center", gap: 14 }}>
           <Link to={onDesk ? "/app/enotary/desk" : "/app/enotary/requests"} aria-label="LAGDA eNotary home"
             style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 22, color: E.navy, textDecoration: "none", whiteSpace: "nowrap" }}>
@@ -210,12 +221,12 @@ export function EnotaryLayout() {
           {edges.right && <button type="button" className="eno-arrow right" aria-label="Show more pages" data-testid="nav-right" onClick={() => { slide(1); }}><ChevronRight size={20} aria-hidden /></button>}
         </div>
       </nav>}
-      <main id="enotary-main" style={{ flex: 1, minWidth: 0 }}>
+      <main id="enotary-main" className="eno-layer" style={{ flex: 1, minWidth: 0 }}>
         <Suspense fallback={<LagdaLoader mode="inline" theme="light" size={28} ariaLabel="Loading page" />}>
           <Outlet />
         </Suspense>
       </main>
-      <footer data-testid="enotary-footer" style={{ background: "linear-gradient(180deg, #0B1F44 0%, #081833 100%)", borderTop: "3px solid #C9A24A", padding: "30px 16px 34px", textAlign: "center", color: "#FFFFFF" }}>
+      <footer data-testid="enotary-footer" className="eno-layer" style={{ background: "linear-gradient(180deg, #0B1F44 0%, #081833 100%)", borderTop: "3px solid #C9A24A", padding: "30px 16px 34px", textAlign: "center", color: "#FFFFFF" }}>
         <div data-testid="footer-logo" style={{ display: "inline-flex", alignItems: "center", gap: 12, padding: "8px 16px 8px 10px", borderRadius: 12, background: "#FFFFFF", boxShadow: "0 8px 22px -12px rgba(0,0,0,0.6)", maxWidth: "100%", boxSizing: "border-box" }}>
           <img src={lagdaLogo} alt="LAGDA" style={{ display: "block", width: "clamp(118px, 34vw, 150px)", aspectRatio: "200 / 58", height: "auto", objectFit: "cover", objectPosition: "left center" }} />
           <span aria-hidden="true" style={{ width: 1, alignSelf: "stretch", background: E.line }} />
