@@ -260,7 +260,7 @@ export function MobileNav() {
           style={{
             position: "absolute", top: -5, width: 52, height: 52, borderRadius: 999, boxSizing: "border-box",
             left: `calc(${lastBarSlot.current * 20 + 10}% - 26px)`,
-            backgroundColor: "#0078D4", border: "3px solid #ffffff", boxShadow: "0 4px 14px rgba(0,120,212,0.35)",
+            backgroundColor: "#1b3a66", border: "3px solid #ffffff", boxShadow: "0 4px 14px rgba(27,58,102,0.32)",
             pointerEvents: "none",
             opacity: activeBarSlot >= 0 ? 1 : 0,
             transform: activeBarSlot >= 0 ? "scale(1)" : "scale(0.6)",
@@ -293,7 +293,7 @@ export function MobileNav() {
                         position: "relative", width: 44, height: 44, boxSizing: "border-box",
                         borderRadius: preparing ? 999 : 14,
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        backgroundColor: preparing ? "#0078D4" : PREPARE_NAVY,
+                        backgroundColor: preparing ? "#1b3a66" : PREPARE_NAVY,
                         backgroundImage: preparing ? "none" : PREPARE_WEAVE,
                         color: "#ffffff", textDecoration: "none",
                         transform: preparing ? "translateY(-9px)" : "none",
@@ -323,7 +323,7 @@ export function MobileNav() {
                   >
                     <Icon size={22} aria-hidden />
                     {count > 0 && (
-                      <span aria-hidden style={{ position: "absolute", top: 4, right: 6, minWidth: 16, height: 16, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#0078D4", color: "#ffffff", ...GM, fontSize: 9, fontWeight: 700, lineHeight: "16px", textAlign: "center" }}>
+                      <span aria-hidden style={{ position: "absolute", top: 4, right: 6, minWidth: 16, height: 16, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#1b3a66", color: "#ffffff", ...GM, fontSize: 9, fontWeight: 700, lineHeight: "16px", textAlign: "center" }}>
                         {count > 99 ? "99+" : count}
                       </span>
                     )}
@@ -461,7 +461,7 @@ export function MobileNav() {
                         <span style={{ display: "block", color: "#07111F", ...GF, fontSize: 13, fontWeight: current ? 700 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ws.name}</span>
                         <WorkspacePlanLine workspace={ws} />
                       </span>
-                      {current && <Check size={15} aria-hidden style={{ color: "#0078D4", flexShrink: 0 }} />}
+                      {current && <Check size={15} aria-hidden style={{ color: "#1b3a66", flexShrink: 0 }} />}
                     </button>
                   );
                 })}
@@ -479,7 +479,7 @@ export function MobileNav() {
               }}>
               {joinLocked
                 ? <Lock size={15} aria-hidden style={{ color: "#B45309", flexShrink: 0 }} />
-                : <LogIn size={15} aria-hidden style={{ color: "#0078D4", flexShrink: 0 }} />}
+                : <LogIn size={15} aria-hidden style={{ color: "#1b3a66", flexShrink: 0 }} />}
               <span style={{ flex: 1, textAlign: "left" }}>Join another workspace</span>
               {joinLocked && (
                 <span style={{ fontSize: 10.5, fontWeight: 700, color: "#92400E", background: "#FEF3C7", border: "1px solid #FDE68A", borderRadius: 999, padding: "1px 8px" }}>
@@ -508,17 +508,17 @@ export function MobileNav() {
                       display: "flex", alignItems: "center", gap: 12,
                       padding: "12px 12px", borderRadius: 8, minHeight: 48,
                       textDecoration: "none",
-                      background: isActive ? "rgba(0,120,212,0.12)" : "transparent",
-                      border: isActive ? "1px solid rgba(0,120,212,0.22)" : "1px solid transparent",
-                      color: isActive ? "#005A9E" : "#334155",
+                      background: isActive ? "#e6f0fa" : "transparent",
+                      border: isActive ? "1px solid #c9ddf1" : "1px solid transparent",
+                      color: isActive ? "#1b3a66" : "#334155",
                     })}
                   >
                     {({ isActive }) => (
                       <>
-                        <span style={{ color: isActive ? "#005A9E" : "#475569", display: "flex" }}><NavIcon name={item.icon} size={20} /></span>
+                        <span style={{ color: isActive ? "#1b3a66" : "#475569", display: "flex" }}><NavIcon name={item.icon} size={20} /></span>
                         <span style={{ ...GF, fontSize: 15, fontWeight: isActive ? 600 : 500 }}>{item.label}</span>
                         {item.id === "inbox" && unreadCount > 0 && (
-                          <span style={{ marginLeft: "auto", background: "#0078D4", color: "white", fontFamily: "'Geist Mono', monospace", fontSize: 10, fontWeight: 700, borderRadius: 999, padding: "1px 6px" }}>
+                          <span style={{ marginLeft: "auto", background: "#1b3a66", color: "white", fontFamily: "'Geist Mono', monospace", fontSize: 10, fontWeight: 700, borderRadius: 999, padding: "1px 6px" }}>
                             {unreadCount > 99 ? "99+" : unreadCount}
                           </span>
                         )}
@@ -541,13 +541,13 @@ export function MobileNav() {
               if (!allowed || !enabled || (item.plan !== undefined && !planAllows(item.plan))) return null;
               return (
                 <li key={item.id}>
-                  <NavLink to={item.path} onClick={closeAndNavigate} style={({ isActive }) => ({ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, textDecoration: "none", color: isActive ? "#0078D4" : "#64748B" })}>
+                  <NavLink to={item.path} onClick={closeAndNavigate} style={({ isActive }) => ({ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, textDecoration: "none", color: isActive ? "#1b3a66" : "#64748B" })}>
                     {({ isActive }) => (
                       <>
-                        <span style={{ color: isActive ? "#0078D4" : "#64748B", display: "flex" }}><NavIcon name={item.icon} /></span>
+                        <span style={{ color: isActive ? "#1b3a66" : "#64748B", display: "flex" }}><NavIcon name={item.icon} /></span>
                         <span style={{ ...GF, fontSize: 14, fontWeight: isActive ? 600 : 400 }}>{item.label}</span>
                         {item.id === "notifications" && unreadCount > 0 && (
-                          <span style={{ marginLeft: "auto", background: "#0078D4", color: "white", fontFamily: "'Geist Mono', monospace", fontSize: 10, fontWeight: 700, borderRadius: 999, padding: "1px 6px" }}>
+                          <span style={{ marginLeft: "auto", background: "#1b3a66", color: "white", fontFamily: "'Geist Mono', monospace", fontSize: 10, fontWeight: 700, borderRadius: 999, padding: "1px 6px" }}>
                             {unreadCount > 99 ? "99+" : unreadCount}
                           </span>
                         )}
@@ -559,10 +559,10 @@ export function MobileNav() {
               );
             })}
             <li>
-              <NavLink to={navCounts.settings > 0 ? "/app/settings/plan" : "/app/settings/profile"} onClick={closeAndNavigate} style={({ isActive }) => ({ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, textDecoration: "none", color: isActive ? "#0078D4" : "#64748B" })}>
+              <NavLink to={navCounts.settings > 0 ? "/app/settings/plan" : "/app/settings/profile"} onClick={closeAndNavigate} style={({ isActive }) => ({ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, textDecoration: "none", color: isActive ? "#1b3a66" : "#64748B" })}>
                 {({ isActive }) => (
                   <>
-                    <span style={{ color: isActive ? "#0078D4" : "#64748B", display: "flex" }}><NavIcon name="UserCog" /></span>
+                    <span style={{ color: isActive ? "#1b3a66" : "#64748B", display: "flex" }}><NavIcon name="UserCog" /></span>
                     <span style={{ ...GF, fontSize: 14, fontWeight: isActive ? 600 : 400 }}>My Settings</span>
                     <NavCountBubble key={navCounts.settings} kind="settings" count={navCounts.settings} />
                   </>
@@ -696,10 +696,10 @@ export function MobileNav() {
       )}
 
       <style>{`
-        @media (hover: hover) and (pointer: fine) { .mobile-nav-btn:hover { color: #0078D4 !important; background: #EAF6FF !important; } }
-        .mobile-nav-btn:focus-visible { color: #0078D4 !important; background: #EAF6FF !important; }
-        .mobile-nav-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
-        .mnav-bottom-link:focus-visible, .mnav-bottom-prepare:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
+        @media (hover: hover) and (pointer: fine) { .mobile-nav-btn:hover { color: #1b3a66 !important; background: #eef5fc !important; } }
+        .mobile-nav-btn:focus-visible { color: #1b3a66 !important; background: #eef5fc !important; }
+        .mobile-nav-btn:focus-visible { outline: 2px solid #1b3a66; outline-offset: 2px; }
+        .mnav-bottom-link:focus-visible, .mnav-bottom-prepare:focus-visible { outline: 2px solid #1b3a66; outline-offset: 2px; }
         .mnav-bottom-pill { transition: left 360ms cubic-bezier(0.34, 1.4, 0.64, 1), opacity 180ms ease, transform 220ms ease; }
         .mnav-bottom-link { transition: color 220ms ease 80ms, transform 300ms cubic-bezier(0.34, 1.4, 0.64, 1); }
         .mnav-bottom-prepare { transition: border-radius 300ms ease, background-color 300ms ease, transform 300ms cubic-bezier(0.34, 1.4, 0.64, 1); }
@@ -708,7 +708,7 @@ export function MobileNav() {
         .mnav-tools-panel[data-open="true"] { transition: grid-template-rows 180ms ease, visibility 0s; }
         .mnav-tools-chevron { transition: transform 180ms ease; flex-shrink: 0; }
         @media (hover: hover) and (pointer: fine) { .mnav-tools-toggle:hover { background: #F1F5F9 !important; } }
-        .mnav-tools-toggle:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
+        .mnav-tools-toggle:focus-visible { outline: 2px solid #1b3a66; outline-offset: 2px; }
         @media (prefers-reduced-motion: reduce) {
           #mobile-nav-drawer { transition: none !important; }
           .mnav-bottom-pill, .mnav-bottom-link, .mnav-bottom-prepare { transition: none !important; }

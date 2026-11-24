@@ -17,7 +17,7 @@ import { isInvitationsLink } from "../../services/real/my-invitations.service";
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const BORDER = "rgba(0,0,0,0.08)";
 
-const AZURE = "#0078D4";
+const AZURE = "#1b3a66";
 const AMBER = "#D97706";
 const RED   = "#DC2626";
 const GREEN = "#16A34A";
@@ -282,7 +282,7 @@ export function NotificationMenu({
                 // LABEL is what collapses on the narrowest screens, not the
                 // control — the icon alone still carries the action, and the
                 // accessible name is on the button either way.
-                style={{ background: "none", border: "none", color: "#0078D4", ...GF, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, flexShrink: 0, whiteSpace: "nowrap", padding: 0 }}
+                style={{ background: "none", border: "none", color: "#1b3a66", ...GF, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, flexShrink: 0, whiteSpace: "nowrap", padding: 0 }}
                 aria-label="Mark all notifications as read"
               >
                 <CheckCheck size={13} aria-hidden />
@@ -349,7 +349,7 @@ export function NotificationMenu({
             <Link
               to={category === "documents" ? "/app/notifications?view=documents" : "/app/notifications"}
               onClick={() => setOpen(false)}
-              style={{ color: "#0078D4", ...GF, fontSize: 12, textDecoration: "none", display: "block", textAlign: "center" }}
+              style={{ color: "#1b3a66", ...GF, fontSize: 12, textDecoration: "none", display: "block", textAlign: "center" }}
             >
               View all notifications →
             </Link>
@@ -358,10 +358,10 @@ export function NotificationMenu({
       )}
 
       <style>{`
-        .notif-trigger:hover, .notif-trigger:focus-visible { color: #0078D4 !important; background: #EAF6FF !important; }
-        .notif-trigger:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
+        .notif-trigger:hover, .notif-trigger:focus-visible { color: #1b3a66 !important; background: #eef5fc !important; }
+        .notif-trigger:focus-visible { outline: 2px solid #1b3a66; outline-offset: 2px; }
         .notif-item-link:hover { background: #F1F5F9 !important; }
-        .notif-item-link:focus-visible { outline: 2px solid #0078D4; outline-offset: -2px; }
+        .notif-item-link:focus-visible { outline: 2px solid #1b3a66; outline-offset: -2px; }
 
         /* Two-line clamp. \`overflow-wrap: anywhere\` is the safety net for the
            one case a clamp cannot handle on its own: a single unbroken token

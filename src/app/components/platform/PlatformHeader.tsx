@@ -220,10 +220,10 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
 
       <style>{`
         .header-search-btn:hover { background: #E2E8F0 !important; }
-        .header-search-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
-        .header-help-btn:hover { color: #0078D4 !important; background: rgba(0,120,212,0.08) !important; }
-        .header-logo-link:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
-        .header-help-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
+        .header-search-btn:focus-visible { outline: 2px solid #1b3a66; outline-offset: 2px; }
+        .header-help-btn:hover { color: #1b3a66 !important; background: #eef5fc !important; }
+        .header-logo-link:focus-visible { outline: 2px solid #1b3a66; outline-offset: 2px; }
+        .header-help-btn:focus-visible { outline: 2px solid #1b3a66; outline-offset: 2px; }
         @media (min-width: 640px) {
           .search-label { display: inline !important; }
           .search-kbd { display: inline !important; }
