@@ -76,3 +76,14 @@ The [mobile platform review](docs/reviews/mobile-platform/review.md) covers temp
 ## Template variable preparation baseline
 
 The [real variable/multiple-role review](docs/reviews/template-variables-roles/review.md) records two validation fixes. Treat whitespace-only required string variables as missing while preserving zero and No. Nonempty static sender-filled fields intentionally have no recipient; exclude them from unassigned-recipient errors without relaxing empty-field, geometry, role-eligibility or signer-signature checks. Verify values, routing and completed artifacts against the real backend when changing this boundary. No deployment authority or external-provider assurance is implied.
+
+## Navy theme, waves and public type (24 November 2026)
+
+Recorded at the user's request; this supersedes the "existing brand colours" default above for the colours named here. The client asked for a navy from the logo instead of the bright azure.
+
+- Accents: navy `#1b3a66` for primary buttons, the current navigation item, links and the chart primary; heading navy `#14294d`; sky blue `#4a9ad8` for hover accents and chart series (marks only, never text); `#e6f0fa` for the current navigation item's background. Success, warning and error colours keep their meanings.
+- Where: `src/styles/app-shell.css`, scoped to `<html data-lagda-app>` (signed-in shells) and `<html data-lagda-public>` (public site, sign-in, create account), set by `hooks/useAppShellTheme.ts`. Inline azure in existing pages is recoloured there by attribute selectors, so pages need no edits; new code should use the navy values directly.
+- Waves: `components/platform/AppWaveBackdrop.tsx`, mounted once per shell. Decorative, still in the app, never behind data-dense content. Page content stays positioned without a z-index, so page dialogs are not trapped under the shell.
+- Public type: Libre Caslon (Display for large headings, Text for small ones and h3) with Geist for everything else (`src/styles/public-shell.css`). Mono stays for IDs and codes only.
+- Public motion (public site only, not the admin portal): section reveal on scroll and one opening per page. Purpose: pacing on long marketing pages. Never with `prefers-reduced-motion` or `navigator.webdriver` (tests see still pages); nothing is hidden unless the script ran. The admin portal rules above still apply: no route-entry or sidebar-width animation.
+- Home: the participant-progress ring says "completed", per the rule above.

@@ -1,0 +1,236 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   LAGDA's navy brand accents and the navy + sky blue wave backdrop, shared by
+   the signed-in app and the public site.
+
+   Scope. Every rule here sits under one of two marks on <html>, set by the
+   shared shells while they are on screen (hooks/useAppShellTheme.ts):
+     data-lagda-app     the signed-in shells (PlatformLayout, EnotaryLayout)
+     data-lagda-public  the public site and its sign-in pages (PublicLayout,
+                        AuthLayout, CreateAccountLayout)
+   Onboarding and signing links carry neither, so nothing here reaches them.
+   Dialogs and menus render outside a shell's own box (portals) but still
+   inside :root, so they follow the same accents. Rules for the public site
+   alone (its type, header and motion) are in public-shell.css.
+
+   Navy is the brand colour, not the background: the backdrop is a pale wash
+   with translucent waves in three corners, each with a normal blue along the
+   section's very edge. The app's side panel keeps its white with smaller waves
+   in its top-right and bottom corners; headers, cards, tables, dialogs and
+   forms stay white.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+:root:is([data-lagda-app], [data-lagda-public]) {
+  /* ── Accents ──────────────────────────────────────────────────────────── */
+  --app-navy: #1b3a66;          /* primary buttons, active nav item, links, chart primary (11.4:1 on white) */
+  --app-navy-strong: #14294d;   /* headings; a filled navy control under the pointer */
+  --app-sky: #4a9ad8;           /* secondary accents, hover accents, chart series (3.0:1: marks and lines, never text) */
+  --app-sky-ink: #2f7cbf;       /* sky as an icon on a pale tint (3.9:1 on #eaf3fb) */
+  --app-sky-wash: #eef5fc;      /* the wash a row or button takes under the pointer */
+  --app-active: #e6f0fa;        /* the current page in the navigation */
+  --app-active-line: #c9ddf1;   /* its hairline */
+  --app-gold: #e0a21b;          /* the warm highlight (fills with dark text only) */
+  --app-muted-ink: #5b6b7f;     /* secondary text that stays AA on the wash (4.8:1 at its darkest) */
+
+  /* The app's own tokens, pointed at the accents above (shadcn components,
+     Tailwind utilities and the LAGDA brand variables read these). */
+  --primary: var(--app-navy);
+  --ring: var(--app-navy);
+  --accent: var(--app-active);
+  --secondary: var(--app-active);
+  --sidebar-primary: var(--app-navy);
+  --sidebar-accent: var(--app-active);
+  --sidebar-ring: var(--app-navy);
+  --lagda-azure: var(--app-navy);
+  --lagda-azure-hover: var(--app-navy-strong);
+  --lagda-azure-active: #10213e;
+  --lagda-azure-glow: var(--app-sky);
+  --lagda-azure-surface: var(--app-active);
+  --lagda-azure-border: var(--app-active-line);
+  --lagda-info: var(--app-navy);
+  --lagda-info-surface: var(--app-active);
+  --lagda-info-border: var(--app-active-line);
+  --lagda-gold: var(--app-gold);
+  --chart-1: var(--app-navy);
+  --chart-2: var(--app-sky);
+
+  /* ── The wave backdrop (components/platform/AppWaveBackdrop.tsx) ─────────
+     Change the look here, in one place. Sky carries the waves; navy is only a
+     faint depth layer underneath them. Each wave starts at these strengths in
+     its corner and fades to nothing towards the middle. */
+  --app-wave-wash: linear-gradient(160deg, #f4f8fc 0%, #f8fafd 40%, #f3f7fb 72%, #eaf1f9 100%);
+  --app-wave-sky-1: #aed2ed;
+  --app-wave-sky-2: #92c2e8;
+  --app-wave-fade: #c9e1f3;
+  --app-wave-navy: #1b3a66;
+  --app-wave-o-sky-1: 0.5;
+  --app-wave-o-sky-2: 0.4;
+  --app-wave-o-navy: 0.12;
+  --app-wave-o-line: 0.45;
+  /* A normal blue along each section's very edge, where every wave begins (a
+     deeper step of the sky, between it and the navy): strongest at the edge,
+     weaker halfway along its band, gone before the band ends. */
+  --app-wave-edge: #2f7cbf;
+  --app-wave-o-edge: 0.5;
+  --app-wave-o-edge-mid: 0.2;
+}
+
+/* ── Inline colours, recoloured in one place ─────────────────────────────────
+   Most screens set their colours in inline styles, with the old azure
+   (#0078D4; #005A9E and #0063B1 for its darker text; #0B3A82 for the public
+   site's buttons). Rather than edit every page, these rules find that colour in
+   the style attribute (the browser writes it as rgb(0, 120, 212)) and paint the
+   navy accent over it. Only those blues are matched: success, warning and
+   error colours, the pale azure tints (which are the sky hue already) and
+   everything else keep their own values. */
+
+/* Text, links, and icons drawn in currentColor. The "; color" form leaves
+   background-color and border-color alone. */
+:root:is([data-lagda-app], [data-lagda-public]) [style^="color: rgb(0, 120, 212)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="; color: rgb(0, 120, 212)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style^="color: rgb(0, 90, 158)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="; color: rgb(0, 90, 158)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style^="color: rgb(0, 99, 177)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="; color: rgb(0, 99, 177)"] {
+  color: var(--app-navy) !important;
+}
+
+/* Solid fills: primary buttons, count badges, dots. */
+:root:is([data-lagda-app], [data-lagda-public]) [style*="background: rgb(0, 120, 212)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="background-color: rgb(0, 120, 212)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="background: rgb(11, 58, 130)"] {
+  background-color: var(--app-navy) !important;
+}
+:root:is([data-lagda-app], [data-lagda-public]) :is(a, button)[style*="background: rgb(0, 120, 212)"]:hover:not(:disabled),
+:root:is([data-lagda-app], [data-lagda-public]) :is(a, button)[style*="background-color: rgb(0, 120, 212)"]:hover:not(:disabled),
+:root:is([data-lagda-app], [data-lagda-public]) :is(a, button)[style*="background: rgb(11, 58, 130)"]:hover:not(:disabled) {
+  background-color: var(--app-navy-strong) !important;
+}
+/* The half-strength fill a primary button takes while busy or disabled. */
+:root:is([data-lagda-app], [data-lagda-public]) [style*="background: rgba(0, 120, 212, 0.4)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="background: rgba(0, 120, 212, 0.45)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="background: rgba(0, 120, 212, 0.5)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="background: rgba(0, 120, 212, 0.55)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="background: rgba(0, 120, 212, 0.6)"] {
+  background-color: rgba(27, 58, 102, 0.55) !important;
+}
+
+/* Borders: selected cards, active tabs, focused fields. */
+:root:is([data-lagda-app], [data-lagda-public]) [style*="border: 1px solid rgb(0, 120, 212)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="border: 1.5px solid rgb(0, 120, 212)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="border: 2px solid rgb(0, 120, 212)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="border-color: rgb(0, 120, 212)"] {
+  border-color: var(--app-navy) !important;
+}
+:root:is([data-lagda-app], [data-lagda-public]) [style*="border-bottom: 2px solid rgb(0, 120, 212)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="border-bottom: 3px solid rgb(0, 120, 212)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="border-bottom-color: rgb(0, 120, 212)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="border-color: rgb(226, 232, 240) rgb(226, 232, 240) rgb(0, 120, 212)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="border-color: transparent transparent rgb(0, 120, 212)"] {
+  border-bottom-color: var(--app-navy) !important;
+}
+:root:is([data-lagda-app], [data-lagda-public]) [style*="border-left: 3px solid rgb(0, 120, 212)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="border-left: 4px solid rgb(0, 120, 212)"],
+:root:is([data-lagda-app], [data-lagda-public]) [style*="border-left-color: rgb(0, 120, 212)"] {
+  border-left-color: var(--app-navy) !important;
+}
+:root:is([data-lagda-app], [data-lagda-public]) [style*="border-top-color: rgb(0, 120, 212)"] {
+  border-top-color: var(--app-navy) !important;
+}
+:root:is([data-lagda-app], [data-lagda-public]) [style*="border-right-color: rgb(0, 120, 212)"] {
+  border-right-color: var(--app-navy) !important;
+}
+:root:is([data-lagda-app], [data-lagda-public]) [style*="outline: rgb(0, 120, 212)"] {
+  outline-color: var(--app-navy) !important;
+}
+
+/* Checkboxes, radios and range inputs. */
+:root:is([data-lagda-app], [data-lagda-public]) [style*="accent-color: rgb(0, 120, 212)"] {
+  accent-color: var(--app-navy) !important;
+}
+
+/* Icons given the azure as their colour (lucide writes it as the stroke), and
+   chart marks drawn in it. The LAGDA logo's own fills are not touched. */
+:root:is([data-lagda-app], [data-lagda-public]) svg.lucide[stroke="#0078D4" i],
+:root:is([data-lagda-app], [data-lagda-public]) svg.lucide[stroke="#005A9E" i],
+:root:is([data-lagda-app], [data-lagda-public]) svg.lucide[stroke="#0063B1" i],
+:root:is([data-lagda-app], [data-lagda-public]) .recharts-wrapper [stroke="#0078D4" i] {
+  stroke: var(--app-navy);
+}
+:root:is([data-lagda-app], [data-lagda-public]) .recharts-wrapper [fill="#0078D4" i] {
+  fill: var(--app-navy);
+}
+:root:is([data-lagda-app], [data-lagda-public]) .recharts-wrapper [stop-color="#0078D4" i] {
+  stop-color: var(--app-navy);
+}
+
+/* Headings set in the old near-black inks take the heading navy. A heading in
+   any other colour (white on a dark card, a status colour) keeps it. */
+:root:is([data-lagda-app], [data-lagda-public]) :is(h1, h2, h3)[style^="color: rgb(15, 23, 42)"],
+:root:is([data-lagda-app], [data-lagda-public]) :is(h1, h2, h3)[style*="; color: rgb(15, 23, 42)"],
+:root:is([data-lagda-app], [data-lagda-public]) :is(h1, h2, h3)[style^="color: rgb(7, 17, 31)"],
+:root:is([data-lagda-app], [data-lagda-public]) :is(h1, h2, h3)[style*="; color: rgb(7, 17, 31)"],
+:root:is([data-lagda-app], [data-lagda-public]) :is(h1, h2, h3)[style^="color: rgb(11, 31, 75)"],
+:root:is([data-lagda-app], [data-lagda-public]) :is(h1, h2, h3)[style*="; color: rgb(11, 31, 75)"] {
+  color: var(--app-navy-strong) !important;
+}
+
+/* Secondary text in the old slate (#64748B) is 4.4:1 on the wash's darkest
+   step, just under AA. Inside the content areas it takes one step darker. */
+:root:is([data-lagda-app], [data-lagda-public]) :is(.platform-main, #enotary-main, #main-content, .auth-shell, .create-account-shell)
+  :is([style^="color: rgb(100, 116, 139)"], [style*="; color: rgb(100, 116, 139)"]) {
+  color: var(--app-muted-ink) !important;
+}
+
+/* ── Page planes become see-through (signed-in app) ──────────────────────────
+   Some pages paint their own full-height page colour, which would cover the
+   backdrop. Only those planes are cleared: a full-height wrapper in the old
+   page grey, and the section shells that paint one (Workspace, My Settings,
+   Find people, the eNotary frame, the request history). Their cards, tables
+   and forms keep their white. */
+:root[data-lagda-app] :is(.platform-main, #enotary-main) :is(
+  [style*="min-height: 100vh"][style*="background: rgb(248, 250, 252)"],
+  [style*="min-height: 100%"][style*="background: rgb(248, 250, 252)"],
+  [style*="min-height: 100dvh"][style*="background: rgb(248, 250, 252)"],
+  .ws-shell, .st-shell, .fp-page, .eno-page, .rh
+) {
+  background: transparent !important;
+}
+
+/* ── The wave backdrop ───────────────────────────────────────────────────────
+   One still, decorative layer behind the main area (beside the sidebar, under
+   the header). It never scrolls: the shell keeps it in a wrapper that does not
+   scroll (or fixes it to the window), and the content sits above it. */
+.app-waves {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--app-wave-wash, #f6f9fc);
+  container-type: size;
+  --app-wave-scale: 1;
+  --app-wave-top: 0px;
+}
+.app-waves[data-fixed] { position: fixed; }
+.app-waves-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.app-wave { position: absolute; display: block; height: auto; overflow: visible; }
+/* Sized by the area they decorate, so they grow and shrink with the screen. */
+.app-wave-tr { top: var(--app-wave-top); right: 0; width: clamp(calc(180px * var(--app-wave-scale)), calc(44cqw * var(--app-wave-scale)), 640px); }
+.app-wave-bl { bottom: 0; left: 0; width: clamp(calc(150px * var(--app-wave-scale)), calc(36cqw * var(--app-wave-scale)), 520px); }
+.app-wave-br { bottom: 0; right: 0; width: clamp(calc(140px * var(--app-wave-scale)), calc(32cqw * var(--app-wave-scale)), 480px); }
+/* Phones: about 40% smaller, kept in the corners. */
+@media (max-width: 640px) { .app-waves { --app-wave-scale: 0.6; } }
+
+/* The side panel: the same three corners (top right, bottom left, bottom
+   right), smaller, on the panel's own white (no wash). The panel is its own
+   stacking context (sticky, with a z-index), so -1 puts the waves above its
+   white and below everything in it: the menu, the Prepare button, the account
+   row. Sized by the panel, so they follow it when it collapses. */
+.app-waves--side { background: none; z-index: -1; }
+.app-waves--side .app-wave-tr { width: min(84cqw, 210px); }
+.app-waves--side .app-wave-bl,
+.app-waves--side .app-wave-br { width: min(66cqw, 164px); }
+/* High-contrast modes and paper get the plain page. */
+@media (forced-colors: active) { .app-waves { display: none; } }
+@media print { .app-waves { display: none; } }
