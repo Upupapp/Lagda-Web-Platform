@@ -180,7 +180,9 @@ export function SectionTabs({ label, tabs, tone = "azure", groupColors }: Sectio
       aria-label={label}
       className="lsn"
       data-tone={tone}
-      style={{ position: "sticky", top: 72, zIndex: Z.sticky }}
+      // Right under the header, which is 64px tall and 54px once the page
+      // scrolls (PublicHeader sets --phdr-h).
+      style={{ position: "sticky", top: "var(--phdr-h, 64px)", zIndex: Z.sticky }}
     >
       <div className="lsn-frame">
         <div

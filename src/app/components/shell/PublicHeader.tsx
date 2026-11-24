@@ -253,7 +253,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
           {TOP_NAV.map((nav) => {
             const isOpen = openSection === nav.id;
             const isEnotary = nav.id === "enotary";
-            const accentColor = isEnotary ? "#b01262" : "#0078d4";
+            const accentColor = isEnotary ? "#b01262" : "#1b3a66";
             const isCurrent = pathname.startsWith(nav.matchPrefix);
             const NavIcon = navIcon(nav.id);
 
@@ -272,7 +272,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
                   }}
                   style={{
                     ["--phdr-accent" as string]: accentColor,
-                    ["--phdr-tint" as string]: isEnotary ? "rgba(176,18,98,0.07)" : "rgba(0,120,212,0.07)",
+                    ["--phdr-tint" as string]: isEnotary ? "rgba(176,18,98,0.07)" : "#e6f0fa",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
@@ -486,11 +486,25 @@ export function PublicHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
-  // Scroll detection
+  // Scroll detection. Past the first 24px the header shrinks (64px → 54px);
+  // its live height is published as --phdr-h so the sticky section tabs and
+  // the top-right wave stay right under it.
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    const root = document.documentElement;
+    let last: boolean | null = null;
+    const onScroll = () => {
+      const condensed = window.scrollY > 24;
+      if (condensed === last) return;
+      last = condensed;
+      setScrolled(condensed);
+      root.style.setProperty("--phdr-h", condensed ? "54px" : "64px");
+    };
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      root.style.removeProperty("--phdr-h");
+    };
   }, []);
 
   // Close menus on route change
@@ -525,6 +539,7 @@ export function PublicHeader() {
       <header
         ref={navRef}
         role="banner"
+        data-condensed={scrolled ? "true" : "false"}
         style={{
           position: "fixed",
           top: 0,
@@ -535,8 +550,9 @@ export function PublicHeader() {
       >
         <nav aria-label="Main navigation">
           <div
+            className="phdr-bar"
             style={{
-              height: 72,
+              height: "var(--phdr-h, 64px)",
               background: scrolled ? "rgba(255,255,255,0.92)" : "#ffffff",
               backdropFilter: scrolled ? "blur(20px) saturate(160%)" : "none",
               WebkitBackdropFilter: scrolled
@@ -547,7 +563,7 @@ export function PublicHeader() {
                 : "1px solid rgba(7,17,31,0.08)",
               boxShadow: scrolled ? "0 2px 24px rgba(7,17,31,0.06)" : "none",
               transition:
-                "background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease",
+                "height 0.28s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease",
             }}
           >
             <div
@@ -591,9 +607,10 @@ export function PublicHeader() {
                 {TOP_NAV.map((nav) => {
                   const isActive = pathname.startsWith(nav.matchPrefix);
                   const isEnotary = nav.id === "enotary";
-                  const accentColor = isEnotary ? "#b01262" : "#0078d4";
+                  // Navy for LAGDA's sections; eNotary keeps its burgundy.
+                  const accentColor = isEnotary ? "#b01262" : "#1b3a66";
                   // Darker than the accent so it stays AA on the tinted pill.
-                  const accentTextColor = isEnotary ? "#9E1058" : "#0062AF";
+                  const accentTextColor = isEnotary ? "#9E1058" : "#1b3a66";
                   const NavIcon = navIcon(nav.id);
 
                   return (
@@ -608,7 +625,8 @@ export function PublicHeader() {
                         style={{
                           ["--phdr-accent" as string]: accentColor,
                           ["--phdr-accent-text" as string]: accentTextColor,
-                          ["--phdr-tint" as string]: isEnotary ? "rgba(176,18,98,0.07)" : "rgba(0,120,212,0.07)",
+                          ["--phdr-tint" as string]: isEnotary ? "rgba(176,18,98,0.07)" : "#e6f0fa",
+                          ["--phdr-ring" as string]: isEnotary ? "rgba(176,18,98,0.22)" : "#c9ddf1",
                           fontWeight: isActive ? 600 : 500,
                           textDecoration: "none",
                           ...GF,
@@ -653,79 +671,17 @@ export function PublicHeader() {
                   <DashboardButton />
                 ) : sessionStatus === "unauthenticated" ? (
                   <>
-                {/* Sign In — desktop */}
-                <Link
-                  to="/sign-in"
-                  className="phdr-signin"
-                  style={{
-                    color: "#07111F",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    ...GF,
-                    textDecoration: "none",
-                    padding: "9px 15px",
-                    minHeight: 36,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    border: "1px solid #D7DEE8",
-                    borderRadius: 8,
-                    background: "#FFFFFF",
-                    boxShadow: "0 2px 6px rgba(7,17,31,0.06)",
-                    transition:
-                      "color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "#0078d4";
-                    e.currentTarget.style.borderColor = "#A9CDEE";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 10px rgba(0,120,212,0.10)";
-                    e.currentTarget.style.transform = "translateY(-1px)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "#07111F";
-                    e.currentTarget.style.borderColor = "#D7DEE8";
-                    e.currentTarget.style.boxShadow =
-                      "0 2px 6px rgba(7,17,31,0.06)";
-                    e.currentTarget.style.transform = "";
-                  }}
-                >
+                {/* Sign In — desktop: a plain link beside the one filled button. */}
+                <Link to="/sign-in" className="phdr-signin" style={{ ...GF, display: "inline-flex" }}>
                   Sign In
                 </Link>
 
-                {/* Create Account — desktop */}
+                {/* Create Account — desktop: a compact navy pill. */}
                 <Link
                   to="/create-account"
                   className="phdr-cta"
                   onClick={() => haptic("light")}
-                  style={{
-                    background: "#0B3A82",
-                    color: "white",
-                    borderRadius: 8,
-                    padding: "9px 16px",
-                    minHeight: 36,
-                    fontSize: 13,
-                    fontWeight: 700,
-                    ...GF,
-                    textDecoration: "none",
-                    whiteSpace: "nowrap",
-                    boxShadow: "0 4px 12px rgba(11,58,130,0.24)",
-                    transition:
-                      "filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease",
-                    alignItems: "center",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.filter = "brightness(1.12)";
-                    e.currentTarget.style.transform = "translateY(-1px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 6px 18px rgba(11,58,130,0.30)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.filter = "";
-                    e.currentTarget.style.transform = "";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 12px rgba(11,58,130,0.24)";
-                  }}
+                  style={GF}
                 >
                   Create Free Account
                 </Link>
@@ -798,7 +754,7 @@ export function PublicHeader() {
         .phdr-hamburger   { display: flex !important; }
         @media (min-width: 1024px) {
           .phdr-desktop-nav { display: flex !important; }
-          .phdr-signin      { display: block !important; }
+          .phdr-signin      { display: inline-flex !important; }
           .phdr-cta         { display: inline-flex !important; }
           .phdr-hamburger   { display: none !important; }
         }
@@ -834,76 +790,91 @@ export function PublicHeader() {
         @media (min-width: 1280px) { .phdr-logo { --phdr-logo-w: 144px; } }
         .phdr-logo.phdr-logo--drawer { --phdr-logo-w: 124px; }
 
-        /* Top-nav triggers: icon + label pill, underline indicator. */
+        /* Top nav, minimized: the six sections as compact text pills in one
+           light capsule (no icons, no underline). The current section is navy
+           on the app's pale sky tint; eNotary keeps its burgundy. */
+        .phdr-desktop-nav {
+          padding: 3px !important;
+          gap: 2px !important;
+          background: rgba(255,255,255,0.78);
+          border: 1px solid #e1e9f3;
+          border-radius: 999px;
+          box-shadow: 0 1px 2px rgba(20,41,77,0.04);
+        }
         .phdr-navbtn {
           position: relative;
           display: flex;
           align-items: center;
-          gap: 6px;
-          height: 40px;
-          padding: 0 8px 0 9px;
+          gap: 5px;
+          height: 32px;
+          padding: 0 12px;
           border: none;
-          border-radius: 10px;
+          border-radius: 999px;
           background: transparent;
           color: #334155;
           font-size: 13px;
+          letter-spacing: 0.005em;
           cursor: pointer;
           white-space: nowrap;
-          transition: color 180ms ease, background-color 180ms ease;
+          transition: color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
         }
-        .phdr-navbtn::after {
-          content: "";
-          position: absolute;
-          left: 10px;
-          right: 10px;
-          bottom: 3px;
-          height: 2px;
-          border-radius: 2px;
-          background: var(--phdr-accent);
-          transform: scaleX(0);
-          transform-origin: center;
-          opacity: 0;
-          transition: transform 200ms cubic-bezier(0.22, 0.8, 0.24, 1), opacity 160ms ease;
+        .phdr-navico { display: none !important; }
+        .phdr-navchev { display: none !important; }
+        .phdr-navbtn:hover { color: #1b3a66; background: #eef5fc; }
+        .phdr-navbtn[data-open="true"],
+        .phdr-navbtn[data-active="true"] {
+          color: var(--phdr-accent-text);
+          background: var(--phdr-tint);
+          box-shadow: inset 0 0 0 1px var(--phdr-ring, transparent);
         }
-        .phdr-navico {
-          display: inline-flex;
-          color: #64748B;
-          transition: color 180ms ease;
-        }
-        .phdr-navbtn:hover { color: #07111F; background: rgba(7,17,31,0.045); }
-        .phdr-navbtn:hover .phdr-navico { color: var(--phdr-accent); }
-        .phdr-navbtn:hover::after { transform: scaleX(0.35); opacity: 0.55; }
-        .phdr-navbtn[data-open="true"] { color: var(--phdr-accent-text); background: var(--phdr-tint); }
-        .phdr-navbtn[data-open="true"] .phdr-navico { color: var(--phdr-accent); }
-        .phdr-navbtn[data-open="true"]::after { transform: scaleX(1); opacity: 1; }
-        .phdr-navbtn[data-active="true"] { color: var(--phdr-accent-text); }
-        .phdr-navbtn[data-active="true"] .phdr-navico { color: var(--phdr-accent); }
-        .phdr-navbtn[data-active="true"]::after { transform: scaleX(1); opacity: 1; }
-        .phdr-navbtn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
-        /* The desktop row must hold the logo, six triggers, the Coming Soon
-           badge and both CTAs on one line. Measured budgets:
-             1024–1199  labels only (icons + chevrons would clip the CTA)
-             1200–1359  icons + labels, chevrons tucked away
-             ≥1360      icons + labels + chevrons */
+        .phdr-navbtn:focus-visible { outline: 2px solid #1b3a66; outline-offset: 2px; }
+        /* Narrow desktops: a little tighter so everything stays on one line. */
         @media (min-width: 1024px) and (max-width: 1199px) {
-          .phdr-navico { display: none !important; }
-          .phdr-navbtn { padding: 0 8px; }
+          .phdr-navbtn { padding: 0 9px; font-size: 12.5px; }
         }
-        @media (min-width: 1024px) and (max-width: 1359px) {
-          .phdr-navchev { display: none !important; }
+
+        /* Sign In: a plain navy link. Create Free Account: the one filled
+           button, a compact navy pill. */
+        .phdr-signin {
+          align-items: center;
+          height: 32px;
+          padding: 0 12px;
+          border-radius: 999px;
+          color: #1b3a66;
+          font-size: 13px;
+          font-weight: 600;
+          text-decoration: none;
+          white-space: nowrap;
+          transition: background-color 160ms ease, color 160ms ease;
         }
-        @media (min-width: 1200px) and (max-width: 1359px) {
-          .phdr-navbtn { padding: 0 10px 0 9px; }
+        .phdr-signin:hover { background: #eef5fc; text-decoration: underline; text-decoration-color: #4a9ad8; text-underline-offset: 4px; }
+        .phdr-signin:focus-visible { outline: 2px solid #1b3a66; outline-offset: 2px; }
+        .phdr-cta {
+          align-items: center;
+          height: 34px;
+          padding: 0 16px;
+          border-radius: 999px;
+          background: #1b3a66;
+          color: #FFFFFF;
+          font-size: 13px;
+          font-weight: 600;
+          text-decoration: none;
+          white-space: nowrap;
+          box-shadow: 0 8px 16px -10px rgba(27,58,102,0.7);
+          transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
         }
-        @media (min-width: 1360px) {
-          .phdr-navbtn { padding: 0 10px 0 11px; }
-        }
+        .phdr-cta:hover { background: #14294d; box-shadow: 0 10px 20px -10px rgba(20,41,77,0.75); transform: translateY(-1px); }
+        .phdr-cta:focus-visible { outline: 2px solid #1b3a66; outline-offset: 3px; }
+
+        /* The logo settles a little smaller with the header as the page scrolls. */
+        .phdr-logo { transform-origin: left center; transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
+        header[data-condensed="true"] .phdr-logo { transform: scale(0.9); }
 
         /* Mobile drawer rows. */
         .phdr-drawer-row { background: transparent; transition: background-color 180ms ease; }
         .phdr-drawer-row:hover { background: #F8FAFC; }
         .phdr-drawer-row[data-open="true"] { background: var(--phdr-tint); }
-        .phdr-drawer-row:focus-visible { outline: 2px solid #0078D4; outline-offset: -2px; }
+        .phdr-drawer-row:focus-visible { outline: 2px solid #1b3a66; outline-offset: -2px; }
         .phdr-drawer-ico {
           width: 34px;
           height: 34px;
@@ -923,13 +894,15 @@ export function PublicHeader() {
         }
         .phdr-drawer-link { transition: background-color 160ms ease; }
         .phdr-drawer-link:hover { background: rgba(7,17,31,0.04); }
-        .phdr-drawer-link:focus-visible { outline: 2px solid #0078D4; outline-offset: -2px; }
+        .phdr-drawer-link:focus-visible { outline: 2px solid #1b3a66; outline-offset: -2px; }
         .phdr-iconbtn:hover { background: #F8FAFC !important; color: #07111F !important; }
-        .phdr-iconbtn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
+        .phdr-iconbtn:focus-visible { outline: 2px solid #1b3a66; outline-offset: 2px; }
 
         @media (prefers-reduced-motion: reduce) {
           .phdr-navbtn, .phdr-navbtn::after, .phdr-navico,
-          .phdr-drawer-row, .phdr-drawer-ico, .phdr-drawer-link { transition: none; }
+          .phdr-drawer-row, .phdr-drawer-ico, .phdr-drawer-link,
+          .phdr-signin, .phdr-cta, .phdr-logo, .phdr-bar { transition: none !important; }
+          .phdr-cta:hover { transform: none; }
           .phdr-chev { transition: none !important; }
         }
       `}</style>
