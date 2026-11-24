@@ -13,6 +13,10 @@ import type {
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
+// Headings: Libre Caslon Display (styles/fonts.css), with Georgia behind it.
+const SERIF = { fontFamily: "'Libre Caslon Display', 'Libre Caslon Text', Georgia, 'Times New Roman', serif" };
+const NAVY = "#1b3a66";
+const INK = "#14294d";
 
 // ── Reusable section container ────────────────────────────────────────────────
 // Section and heading are the shared public primitives. Kept exported under
@@ -33,7 +37,7 @@ export function RelatedPages({
 }) {
   return (
     <section
-      style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "#f8fafb" }}
+      style={{ borderTop: "1px solid rgba(27,58,102,0.08)", background: "rgba(255,255,255,0.6)" }}
     >
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "48px 24px" }}>
         <p
@@ -66,7 +70,7 @@ export function RelatedPages({
                 }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLDivElement).style.borderColor =
-                    "rgba(0,120,212,0.35)";
+                    "rgba(74,154,216,0.6)";
                   (e.currentTarget as HTMLDivElement).style.boxShadow =
                     "0 4px 16px rgba(7,17,31,0.10), 0 1px 4px rgba(7,17,31,0.05)";
                 }}
@@ -143,27 +147,28 @@ export function PageCTA({
   return (
     <section
       style={{
-        borderTop: "1px solid rgba(0,0,0,0.07)",
-        background: "rgba(0,120,212,0.04)",
+        borderTop: "1px solid rgba(27,58,102,0.08)",
+        background: "rgba(255,255,255,0.55)",
       }}
     >
       <div
         style={{
           maxWidth: 720,
           margin: "0 auto",
-          padding: "64px 24px",
+          padding: "72px 24px",
           textAlign: "center",
         }}
       >
         <h2
           style={{
-            color: "#07111F",
-            ...GF,
-            fontSize: "clamp(22px, 3.5vw, 34px)",
-            fontWeight: 800,
+            color: INK,
+            ...SERIF,
+            fontSize: "clamp(27px, 3.8vw, 40px)",
+            fontWeight: 400,
+            lineHeight: 1.15,
             margin: 0,
-            marginBottom: sub ? 12 : 24,
-            letterSpacing: "-0.02em",
+            marginBottom: sub ? 14 : 26,
+            letterSpacing: "-0.01em",
           }}
         >
           {heading}
@@ -171,12 +176,12 @@ export function PageCTA({
         {sub && (
           <p
             style={{
-              color: ON_LIGHT.slate,
+              color: "#475569",
               ...GF,
-              fontSize: 16,
-              lineHeight: 1.65,
-              margin: "0 auto 24px",
-              maxWidth: 520,
+              fontSize: 17,
+              lineHeight: 1.7,
+              margin: "0 auto 28px",
+              maxWidth: 540,
             }}
           >
             {sub}
@@ -193,26 +198,26 @@ export function PageCTA({
           <Link
             to={primaryPath}
             style={{
-              background: "#0B3A82",
+              background: NAVY,
               color: "white",
               padding: "13px 28px",
-              borderRadius: 12,
+              borderRadius: 999,
               ...GF,
               fontSize: 15,
-              fontWeight: 700,
+              fontWeight: 600,
               textDecoration: "none",
               display: "inline-flex",
               alignItems: "center",
-              boxShadow: "0 4px 16px rgba(0,120,212,0.3)",
-              transition: "filter 0.15s ease, transform 0.15s ease",
-              minHeight: 44,
+              boxShadow: "0 12px 24px -14px rgba(27,58,102,0.8)",
+              transition: "background-color 0.15s ease, transform 0.15s ease",
+              minHeight: 46,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.filter = "brightness(1.1)";
+              e.currentTarget.style.background = INK;
               e.currentTarget.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.filter = "";
+              e.currentTarget.style.background = NAVY;
               e.currentTarget.style.transform = "";
             }}
           >
@@ -259,18 +264,18 @@ export function LegalNote({ showEnotary }: { showEnotary?: boolean }) {
   return (
     <div
       style={{
-        background: "#f8fafb",
-        borderTop: "1px solid rgba(0,0,0,0.07)",
+        background: "rgba(255,255,255,0.7)",
+        borderTop: "1px solid rgba(27,58,102,0.08)",
         padding: "20px 24px",
       }}
     >
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <p
           style={{
-            color: ON_LIGHT.slate,
+            color: "#475569",
             ...GF,
-            fontSize: 12,
-            lineHeight: 1.6,
+            fontSize: 12.5,
+            lineHeight: 1.65,
             margin: 0,
             marginBottom: showEnotary ? 8 : 0,
           }}
@@ -280,10 +285,10 @@ export function LegalNote({ showEnotary }: { showEnotary?: boolean }) {
         {showEnotary && (
           <p
             style={{
-              color: ON_LIGHT.muted,
+              color: "#5b6b7f",
               ...GF,
-              fontSize: 12,
-              lineHeight: 1.6,
+              fontSize: 12.5,
+              lineHeight: 1.65,
               margin: 0,
             }}
           >
@@ -373,8 +378,11 @@ export function PageHero({
   return (
     <section
       aria-labelledby={headingId}
+      data-public-hero=""
       style={{ position: "relative", overflow: "hidden" }}
     >
+      {/* The page's waves show through the hero at full strength; a soft
+          white glow sits behind the words so they read cleanly over them. */}
       <div
         aria-hidden
         style={{
@@ -384,7 +392,7 @@ export function PageHero({
           pointerEvents: "none",
           background:
             gradient ??
-            "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,120,212,0.08) 0%, transparent 70%)",
+            "radial-gradient(ellipse 62% 78% at 24% 42%, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.35) 46%, rgba(255,255,255,0) 72%)",
         }}
       />
       <div
@@ -394,7 +402,7 @@ export function PageHero({
           zIndex: 1,
           maxWidth: 1200,
           margin: "0 auto",
-          padding: "64px 24px 48px",
+          padding: "76px 24px 60px",
           ...(visual
             // minmax(0, 1fr), never a bare 1fr: a 1fr track's minimum is auto,
             // so it floors at the content's min-content width and the hero
@@ -409,13 +417,13 @@ export function PageHero({
         <div style={{ minWidth: 0 }}>
           <p
             style={{
-              color: ON_LIGHT.azure,
-              ...GM,
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "0.12em",
+              color: NAVY,
+              ...GF,
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: "0.14em",
               textTransform: "uppercase",
-              marginBottom: 16,
+              marginBottom: 18,
             }}
           >
             {eyebrow}
@@ -423,28 +431,28 @@ export function PageHero({
           <h1
             id={headingId}
             style={{
-              color: "#07111F",
-              ...GF,
-              fontSize: "clamp(28px, 4.5vw, 52px)",
-              fontWeight: 800,
-              lineHeight: 1.1,
+              color: INK,
+              ...SERIF,
+              fontSize: "clamp(34px, 5.2vw, 62px)",
+              fontWeight: 400,
+              lineHeight: 1.08,
               margin: 0,
-              marginBottom: 16,
-              letterSpacing: "-0.02em",
-              maxWidth: 800,
+              marginBottom: 20,
+              letterSpacing: "-0.015em",
+              maxWidth: 820,
             }}
           >
             {heading}
           </h1>
           <p
             style={{
-              color: ON_LIGHT.slate,
+              color: "#475569",
               ...GF,
-              fontSize: "clamp(15px, 2vw, 18px)",
-              lineHeight: 1.65,
+              fontSize: "clamp(16px, 2vw, 19px)",
+              lineHeight: 1.7,
               margin: 0,
-              marginBottom: children ? 32 : 0,
-              maxWidth: 640,
+              marginBottom: children ? 34 : 0,
+              maxWidth: 620,
             }}
           >
             {sub}

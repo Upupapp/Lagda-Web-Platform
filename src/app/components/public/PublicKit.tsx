@@ -17,11 +17,11 @@
 // to change. What that buys is that the next spacing decision is made once.
 
 import { useState } from "react";
-import { ON_LIGHT } from "../../utils/on-light";
 import type { ReactNode } from "react";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
-const GM = { fontFamily: "'Geist Mono', monospace" };
+// Headings: Libre Caslon Display (styles/fonts.css), with Georgia behind it.
+const SERIF = { fontFamily: "'Libre Caslon Display', 'Libre Caslon Text', Georgia, 'Times New Roman', serif" };
 
 /**
  * Vertical rhythm for a public section.
@@ -33,9 +33,12 @@ const GM = { fontFamily: "'Geist Mono', monospace" };
  */
 export type SectionDensity = "default" | "compact";
 
+// The alternating band is a soft frosted white over the wave backdrop (the
+// plain band is see-through), so the waves read softly behind one band and
+// clearly behind the next. Cards inside either stay solid white.
 const DENSITY: Record<SectionDensity, { padding: string; tint: string; border: string }> = {
-  default: { padding: "72px 24px", tint: "#f8fafb",  border: "rgba(0,0,0,0.07)" },
-  compact: { padding: "56px 24px", tint: "#f8fafb", border: "rgba(0,0,0,0.07)" },
+  default: { padding: "72px 24px", tint: "rgba(255,255,255,0.62)", border: "rgba(27,58,102,0.08)" },
+  compact: { padding: "56px 24px", tint: "rgba(255,255,255,0.62)", border: "rgba(27,58,102,0.08)" },
 };
 
 export interface PublicSectionProps {
@@ -83,22 +86,21 @@ export function PublicHeading({ eyebrow, id, heading, sub, center }: PublicHeadi
   return (
     <div style={{ marginBottom: 40, textAlign: center ? "center" : undefined }}>
       <p style={{
-        // Azure as TEXT on a light panel: the brand fill (#0078D4) is 4.3:1
-        // on the tinted sections, under AA for 11px.
-        color: ON_LIGHT.azure, ...GM, fontSize: 11, fontWeight: 700,
-        letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10,
+        // Navy as text: 11.4:1 on white, and still AA on the wash and waves.
+        color: "#1b3a66", ...GF, fontSize: 12, fontWeight: 600,
+        letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 12,
       }}>
         {eyebrow}
       </p>
       <h2 id={id} style={{
-        color: "#07111F", ...GF, fontSize: "clamp(22px, 3.5vw, 36px)", fontWeight: 800,
-        margin: 0, marginBottom: sub ? 12 : 0, letterSpacing: "-0.02em", lineHeight: 1.15,
+        color: "#14294d", ...SERIF, fontSize: "clamp(27px, 3.8vw, 42px)", fontWeight: 400,
+        margin: 0, marginBottom: sub ? 14 : 0, letterSpacing: "-0.01em", lineHeight: 1.12,
       }}>
         {heading}
       </h2>
       {sub && (
         <p style={{
-          color: ON_LIGHT.slate, ...GF, fontSize: 16, lineHeight: 1.65,
+          color: "#475569", ...GF, fontSize: 17, lineHeight: 1.7,
           margin: center ? "0 auto" : 0, maxWidth: 640,
         }}>
           {sub}
@@ -156,7 +158,7 @@ export function FaqAccordion({ items }: { items: FaqItem[] }) {
               </span>
             </button>
             <div id={`${id}-answer`} hidden={!isOpen} style={{ padding: isOpen ? "0 20px 16px" : "0 20px 0" }}>
-              <p style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0 }}>{a}</p>
+              <p style={{ color: "#475569", ...GF, fontSize: 15, lineHeight: 1.7, margin: 0 }}>{a}</p>
             </div>
           </div>
         );
