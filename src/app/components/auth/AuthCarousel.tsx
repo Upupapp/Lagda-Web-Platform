@@ -463,7 +463,7 @@ function ImageSlideView({ slide, load }: { slide: ImageSlide; load: boolean }) {
 const AUTH_CAROUSEL_CSS = `
 .auth-carousel { container-type: inline-size; }
 .auth-carousel-lead { height: 64px; margin-bottom: 12px; overflow: hidden; }
-.auth-carousel-lead-kicker { margin: 0 0 6px; color: #0078d4; font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 800; letter-spacing: .14em; line-height: 1.4; }
+.auth-carousel-lead-kicker { margin: 0 0 6px; color: #1b3a66; font-family: 'Geist', sans-serif; font-size: 10px; font-weight: 800; letter-spacing: .14em; line-height: 1.4; }
 .auth-carousel-lead-text { margin: 0; color: #334155; font-size: 14px; font-weight: 600; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .auth-carousel-viewport { --dir: 1; position: relative; height: 540px; overflow: hidden; touch-action: pan-y; }
 .auth-carousel-viewport[data-direction="back"] { --dir: -1; }
@@ -487,7 +487,7 @@ const AUTH_CAROUSEL_CSS = `
 .auth-carousel-placeholder { display: block; width: 100%; height: 100%; }
 .auth-carousel-figure figcaption { display: flex; flex-direction: column; gap: 4px; }
 .auth-carousel-slide--drop figcaption { align-items: center; text-align: center; }
-.auth-carousel-number { color: #0078d4; font-family: 'Geist Mono', monospace; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+.auth-carousel-number { color: #1b3a66; font-family: 'Geist', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
 .auth-carousel-title { color: #07111f; font-size: 22px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
 .auth-carousel-description { color: #475569; font-size: 14px; line-height: 1.55; }
 
@@ -528,10 +528,10 @@ const AUTH_CAROUSEL_CSS = `
 .auth-carousel--modal .auth-carousel-controls { justify-content: center; margin-top: 12px; }
 .auth-carousel-dots { display: flex; align-items: center; gap: 6px; }
 .auth-carousel-dot { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 999px; background: #bfd6ee; cursor: pointer; transition: width .3s cubic-bezier(.22,1,.36,1), background .3s ease; }
-.auth-carousel-dot[aria-current="true"] { width: 22px; background: #0078d4; }
+.auth-carousel-dot[aria-current="true"] { width: 22px; background: #1b3a66; }
 .auth-carousel-arrow { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 1px solid #cfe3f7; border-radius: 8px; background: rgba(255,255,255,.9); color: #334155; font: 400 18px/1 'Geist', sans-serif; cursor: pointer; }
-.auth-carousel-arrow:hover { border-color: #8fc2ed; color: #005ba9; }
-.auth-carousel-dot:focus-visible, .auth-carousel-arrow:focus-visible { outline: 2px solid #0078d4; outline-offset: 3px; }
+.auth-carousel-arrow:hover { border-color: #4a9ad8; color: #14294d; }
+.auth-carousel-dot:focus-visible, .auth-carousel-arrow:focus-visible { outline: 2px solid #1b3a66; outline-offset: 3px; }
 
 /* ── Entrances ─────────────────────────────────────────────────────────── */
 .auth-carousel-slide.is-active .auth-anim { animation: auth-rise .7s cubic-bezier(.22,1,.36,1) both; animation-delay: calc(var(--i, 0) * 70ms + 120ms); }

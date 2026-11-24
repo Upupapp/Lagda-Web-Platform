@@ -2,12 +2,21 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { usePageMeta } from "../hooks/usePageMeta";
 import lagdaLogo from "../assets/brand/LagdaLogoPrimaryHorizontalFullColor.png";
+import { AppWaveBackdrop } from "../components/platform/AppWaveBackdrop";
+import { useAppShellTheme } from "../hooks/useAppShellTheme";
+import { usePublicMotion } from "../hooks/usePublicMotion";
 
 export function CreateAccountLayout({ children }: { children: ReactNode }) {
   usePageMeta();
+  // The public site's look: navy accents, Libre Caslon headings, the waves.
+  useAppShellTheme("public");
+  usePublicMotion();
 
   return (
     <div className="create-account-shell">
+      {/* The wave backdrop, pinned to the window; the frame (positioned)
+          paints above it. */}
+      <AppWaveBackdrop fixed enter />
       <div className="create-account-frame">
         <Link
           to="/esignature"
@@ -48,22 +57,25 @@ export function CreateAccountLayout({ children }: { children: ReactNode }) {
         </footer>
       </div>
       <style>{`
-				.create-account-shell { min-height: 100vh; background: #f8fbff; color: #07111f; font-family: 'Geist', sans-serif; padding: 24px clamp(20px, 5vw, 72px); }
-				.create-account-frame { max-width: 1080px; min-height: calc(100vh - 48px); margin: 0 auto; }
-				.create-account-back { display: inline-flex; align-items: center; gap: 8px; color: #0063b1; font-size: 12px; font-weight: 700; text-decoration: none; }
+				.create-account-shell { min-height: 100vh; background: transparent; color: #07111f; font-family: 'Geist', sans-serif; padding: 24px clamp(20px, 5vw, 72px); }
+				.create-account-frame { position: relative; max-width: 1080px; min-height: calc(100vh - 48px); margin: 0 auto; }
+				.create-account-back { display: inline-flex; align-items: center; gap: 8px; color: #1b3a66; font-size: 12px; font-weight: 700; text-decoration: none; }
+				.create-account-back:hover { text-decoration: underline; text-decoration-color: #4a9ad8; text-underline-offset: 4px; }
 				.create-account-back span { font-size: 18px; line-height: 0; }
 				.create-account-main { display: flex; justify-content: center; padding: 36px 0; }
 				.create-account-card { width: 100%; box-sizing: border-box; background: #ffffff; border: 1px solid #dbeafe; border-radius: 18px; padding: 36px 48px 42px; box-shadow: 0 18px 50px rgba(7,17,31,0.08); }
 				.create-account-card-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
 				.create-account-card-header img { display: block; width: 273px; height: 78px; object-fit: cover; object-position: left center; }
 				.create-account-card-header h1 { color: #050505; font-family: 'Geist', sans-serif; font-size: 22px; font-weight: 800; line-height: 1.08; letter-spacing: -0.015em; text-align: right; text-transform: uppercase; max-width: 330px; margin: 0; }
-				.create-account-footer { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 28px 12px 4px; color: #64748b; font-size: 11px; text-align: center; }
+				.create-account-footer { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 28px 12px 4px; color: #5b6b7f; font-size: 11px; text-align: center; }
 				.create-account-footer-logo { display: block; width: 205px; height: 65px; object-fit: cover; margin-bottom: 3px; position: relative; top: 13px; }
 				.create-account-footer p { max-width: 680px; margin: 0; line-height: 1.55; }
 				.create-account-footer-description { color: #334155; font-size: 12px; }
-				.create-account-footer-product { color: #64748b; font-weight: 600; }
-				.create-account-footer-copyright { color: #5b6776; font-size: 10px; }
-				.create-account-back:focus-visible { outline: 2px solid #0078d4; outline-offset: 4px; border-radius: 4px; }
+				/* Darker than before: these sit on the wave backdrop, which must not
+				   take them under AA. */
+				.create-account-footer-product { color: #5b6b7f; font-weight: 600; }
+				.create-account-footer-copyright { color: #5b6b7f; font-size: 10px; }
+				.create-account-back:focus-visible { outline: 2px solid #1b3a66; outline-offset: 4px; border-radius: 4px; }
 				@media (max-width: 640px) {
 					.create-account-shell { padding: 16px; }
 					.create-account-main { padding: 24px 0; }
