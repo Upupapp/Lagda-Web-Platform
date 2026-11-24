@@ -36,8 +36,9 @@ import { withProcess } from "../../../config/process-screens";
 export const C = {
   NAVY: "#07111F",
   INK: "#1E293B",
-  AZURE: "#0078D4",
-  AZURE_TEXT: "#005A9E",
+  // The app's navy accent (styles/app-shell.css); the names stay for the pages that use them.
+  AZURE: "#1b3a66",
+  AZURE_TEXT: "#1b3a66",
   SLATE: "#475569",
   MUTED: "#64748B",
   BORDER: "#E3E8EF",
@@ -313,7 +314,7 @@ export function ContactsHeader({ section, subtitle, stats, pendingCount, action 
 
 const HEADER_CSS = `
 .ct-header { position: relative; background: #FFFFFF; border-bottom: 1px solid ${C.BORDER}; padding: 22px 24px 12px; }
-.ct-header::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, ${C.NAVY} 0%, #0B3A66 45%, ${C.AZURE} 100%); }
+.ct-header::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, ${C.NAVY} 0%, #1b3a66 45%, #4a9ad8 100%); }
 .ct-header-top { display: flex; align-items: center; gap: 14px; min-width: 0; margin-bottom: 14px; }
 .ct-header-icon { width: 46px; height: 46px; border-radius: 12px; background: ${C.LIGHT}; border: 1.5px solid #BAD7F5; color: ${C.AZURE_TEXT};
   display: flex; align-items: center; justify-content: center; flex-shrink: 0; }

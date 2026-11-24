@@ -145,7 +145,7 @@ export function EmptyStateLayout({
       <div style={{ width: 56, height: 56, borderRadius: 14, background: "#F1F5F9", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, color: "#94A3B8" }}>
         {icon}
       </div>
-      <h2 style={{ color: "#0F172A", ...GF, fontSize: 18, fontWeight: 700, margin: "0 0 8px" }}>{title}</h2>
+      <h2 style={{ color: "#14294d", ...GF, fontSize: 18, fontWeight: 700, margin: "0 0 8px" }}>{title}</h2>
       <p style={{ color: "#64748B", ...GF, fontSize: 14, margin: "0 0 24px", maxWidth: 400, lineHeight: 1.6 }}>{description}</p>
       {action}
     </div>
@@ -212,7 +212,7 @@ export function FormCardHeading({
 }) {
   return (
     <div style={{ marginBottom: description ? 20 : 16 }}>
-      <h2 style={{ ...GF, margin: 0, fontSize: 16, fontWeight: 700, color: "#07111F" }}>
+      <h2 style={{ ...GF, margin: 0, fontSize: 16, fontWeight: 700, color: "#14294d" }}>
         {title}
       </h2>
       {description && (

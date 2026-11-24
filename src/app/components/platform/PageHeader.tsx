@@ -73,7 +73,7 @@ export function PageHeader({
         {/* Title row */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: description ? 4 : (tabs ? 0 : 16) }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <h1 style={{ color: "#0F172A", ...GF, fontSize: compact ? 18 : 22, fontWeight: 800, margin: 0, letterSpacing: "-0.02em", textWrap: "balance" }}>
+            <h1 style={{ color: "#14294d", ...GF, fontSize: compact ? 18 : 22, fontWeight: 800, margin: 0, letterSpacing: "-0.02em", textWrap: "balance" }}>
               {title}
             </h1>
             {status && <div>{status}</div>}
@@ -105,7 +105,7 @@ export function PageHeader({
       )}
 
       <style>{`
-        .breadcrumb-link:hover { color: #0078D4 !important; }
+        .breadcrumb-link:hover { color: #1b3a66 !important; text-decoration: underline; text-decoration-color: #4a9ad8; text-underline-offset: 3px; }
       `}</style>
     </div>
   );

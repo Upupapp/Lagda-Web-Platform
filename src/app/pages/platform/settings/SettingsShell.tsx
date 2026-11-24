@@ -52,8 +52,9 @@ export const SET = {
   MUTED: "#5B6B7F",
   BORDER: "#E2E8F0",
   CANVAS: "#F8FAFC",
-  AZURE: "#0078D4",
-  AZURE_TEXT: "#005A9E",
+  // The app's navy accent (styles/app-shell.css); the names stay for the pages that use them.
+  AZURE: "#1b3a66",
+  AZURE_TEXT: "#1b3a66",
   TEAL: "#0F766E",
   TEAL_TEXT: "#115E59",
   DANGER: "#B91C1C",
@@ -480,7 +481,7 @@ const SHELL_CSS = `
 .st-shell { background: ${SET.CANVAS}; min-height: 100%; padding-bottom: 48px; overflow-x: clip; }
 .st-inner { max-width: 1120px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; min-width: 0; }
 .st-header { position: relative; background: #FFFFFF; border-bottom: 1px solid ${SET.BORDER}; padding: 22px 0 16px; }
-.st-header::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, ${SET.NAVY} 0%, #0B3A66 45%, ${SET.AZURE} 100%); }
+.st-header::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, ${SET.NAVY} 0%, #1b3a66 45%, #4a9ad8 100%); }
 .st-identity { display: flex; align-items: center; gap: 14px; min-width: 0; margin-bottom: 18px; }
 .st-identity-icon { width: 46px; height: 46px; border-radius: 12px; background: #F0F7FF; border: 1.5px solid #BAD7F5; color: ${SET.AZURE_TEXT};
   display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -714,7 +715,7 @@ const COLOR_TONE: Record<string, Tone> = {
   "#16A34A": "success", "#15803D": "success", "#166534": "success",
   "#D97706": "warning", "#92400E": "warning",
   "#DC2626": "danger", "#B91C1C": "danger", "#991B1B": "danger",
-  "#0078D4": "info", "#005A9E": "info",
+  "#0078D4": "info", "#005A9E": "info", "#1B3A66": "info",
   "#C9960C": "accent", "#CA8A04": "accent",
   "#0F766E": "teal",
 };

@@ -54,7 +54,8 @@ import {
 } from "./sections";
 
 const NAVY = "#07111F";
-const AZURE = "#0078D4";
+// The app's navy accent (styles/app-shell.css).
+const AZURE = "#1b3a66";
 const SLATE = ON_LIGHT.slate;
 const SILVER = ON_LIGHT.muted;
 const BORDER = "#E3E8EF";
@@ -463,7 +464,7 @@ const SHELL_CSS = `
 .ws-shell { background: #F8FAFC; min-height: 100%; padding-bottom: 48px; overflow-x: clip; }
 .ws-shell-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; min-width: 0; }
 .ws-shell-header { position: relative; background: #FFFFFF; border-bottom: 1px solid ${BORDER}; padding: 22px 0 18px; }
-.ws-shell-header::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, ${NAVY} 0%, #0B3A66 45%, ${AZURE} 100%); }
+.ws-shell-header::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, ${NAVY} 0%, #1b3a66 45%, #4a9ad8 100%); }
 .ws-identity { display: flex; align-items: center; gap: 14px; min-width: 0; margin-bottom: 18px; }
 .ws-mark-logo { background: #FFFFFF !important; overflow: hidden; padding: 3px; box-sizing: border-box; }
 .ws-mark-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
@@ -508,7 +509,7 @@ const SHELL_CSS = `
   transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, color 160ms ease; }
 .ws-part:hover { border-color: #C9D5E3; box-shadow: 0 1px 2px rgba(7,17,31,0.05), 0 6px 14px -10px rgba(7,17,31,0.25); }
 .ws-part:focus-visible { box-shadow: 0 0 0 3px rgba(0,120,212,0.35); border-color: ${AZURE}; }
-.ws-part[data-active="true"] { background: #EFF6FF; border-color: ${AZURE}; color: #005A9E;
+.ws-part[data-active="true"] { background: #EFF6FF; border-color: ${AZURE}; color: #1b3a66;
   box-shadow: 0 0 0 3px rgba(0,120,212,0.12), 0 8px 18px -12px rgba(0,120,212,0.5); }
 .ws-part-icon { position: relative; width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
   background: #FFFFFF; border: 1px solid #DCE4ED; color: #2F4A66; transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease; }
@@ -551,7 +552,7 @@ const SHELL_CSS = `
   transition: color 140ms ease, border-color 140ms ease, background-color 140ms ease; }
 .ws-subtab:hover { color: ${NAVY}; border-bottom-color: #CBD5E1; background: rgba(241,245,249,0.7); }
 .ws-subtab:focus-visible { box-shadow: inset 0 0 0 2px rgba(0,120,212,0.45); }
-.ws-subtab[data-active="true"] { color: #005A9E; border-bottom-color: ${AZURE}; font-weight: 700; }
+.ws-subtab[data-active="true"] { color: #1b3a66; border-bottom-color: ${AZURE}; font-weight: 700; }
 .ws-subtab-count { box-sizing: border-box; min-width: 20px; height: 18px; padding: 0 6px; border-radius: 999px;
   display: inline-flex; align-items: center; justify-content: center; font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 700;
   background: #E9EEF4; color: #475569; border: 1px solid transparent; }
