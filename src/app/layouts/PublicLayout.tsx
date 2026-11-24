@@ -3,6 +3,9 @@ import { useEffect, Suspense } from "react";
 import { SkipLink, PublicHeader, PublicFooter } from "@/app/components/shell";
 import { usePageMeta } from "@/app/hooks/usePageMeta";
 import { useStructuredData } from "@/app/hooks/useStructuredData";
+import { AppWaveBackdrop } from "@/app/components/platform/AppWaveBackdrop";
+import { useAppShellTheme } from "@/app/hooks/useAppShellTheme";
+import { usePublicMotion, usePublicReveal } from "@/app/hooks/usePublicMotion";
 
 function PageLoader() {
   return (
@@ -37,6 +40,13 @@ export function PublicLayout() {
 
   usePageMeta();
   useStructuredData();
+  // The navy accents, the Libre Caslon headings and the wave backdrop's
+  // colours (styles/app-shell.css, styles/public-shell.css).
+  useAppShellTheme("public");
+  // Each page opens with its heading rising; sections below the fold rise into
+  // view as the page scrolls. Never with reduced motion (hooks/usePublicMotion.ts).
+  usePublicMotion();
+  usePublicReveal(pathname);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -45,24 +55,31 @@ export function PublicLayout() {
   return (
     <div
       style={{
-        background: "aliceblue",
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
       }}
     >
+      {/* The wave backdrop, pinned to the window behind every public page,
+          its top-right wave starting under the fixed header. It eases in from
+          the corners when the site first opens and then stays put: it belongs
+          to this layout, so moving between pages does not replay it. */}
+      <AppWaveBackdrop fixed underHeader enter />
       <SkipLink />
       <PublicHeader />
+      {/* Positioned (no z-index) so the page paints above the backdrop. */}
       <main
         id="main-content"
         tabIndex={-1}
-        style={{ flex: 1, paddingTop: 72, outline: "none" }}
+        style={{ flex: 1, paddingTop: 64, outline: "none", position: "relative" }}
       >
         <Suspense fallback={<PageLoader />}>
           <Outlet />
         </Suspense>
       </main>
-      <PublicFooter />
+      <div style={{ position: "relative" }}>
+        <PublicFooter />
+      </div>
     </div>
   );
 }
