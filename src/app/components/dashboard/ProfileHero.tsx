@@ -149,15 +149,15 @@ const CSS = `
 .ph-logo-initials { font-family: 'Geist', sans-serif; font-size: 24px; font-weight: 800; color: #FFFFFF; letter-spacing: 0.02em; }
 .ph-body { display: flex; align-items: flex-end; gap: 20px; padding: 0 24px 20px; flex-wrap: wrap; }
 .ph-avatar { position: relative; margin-top: -72px; flex-shrink: 0; line-height: 0; z-index: 1; }
-.ph-camera { position: absolute; right: 4px; bottom: 6px; width: 38px; height: 38px; border-radius: 50%; border: 3px solid #FFFFFF; background: #0B63D1;
+.ph-camera { position: absolute; right: 4px; bottom: 6px; width: 38px; height: 38px; border-radius: 50%; border: 3px solid #FFFFFF; background: #1b3a66;
   color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 6px rgba(7,17,31,0.3); padding: 0; }
-.ph-camera:hover:not(:disabled) { background: #0A57B8; }
-.ph-camera:focus-visible { outline: 3px solid rgba(0,120,212,0.45); outline-offset: 2px; }
+.ph-camera:hover:not(:disabled) { background: #14294d; }
+.ph-camera:focus-visible { outline: 2px solid #1b3a66; outline-offset: 2px; }
 .ph-camera:disabled { cursor: progress; }
 .ph-spin { animation: ph-spin 900ms linear infinite; }
 @keyframes ph-spin { to { transform: rotate(360deg); } }
 .ph-text { flex: 1 1 260px; min-width: 0; padding-top: 14px; }
-.ph-name { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0; font-family: 'Geist', sans-serif; font-size: 26px; font-weight: 800; color: #0B1F4B; line-height: 1.2; }
+.ph-name { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0; font-family: 'Geist', sans-serif; font-size: 26px; font-weight: 800; color: #14294d; line-height: 1.2; }
 .ph-name > span { min-width: 0; overflow-wrap: anywhere; }
 .ph-verified { flex-shrink: 0; color: #FFFFFF; fill: #2F80ED; }
 .ph-second { font-family: 'Geist', sans-serif; font-size: 16px; color: #7B8BA3; margin: 4px 0 0; }
@@ -165,14 +165,14 @@ const CSS = `
 .ph-email span { overflow-wrap: anywhere; }
 .ph-email svg { flex-shrink: 0; }
 .ph-hint { font-family: 'Geist', sans-serif; font-size: 13px; margin: 8px 0 0; }
-.ph-hint a { color: #005A9E; font-weight: 600; text-decoration: none; }
-.ph-hint a:hover { text-decoration: underline; }
+.ph-hint a { color: #1b3a66; font-weight: 600; text-decoration: none; }
+.ph-hint a:hover { text-decoration: underline; text-decoration-color: #4a9ad8; text-underline-offset: 3px; }
 .ph-error { font-family: 'Geist', sans-serif; font-size: 13px; color: #B91C1C; margin: 8px 0 0; }
 .ph-edit { display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 20px; border-radius: 12px; border: 1.5px solid #D6DEE8;
   background: #FFFFFF; color: #334155; font-family: 'Geist', sans-serif; font-size: 14.5px; font-weight: 600; text-decoration: none; white-space: nowrap;
   align-self: center; margin-left: auto; box-shadow: 0 1px 2px rgba(7,17,31,0.05); }
-.ph-edit:hover { border-color: #0078D4; color: #005A9E; }
-.ph-edit:focus-visible { outline: 3px solid rgba(0,120,212,0.35); outline-offset: 2px; }
+.ph-edit:hover { border-color: #4a9ad8; color: #1b3a66; background: #eef5fc; }
+.ph-edit:focus-visible { outline: 2px solid #1b3a66; outline-offset: 2px; }
 @media (max-width: 640px) {
   .ph-card { border-radius: 16px; margin-top: 14px; }
   .ph-band { height: 92px; }

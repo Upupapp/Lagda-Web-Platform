@@ -41,6 +41,7 @@ import {
 import { ProfileHero } from "./ProfileHero";
 import { FreePlanHero } from "./FreePlanHero";
 import { ChatbotShowcase } from "./ChatbotShowcase";
+import { HomeCharts } from "./HomeCharts";
 import { useMyPlan } from "../../hooks/usePlans";
 import { useLiveQuery } from "../../services/live/live-query";
 import { usePlatform } from "../../context/PlatformContext";
@@ -67,7 +68,8 @@ import { usePrepareLaunch } from "../../hooks/usePrepareLaunch";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
-const AZURE  = "#0078D4";
+// The app's accent: navy for primary actions, links and progress (was azure).
+const AZURE  = "#1b3a66";
 const GREEN  = "#059669";
 const RED    = "#B91C1C";
 const AMBER  = "#B45309";
@@ -166,7 +168,7 @@ function Panel({ icon: Icon, title, count, subtitle, action, label, children }: 
  * nobody would guess is a button.
  */
 function GlanceTile({ icon: Icon, label, value, sub, tone, to, onOpen, opens }: {
-  icon: LucideIcon; label: string; value: number; sub: string; tone: "azure" | "red" | "slate" | "green";
+  icon: LucideIcon; label: string; value: number; sub: string; tone: "navy" | "sky" | "red" | "slate" | "green";
   to?: string; onOpen?: () => void;
   /** What activating the tile does, for its accessible name: "Open sent documents". */
   opens: string;
@@ -384,7 +386,7 @@ function ProgressMeter({ signed, of }: { signed: number; of: number }) {
       <div
         role="meter" aria-valuenow={signed} aria-valuemin={0} aria-valuemax={of}
         aria-label={`${signed} of ${of} completed`}
-        style={{ width: 72, height: 6, borderRadius: 3, background: SLATE2, overflow: "hidden", flexShrink: 0 }}
+        style={{ width: 72, height: 6, borderRadius: 3, background: "#e6f0fa", overflow: "hidden", flexShrink: 0 }}
       >
         <div style={{ width: `${pct}%`, height: "100%", background: pct === 100 ? GREEN : AZURE }} />
       </div>
@@ -535,13 +537,13 @@ export function RealDashboard() {
             {/* 2 — the counts, scoped honestly */}
             <Panel label="Document status summary" icon={BarChart3} title="At a glance">
               <div className="hd-tiles">
-                <GlanceTile icon={Send} tone="azure" label="In flight" value={summary.inFlight} sub="Sent, waiting on signatures"
+                <GlanceTile icon={Send} tone="navy" label="In flight" value={summary.inFlight} sub="Sent, waiting on signatures"
                   to="/app/documents" opens="Open sent documents" />
                 {/* Declined and expired sit in two different lists; the panel
                     above holds both, so the tile brings it into view. */}
                 <GlanceTile icon={Clock} tone={summary.attention > 0 ? "red" : "slate"} label="Needs attention" value={summary.attention} sub="Declined or expired"
                   onOpen={showAttention} opens="Show what needs attention" />
-                <GlanceTile icon={FileText} tone="slate" label="Drafts" value={summary.drafts} sub="Prepared, not yet sent"
+                <GlanceTile icon={FileText} tone="sky" label="Drafts" value={summary.drafts} sub="Prepared, not yet sent"
                   to="/app/documents?list=draft" opens="Open drafts" />
                 <GlanceTile icon={CircleCheck} tone="green" label="Completed" value={summary.completed} sub="Every signature collected"
                   to="/app/documents?list=completed" opens="Open completed documents" />
@@ -553,6 +555,11 @@ export function RealDashboard() {
                 </p>
               )}
             </Panel>
+
+            {/* 2b — the same requests as charts: each week's sending and
+                completing, where they all stand, and the participants still
+                to come. Built from the same rows as the tiles above. */}
+            <HomeCharts items={items} summary={summary} paged={paged} now={now} />
 
             {/* 3 — in flight */}
             {flying.length > 0 && (
@@ -597,7 +604,8 @@ export function RealDashboard() {
               </Panel>
             )}
 
-            <p style={{ ...GF, fontSize: 12, color: SLATE4, margin: "28px 2px 0" }}>
+            {/* Slate-600: it sits on the page backdrop, where a wave may pass under it. */}
+            <p style={{ ...GF, fontSize: 12, color: "#475569", margin: "28px 2px 0" }}>
               Everything above comes from your signing requests.
             </p>
           </>
@@ -627,7 +635,7 @@ export function RealDashboard() {
         />
       )}
       <style>{`
-        .dashboard-decline-review:hover { background: #F0F7FF; }
+        .dashboard-decline-review:hover { background: #eef5fc; border-color: #4a9ad8 !important; }
         .dashboard-decline-review:focus-visible { outline: 2px solid ${AZURE}; outline-offset: 2px; }
         ${HOME_CSS}
       `}</style>
@@ -642,15 +650,16 @@ const HOME_CSS = `
 .hd-panel { background: #FFFFFF; border: 1px solid #E6EBF2; border-radius: 18px; padding: 18px 18px 14px; margin-top: 16px;
   box-shadow: 0 1px 2px rgba(7,17,31,0.03); min-width: 0; }
 .hd-panel-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; min-width: 0; }
-.hd-panel-icon { color: #0B1F4B; flex-shrink: 0; margin-top: 1px; }
+.hd-panel-icon { color: #1b3a66; flex-shrink: 0; margin-top: 1px; }
 .hd-panel-title-row { display: flex; align-items: center; gap: 10px; }
-.hd-panel-title { margin: 0; font-family: 'Geist', sans-serif; font-size: 18px; font-weight: 700; color: #0B1F4B; }
+.hd-panel-title { margin: 0; font-family: 'Geist', sans-serif; font-size: 18px; font-weight: 700; color: #14294d; }
 .hd-count { font-family: 'Geist', sans-serif; font-size: 12px; font-weight: 700; min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; border-radius: 999px;
-  display: inline-flex; align-items: center; justify-content: center; background: #E6F0FB; color: #1D4ED8; }
+  display: inline-flex; align-items: center; justify-content: center; background: #e6f0fa; color: #1b3a66; }
 .hd-panel-sub { font-family: 'Geist', sans-serif; font-size: 14px; color: #64748B; margin: 4px 0 0; }
 .hd-viewall { display: inline-flex; align-items: center; gap: 6px; min-height: 42px; padding: 0 14px 0 16px; border-radius: 12px; border: 1.5px solid #D6DEE8;
   font-family: 'Geist', sans-serif; font-size: 14px; font-weight: 600; color: #334155; text-decoration: none; white-space: nowrap; flex-shrink: 0; }
-.hd-viewall:hover { border-color: #0078D4; color: #005A9E; }
+.hd-viewall:hover { border-color: #4a9ad8; color: #1b3a66; background: #eef5fc; }
+.hd-viewall:focus-visible { outline: 2px solid #1b3a66; outline-offset: 2px; }
 .hd-row { list-style: none; display: flex; align-items: center; gap: 14px; min-width: 0; background: #FFFFFF; border: 1px solid #E6EBF2; border-radius: 12px;
   padding: 14px 16px; margin-bottom: 10px; font-family: 'Geist', sans-serif; }
 .hd-row:last-child { margin-bottom: 0; }
@@ -659,32 +668,35 @@ const HOME_CSS = `
 .hd-row-actions { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
 .hd-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1.5px solid #D6DEE8;
   background: #FFFFFF; font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; white-space: nowrap; }
-.hd-btn[data-variant="primary"] { color: #1D6FD1; border-color: #CFE0F5; }
-.hd-btn:hover { border-color: #0078D4; color: #005A9E; background: #F5F9FE; }
-.hd-btn:focus-visible { outline: 3px solid rgba(0,120,212,0.35); outline-offset: 1px; }
+.hd-btn[data-variant="primary"] { color: #1b3a66; border-color: #c9ddf1; }
+.hd-btn:hover { border-color: #4a9ad8; color: #1b3a66; background: #eef5fc; }
+.hd-btn[aria-pressed="true"] { border-color: #c9ddf1; color: #1b3a66; background: #e6f0fa; }
+.hd-btn:focus-visible { outline: 2px solid #1b3a66; outline-offset: 2px; }
 .hd-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .hd-tile { display: flex; gap: 14px; align-items: flex-start; border: 1px solid #E6EBF2; border-radius: 14px; padding: 16px; background: #FFFFFF; min-width: 0;
   box-shadow: 0 6px 16px -14px rgba(7,17,31,0.4); }
 /* A tile is a link or a button: it looks like the card it was, and says it can be opened. */
 a.hd-tile, button.hd-tile { text-decoration: none; color: inherit; text-align: left; font: inherit; cursor: pointer; width: 100%; box-sizing: border-box;
   transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s; }
-a.hd-tile:hover, button.hd-tile:hover { border-color: #B9CBE4; box-shadow: 0 10px 22px -14px rgba(7,17,31,0.5); transform: translateY(-1px); }
-a.hd-tile:focus-visible, button.hd-tile:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
+a.hd-tile:hover, button.hd-tile:hover { border-color: #9cc4e8; box-shadow: 0 10px 22px -14px rgba(7,17,31,0.5); transform: translateY(-1px); }
+a.hd-tile:focus-visible, button.hd-tile:focus-visible { outline: 2px solid #1b3a66; outline-offset: 2px; }
 /* The arrow sits in the corner, out of the text's way, at every width. */
 a.hd-tile, button.hd-tile { position: relative; }
 .hd-tile-go { position: absolute; top: 14px; right: 12px; color: #94A3B8; transition: transform 0.12s, color 0.12s; }
-.hd-tile:hover .hd-tile-go, .hd-tile:focus-visible .hd-tile-go { color: #0078D4; transform: translateX(2px); }
+.hd-tile:hover .hd-tile-go, .hd-tile:focus-visible .hd-tile-go { color: #4a9ad8; transform: translateX(2px); }
 .hd-attention-anchor { scroll-margin-top: 72px; }
 .hd-attention-anchor:focus { outline: none; }
 @media (prefers-reduced-motion: reduce) { a.hd-tile, button.hd-tile, .hd-tile-go { transition: none; } a.hd-tile:hover, button.hd-tile:hover { transform: none; } }
 .hd-tile-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.hd-tile[data-tone="azure"] .hd-tile-icon { background: #E6F0FB; color: #1D6FD1; }
+/* The tones match the charts below: in flight navy, drafts sky, completed green, needs attention red. */
+.hd-tile[data-tone="navy"] .hd-tile-icon { background: #e6f0fa; color: #1b3a66; }
+.hd-tile[data-tone="sky"] .hd-tile-icon { background: #eaf3fb; color: #2f7cbf; }
 .hd-tile[data-tone="red"] .hd-tile-icon { background: #FDECEC; color: #DC2626; }
 .hd-tile[data-tone="slate"] .hd-tile-icon { background: #EEF2F7; color: #334155; }
 .hd-tile[data-tone="green"] .hd-tile-icon { background: #E3F6EC; color: #059669; }
 .hd-tile-label { font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #475569; }
-.hd-tile-value { font-family: 'Geist', sans-serif; font-size: 34px; font-weight: 800; line-height: 1.1; margin-top: 6px; color: #0B1F4B; }
-.hd-tile[data-tone="azure"] .hd-tile-value { color: #1D6FD1; }
+.hd-tile-value { font-family: 'Geist', sans-serif; font-size: 34px; font-weight: 800; line-height: 1.1; margin-top: 6px; color: #14294d; }
+.hd-tile[data-tone="navy"] .hd-tile-value { color: #1b3a66; }
 .hd-tile[data-tone="red"] .hd-tile-value { color: #DC2626; }
 .hd-tile[data-tone="green"] .hd-tile-value { color: #059669; }
 .hd-tile-sub { font-family: 'Geist', sans-serif; font-size: 13px; color: #64748B; margin-top: 8px; }
