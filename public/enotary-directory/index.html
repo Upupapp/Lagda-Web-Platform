@@ -11,13 +11,52 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/brand/tab-icon-32.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/brand/tab-icon-96.png">
   <link rel="apple-touch-icon" href="/brand/LagdaLogoIconFullColorSquare.png">
-  <!-- Fonts are files of this site (assets/fonts, declared in css/styles.css): Tinos for reading text, Manrope for controls. Nothing is fetched from elsewhere. -->
+  <!-- Fonts are files of this site (assets/fonts, declared in css/lagda-look.css): Libre Caslon for headings, names and notes, Geist for everything else, as on the rest of LAGDA's public pages. Nothing is fetched from elsewhere. -->
   <!-- Every path here is relative: opened without the closing slash, the page moves to the address with it first. -->
   <script>if (location.pathname.slice(-18) === "/enotary-directory") location.replace(location.pathname + "/" + location.search + location.hash);</script>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/directory.css">
+  <link rel="stylesheet" href="css/lagda-look.css">
 </head>
 <body>
+  <!-- The navy and sky blue waves behind the page, as on the rest of LAGDA: three corners, a normal blue
+       along each wave's edge, a faint navy depth beneath. Decorative: hidden from assistive technology. -->
+  <div class="dir-waves" aria-hidden="true">
+    <svg class="defs" focusable="false">
+      <defs>
+        <linearGradient id="dw-n" x1="1" y1="0" x2="0.2" y2="1"><stop offset="0" style="stop-color: var(--dw-navy); stop-opacity: 0.12"/><stop offset="1" style="stop-color: var(--dw-navy); stop-opacity: 0"/></linearGradient>
+        <linearGradient id="dw-a" x1="1" y1="0" x2="0.25" y2="0.9"><stop offset="0" style="stop-color: var(--dw-sky-1); stop-opacity: 0.5"/><stop offset="1" style="stop-color: var(--dw-fade); stop-opacity: 0"/></linearGradient>
+        <linearGradient id="dw-b" x1="1" y1="0" x2="0.2" y2="1"><stop offset="0" style="stop-color: var(--dw-sky-2); stop-opacity: 0.4"/><stop offset="1" style="stop-color: var(--dw-fade); stop-opacity: 0"/></linearGradient>
+        <linearGradient id="dw-l" x1="1" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color: var(--dw-sky-2); stop-opacity: 0.45"/><stop offset="1" style="stop-color: var(--dw-fade); stop-opacity: 0"/></linearGradient>
+        <linearGradient id="dw-e" x1="1" y1="0" x2="0.3" y2="0.8"><stop offset="0" style="stop-color: var(--dw-edge); stop-opacity: 0.5"/><stop offset="0.45" style="stop-color: var(--dw-edge); stop-opacity: 0.2"/><stop offset="1" style="stop-color: var(--dw-edge); stop-opacity: 0"/></linearGradient>
+      </defs>
+    </svg>
+    <svg class="tr" viewBox="0 0 600 400" preserveAspectRatio="xMaxYMin meet" focusable="false">
+      <path fill="url(#dw-n)" d="M600,0 H112 C182,40 262,56 344,74 C440,96 500,144 540,224 C566,276 584,330 600,384 Z"/>
+      <path fill="url(#dw-a)" d="M600,0 H150 C214,34 286,46 362,62 C452,80 506,124 546,200 C572,248 588,300 600,352 Z"/>
+      <path fill="url(#dw-b)" d="M600,0 H300 C352,26 402,36 452,48 C520,64 560,106 600,178 Z"/>
+      <path fill="none" stroke="url(#dw-l)" stroke-width="1.5" stroke-linecap="round" d="M206,0 C272,40 348,56 418,74 C494,94 538,142 570,208 C586,242 595,276 600,306"/>
+      <path fill="url(#dw-e)" d="M600,0 H300 C366,18 436,28 500,38 C556,48 588,76 600,128 Z"/>
+    </svg>
+    <svg class="bl" viewBox="0 0 600 400" preserveAspectRatio="xMinYMax meet" focusable="false">
+      <g transform="rotate(180 300 200)">
+        <path fill="url(#dw-n)" d="M600,0 H134 C200,36 274,52 354,70 C446,92 502,136 542,214 C568,264 586,318 600,372 Z"/>
+        <path fill="url(#dw-a)" d="M600,0 H170 C232,30 300,44 372,60 C458,80 510,120 548,192 C572,238 588,290 600,340 Z"/>
+        <path fill="url(#dw-b)" d="M600,0 H320 C366,24 412,34 458,46 C522,62 562,100 600,168 Z"/>
+        <path fill="none" stroke="url(#dw-l)" stroke-width="1.5" stroke-linecap="round" d="M228,0 C290,36 360,52 428,70 C500,90 544,136 574,198 C590,232 596,262 600,290"/>
+        <path fill="url(#dw-e)" d="M600,0 H320 C382,16 448,26 508,36 C560,46 590,72 600,120 Z"/>
+      </g>
+    </svg>
+    <svg class="br" viewBox="0 0 600 400" preserveAspectRatio="xMaxYMax meet" focusable="false">
+      <g transform="translate(0 400) scale(1 -1)">
+        <path fill="url(#dw-n)" d="M600,0 H154 C220,38 290,54 368,72 C456,92 508,136 546,212 C570,260 588,312 600,366 Z"/>
+        <path fill="url(#dw-a)" d="M600,0 H190 C250,32 316,46 386,62 C466,80 514,122 550,190 C574,236 590,286 600,334 Z"/>
+        <path fill="url(#dw-b)" d="M600,0 H372 C412,22 452,32 494,42 C548,56 578,92 600,150 Z"/>
+        <path fill="none" stroke="url(#dw-l)" stroke-width="1.5" stroke-linecap="round" d="M246,0 C306,38 374,54 440,72 C508,92 550,138 578,200 C592,232 597,262 600,288"/>
+        <path fill="url(#dw-e)" d="M600,0 H336 C396,16 458,26 514,34 C564,44 591,70 600,116 Z"/>
+      </g>
+    </svg>
+  </div>
   <div id="site">
     <header class="top">
       <a class="brand" href="#" data-go="market"><img src="assets/header-icon.png" alt="" width="44" height="44"><span class="top-name">LAGDA <b>eNotary</b></span></a>
