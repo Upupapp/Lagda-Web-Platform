@@ -87,7 +87,8 @@ export function UserMenu({ collapsed, onSignOut }: UserMenuProps) {
               <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {user.displayName}
               </p>
-              <p style={{ color: "#64748B", ...GM, fontSize: 9, margin: 0 }}>{roleLabel}</p>
+              {/* Slate-600: a wave sits in the panel's bottom corners behind this row. */}
+              <p style={{ color: "#475569", ...GM, fontSize: 9, margin: 0 }}>{roleLabel}</p>
             </div>
             <ChevronUp size={12} style={{ color: "#64748B", flexShrink: 0, transform: open ? "rotate(180deg)" : undefined, transition: "transform 0.15s" }} aria-hidden />
           </>

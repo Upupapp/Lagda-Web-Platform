@@ -217,7 +217,7 @@ const WorkspaceMenu = forwardRef<HTMLDivElement, WorkspaceMenuProps>(
               </p>
               <WorkspacePlanLine workspace={ws} />
             </div>
-            {isCurrent && <Check size={13} style={{ color: "#0078D4", flexShrink: 0 }} aria-hidden />}
+            {isCurrent && <Check size={13} style={{ color: "#1b3a66", flexShrink: 0 }} aria-hidden />}
           </button>
         );
       })}
@@ -239,7 +239,7 @@ const WorkspaceMenu = forwardRef<HTMLDivElement, WorkspaceMenuProps>(
         >
           {joinLocked
             ? <Lock size={13} aria-hidden style={{ color: "#B45309", flexShrink: 0 }} />
-            : <LogIn size={13} aria-hidden style={{ color: "#0078D4", flexShrink: 0 }} />}
+            : <LogIn size={13} aria-hidden style={{ color: "#1b3a66", flexShrink: 0 }} />}
           <span style={{ flex: 1, minWidth: 0 }}>Join another workspace</span>
           {joinLocked && (
             <span data-testid="workspace-menu-join-plan" style={{ fontSize: 10, fontWeight: 700, color: "#92400E", background: "#FEF3C7", border: "1px solid #FDE68A", borderRadius: 999, padding: "1px 7px", whiteSpace: "nowrap" }}>

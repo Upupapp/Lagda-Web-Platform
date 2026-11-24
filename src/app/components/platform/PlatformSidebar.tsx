@@ -1,4 +1,3 @@
-import { ON_LIGHT } from "../../utils/on-light";
 // Desktop sidebar for the authenticated LAGDA customer platform.
 // Collapses to icon-only mode via a toggle button.
 // Hidden on mobile — MobileNav handles that breakpoint.
@@ -28,10 +27,19 @@ import { usePendingInvitationCount } from "../../hooks/usePendingInvitationCount
 import { InvitationCountBubble, NavCountBubble, NAV_BUBBLES, INVITATION_BUBBLE_STYLES, pendingInvitationsLabel, type NavBubbleKind } from "./InvitationCountBubble";
 import { useNavCounts } from "../../hooks/useNavCounts";
 import { useNavAccess } from "../../hooks/useCanPrepare";
+import { AppWaveBackdrop } from "./AppWaveBackdrop";
 
 const BORDER = "rgba(0,0,0,0.08)";
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const GM     = { fontFamily: "'Geist Mono', monospace" };
+
+// The current page: navy on a pale sky tint (9.9:1), with a hairline of the
+// same tint. A row's count sits on a slightly deeper step so it still reads
+// on the current row.
+const NAV_ACTIVE_BG    = "#e6f0fa";
+const NAV_ACTIVE_LINE  = "#c9ddf1";
+const NAV_ACTIVE_INK   = "#1b3a66";
+const NAV_COUNT_BG     = "#d6e6f6";
 
 // Keyed by the `icon` string on each nav item. A name missing here renders a
 // blank space rather than failing, which is why `nav-icons.test.ts` asserts
@@ -73,9 +81,9 @@ function SidebarItem({ to, icon, label, badge, collapsed }: SidebarItemProps) {
           justifyContent: collapsed ? "center" : "flex-start",
           borderRadius: 8,
           textDecoration: "none",
-          background: isActive ? "rgba(0,120,212,0.14)" : "transparent",
-          border: isActive ? "1px solid rgba(0,120,212,0.22)" : "1px solid transparent",
-          color: isActive ? ON_LIGHT.azure : "#64748B",
+          background: isActive ? NAV_ACTIVE_BG : "transparent",
+          border: isActive ? `1px solid ${NAV_ACTIVE_LINE}` : "1px solid transparent",
+          color: isActive ? NAV_ACTIVE_INK : "#64748B",
           transition: "background 0.12s, color 0.12s",
           position: "relative",
           minHeight: 36,
@@ -84,7 +92,7 @@ function SidebarItem({ to, icon, label, badge, collapsed }: SidebarItemProps) {
       >
         {({ isActive }) => (
           <>
-            <span aria-hidden style={{ flexShrink: 0, color: isActive ? ON_LIGHT.azure : "#64748B", display: "flex", alignItems: "center" }}>
+            <span aria-hidden style={{ flexShrink: 0, color: isActive ? NAV_ACTIVE_INK : "#64748B", display: "flex", alignItems: "center" }}>
               <NavIcon name={icon} />
             </span>
             {!collapsed && (
@@ -93,12 +101,12 @@ function SidebarItem({ to, icon, label, badge, collapsed }: SidebarItemProps) {
               </span>
             )}
             {!collapsed && badge != null && badge > 0 && (
-              <span style={{ ...GM, fontSize: 10, fontWeight: 700, background: "rgba(0,120,212,0.15)", color: ON_LIGHT.azure, borderRadius: 999, padding: "1px 6px", marginLeft: "auto", flexShrink: 0 }}>
+              <span style={{ ...GM, fontSize: 10, fontWeight: 700, background: NAV_COUNT_BG, color: NAV_ACTIVE_INK, borderRadius: 999, padding: "1px 6px", marginLeft: "auto", flexShrink: 0 }}>
                 {badge > 99 ? "99+" : badge}
               </span>
             )}
             {collapsed && badge != null && badge > 0 && (
-              <span style={{ position: "absolute", top: 4, right: 4, width: 8, height: 8, borderRadius: "50%", background: "#0078D4", border: "2px solid #ffffff" }} aria-hidden />
+              <span style={{ position: "absolute", top: 4, right: 4, width: 8, height: 8, borderRadius: "50%", background: NAV_ACTIVE_INK, border: "2px solid #ffffff" }} aria-hidden />
             )}
           </>
         )}
@@ -137,16 +145,16 @@ function DocumentsNavItem({
           minWidth: 0,
           borderRadius: 8,
           textDecoration: "none",
-          background: isActive ? "rgba(0,120,212,0.14)" : "transparent",
-          border: isActive ? "1px solid rgba(0,120,212,0.22)" : "1px solid transparent",
-          color: isActive ? ON_LIGHT.azure : "#64748B",
+          background: isActive ? NAV_ACTIVE_BG : "transparent",
+          border: isActive ? `1px solid ${NAV_ACTIVE_LINE}` : "1px solid transparent",
+          color: isActive ? NAV_ACTIVE_INK : "#64748B",
           transition: "background 0.12s, color 0.12s",
           minHeight: 36,
         })}
       >
         {({ isActive }) => (
           <>
-            <span aria-hidden style={{ flexShrink: 0, color: isActive ? ON_LIGHT.azure : "#64748B", display: "flex", alignItems: "center" }}>
+            <span aria-hidden style={{ flexShrink: 0, color: isActive ? NAV_ACTIVE_INK : "#64748B", display: "flex", alignItems: "center" }}>
               <NavIcon name={icon} />
             </span>
             <span style={{ ...GF, fontSize: 13, fontWeight: isActive ? 600 : 400, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -176,15 +184,15 @@ function CountedNavItem({ to, icon, label, collapsed, count, kind }: {
           display: "flex", alignItems: "center", gap: collapsed ? 0 : 10,
           padding: collapsed ? "9px 0" : "8px 10px", justifyContent: collapsed ? "center" : "flex-start",
           borderRadius: 8, textDecoration: "none",
-          background: isActive ? "rgba(0,120,212,0.14)" : "transparent",
-          border: isActive ? "1px solid rgba(0,120,212,0.22)" : "1px solid transparent",
-          color: isActive ? ON_LIGHT.azure : "#64748B", transition: "background 0.12s, color 0.12s",
+          background: isActive ? NAV_ACTIVE_BG : "transparent",
+          border: isActive ? `1px solid ${NAV_ACTIVE_LINE}` : "1px solid transparent",
+          color: isActive ? NAV_ACTIVE_INK : "#64748B", transition: "background 0.12s, color 0.12s",
           position: "relative", minHeight: 36,
         })}
       >
         {({ isActive }) => (
           <>
-            <span aria-hidden style={{ flexShrink: 0, color: isActive ? ON_LIGHT.azure : "#64748B", display: "flex", alignItems: "center" }}>
+            <span aria-hidden style={{ flexShrink: 0, color: isActive ? NAV_ACTIVE_INK : "#64748B", display: "flex", alignItems: "center" }}>
               <NavIcon name={icon} />
             </span>
             {!collapsed && (
@@ -219,15 +227,15 @@ function InvitationsNavItem({ to, icon, label, collapsed, pending }: {
           display: "flex", alignItems: "center", gap: collapsed ? 0 : 10,
           padding: collapsed ? "9px 0" : "8px 10px", justifyContent: collapsed ? "center" : "flex-start",
           borderRadius: 8, textDecoration: "none",
-          background: isActive ? "rgba(0,120,212,0.14)" : "transparent",
-          border: isActive ? "1px solid rgba(0,120,212,0.22)" : "1px solid transparent",
-          color: isActive ? ON_LIGHT.azure : "#64748B", transition: "background 0.12s, color 0.12s",
+          background: isActive ? NAV_ACTIVE_BG : "transparent",
+          border: isActive ? `1px solid ${NAV_ACTIVE_LINE}` : "1px solid transparent",
+          color: isActive ? NAV_ACTIVE_INK : "#64748B", transition: "background 0.12s, color 0.12s",
           position: "relative", minHeight: 36,
         })}
       >
         {({ isActive }) => (
           <>
-            <span aria-hidden style={{ flexShrink: 0, color: isActive ? ON_LIGHT.azure : "#64748B", display: "flex", alignItems: "center" }}>
+            <span aria-hidden style={{ flexShrink: 0, color: isActive ? NAV_ACTIVE_INK : "#64748B", display: "flex", alignItems: "center" }}>
               <NavIcon name={icon} />
             </span>
             {!collapsed && (
@@ -283,6 +291,10 @@ export function PlatformSidebar() {
       }}
       className="platform-sidebar"
     >
+      {/* The wave essence in the panel's top-right and both bottom corners,
+          behind everything in it (the panel is its own stacking context). */}
+      <AppWaveBackdrop variant="side" />
+
       {/* ── Workspace switcher + collapse toggle ────────────────────────
           The LAGDA logo lives at the far left of PlatformHeader now, so the
           switcher sits at the very top of the sidebar beside the toggle. */}
@@ -333,7 +345,7 @@ export function PlatformSidebar() {
               alignItems: "center",
               justifyContent: collapsed ? "center" : "flex-start",
               gap: collapsed ? 0 : 8,
-              background: "#07111F",
+              background: NAV_ACTIVE_INK,
               color: "white",
               borderRadius: 8,
               padding: collapsed ? "9px 0" : "9px 12px",
@@ -492,8 +504,12 @@ export function PlatformSidebar() {
         .platform-sidebar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 4px; }
         .platform-sidebar a:focus-visible,
         .platform-sidebar button:focus-visible,
-        .sidebar-collapse-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; border-radius: 6px; }
-        .prepare-cta:hover { background: #0B2344 !important; }
+        .sidebar-collapse-btn:focus-visible { outline: 2px solid #1b3a66; outline-offset: 2px; border-radius: 6px; }
+        .prepare-cta:hover { background: #14294d !important; }
+        /* A row under the pointer: a sky wash, navy words, a sky icon. */
+        .platform-sidebar nav a:not(.active):hover { background: #eef5fc !important; color: #1b3a66 !important; }
+        .platform-sidebar nav a:not(.active):hover svg { color: #2f7cbf; }
+        .sidebar-collapse-btn:hover { color: #1b3a66 !important; background: #e6f0fa !important; }
         ${INVITATION_BUBBLE_STYLES}
         @media (prefers-reduced-motion: reduce) {
           .platform-sidebar, .platform-sidebar * { transition: none !important; }
