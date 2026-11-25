@@ -338,8 +338,18 @@ describe("trust invariants", () => {
     "digest (where available)",
   ];
 
+  // Sentences that use a phrase above for something that is not a notice.
+  // The home page's "Know where every document stands" describes the
+  // Documents view, whose "Expiring soon" list is real (see the note above);
+  // it promises no message. Only this exact sentence is allowed.
+  const NOT_A_NOTICE = [
+    "what's waiting on whom, what's about to expire, and what's done — without chasing anyone by email.",
+  ];
+
   it.each(ABSENT_NOTICES)("never promises a notice that is not sent: %s", phrase => {
-    const offenders = PUBLIC_FILES.filter(f => read(f).toLowerCase().includes(phrase));
+    const offenders = PUBLIC_FILES.filter(f =>
+      NOT_A_NOTICE.reduce((text, ok) => text.split(ok).join(""), read(f).toLowerCase()).includes(phrase),
+    );
     expect(offenders.map(rel)).toEqual([]);
   });
 

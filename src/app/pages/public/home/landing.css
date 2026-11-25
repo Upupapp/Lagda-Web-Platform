@@ -1,0 +1,92 @@
+/* Ported from design-handoff/landing/reference/index.html <style>.
+   Every class is prefixed lgl- and the element rules are scoped to .lgl-root,
+   so nothing here reaches other pages. Values are copied, not reinterpreted. */
+
+/* The reference was built on browser defaults. Undo the app's global element
+   rules (Tailwind preflight, theme.css @layer base) inside this page only, so
+   box-sizing, margins, lists, headings, line-height and form controls behave
+   as they do there. Zero specificity: every rule below and every inline style
+   still wins. SVG is left alone, since revert would drop its attributes. */
+:where(.lgl-root),:where(.lgl-root) :where(:not(svg):not(svg *)),:where(.lgl-root) :where(:not(svg):not(svg *))::before,:where(.lgl-root) :where(:not(svg):not(svg *))::after,:where(.lgl-root) ::placeholder{all:revert}
+:where(.lgl-root){display:block;line-height:normal;font-size:16px;font-weight:400;text-align:start}
+:where(.lgl-root) :where(svg){display:inline;vertical-align:baseline}
+
+:where(.lgl-root) a{color:#0B3981;text-decoration:none}
+:where(.lgl-root) a:hover{color:#0078D4}
+:where(.lgl-root) input::placeholder{color:#7A8698}
+.lgl-lg-draw{stroke-dasharray:1;stroke-dashoffset:1;animation:lg-draw 1.1s cubic-bezier(.6,0,.3,1) forwards}
+.lgl-lg-d1{animation-delay:.5s}
+.lgl-lg-d2{animation-delay:1.1s;animation-duration:1.4s}
+.lgl-lg-d3{animation-delay:2.4s;animation-duration:.5s}
+.lgl-lg-d4{animation-delay:3.1s;animation-duration:1.3s}
+.lgl-lg-d5{animation-delay:4.3s;animation-duration:.45s}
+.lgl-lg-stamp{opacity:0;transform:rotate(-14deg) scale(1.6);animation:lg-stamp .45s cubic-bezier(.3,1.4,.5,1) 5s forwards}
+.lgl-lg-fade{opacity:0;transform:translateY(8px);animation:lg-fade .6s ease 5.4s forwards}
+@keyframes lgl-lg-draw{to{stroke-dashoffset:0}}
+@keyframes lgl-lg-stamp{to{opacity:.95;transform:rotate(-14deg) scale(1)}}
+@keyframes lgl-lg-fade{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){
+  .lgl-lg-draw{stroke-dashoffset:0;animation:none}
+  .lgl-lg-stamp{opacity:.95;transform:rotate(-14deg);animation:none}
+  .lgl-lg-fade{opacity:1;transform:none;animation:none}
+}
+.lgl-lg-out{animation:lg-out .3s ease forwards}
+.lgl-lg-in{opacity:0;animation:lg-inn .4s ease forwards}
+.lgl-lg-t1{animation-delay:1.6s}
+.lgl-lg-t2{animation-delay:2.8s}
+.lgl-lg-t3{animation-delay:4s}
+.lgl-lg-t4{animation-delay:4.6s}
+.lgl-lg-bar{width:0;animation:lg-bar 3.2s cubic-bezier(.5,0,.3,1) 1s forwards}
+@keyframes lgl-lg-out{to{opacity:0}}
+@keyframes lgl-lg-inn{to{opacity:1}}
+@keyframes lgl-lg-bar{to{width:100%}}
+@media (prefers-reduced-motion: reduce){
+  .lgl-lg-out{opacity:0;animation:none}
+  .lgl-lg-in{opacity:1;animation:none}
+  .lgl-lg-bar{width:100%;animation:none}
+}
+.lgl-root{--gutter:clamp(20px,4vw,64px)}
+.lgl-wide{max-width:none!important;padding-left:var(--gutter)!important;padding-right:var(--gutter)!important}
+.lgl-hdr-left{display:flex;align-items:center;gap:clamp(24px,3vw,48px);min-width:0}
+.lgl-hdr-nav{display:flex;gap:4px clamp(18px,2vw,30px);font-size:14px;font-weight:500}
+.lgl-hdr-nav a{color:#33405A;white-space:nowrap}
+.lgl-hdr-nav a:hover{color:#0B1730}
+.lgl-hdr-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.lgl-hdr-toggle{display:none;align-items:center;justify-content:center;width:42px;height:42px;margin-left:4px;border:1px solid #DCE2EA;border-radius:10px;background:#fff;color:#0B1730;cursor:pointer}
+.lgl-first-screen{display:flex;flex-direction:column;min-height:100vh;min-height:100svh}
+.lgl-hero-inner{padding-top:clamp(32px,5vh,72px)!important;padding-bottom:clamp(32px,5vh,72px)!important}
+@media (max-width:700px){
+  .lgl-hero-strip dl{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:16px 20px!important;padding-top:18px!important;padding-bottom:20px!important}
+}
+.lgl-hero-strip{position:relative;background:transparent}
+.lgl-hero-strip::before{content:'';position:absolute;top:0;left:var(--gutter);right:var(--gutter);height:1px;background:rgba(11,23,48,.12)}
+.lgl-btn-light:hover{background:#082C66!important}
+.lgl-btn-ghost:hover{background:rgba(11,57,129,.06)!important}
+@media (max-width:1180px){
+  .lgl-hero-chip{display:none!important}
+}
+.lgl-hero-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:60% 35%}
+.lgl-hero-fade{position:absolute;inset:0;background:linear-gradient(0deg,rgba(255,255,255,.97) 0%,rgba(255,255,255,.82) 38%,rgba(255,255,255,.45) 62%,rgba(255,255,255,0) 88%)}
+.lgl-hero-h1,.lgl-hero-lede{text-shadow:0 0 28px rgba(255,255,255,.95),0 0 10px rgba(255,255,255,.8)}
+@media (max-width:900px){
+  .lgl-hero-bg{object-position:60% 35%}
+  .lgl-hero-fade{background:linear-gradient(0deg,rgba(255,255,255,.92) 0%,rgba(255,255,255,.72) 55%,rgba(255,255,255,.25) 100%)}
+  .lgl-hero-inner{padding-bottom:clamp(48px,10vw,80px)!important}
+  .lgl-hero-chip{display:none!important}
+}
+.lgl-btn-primary:hover{background:#082C66!important;color:#fff!important}
+.lgl-hero-h1{font-size:clamp(44px,6.2vw,92px)}
+.lgl-hero-lede{font-size:clamp(17px,1.5vw,20px)}
+.lgl-ftr-nav{display:flex!important;flex-wrap:wrap;justify-content:space-between}
+.lgl-ftr-nav>div{flex:0 1 auto;min-width:140px}
+@media (max-width:1024px){
+  .lgl-hdr-nav{display:none}
+  .lgl-hdr-toggle{display:inline-flex}
+  .lgl-hdr-open .lgl-hdr-nav{display:flex;flex-direction:column;gap:0;position:absolute;left:0;right:0;top:100%;padding:8px var(--gutter) 16px;background:#fff;border-bottom:1px solid #EEF1F5;box-shadow:0 18px 30px -18px rgba(11,23,48,.25)}
+  .lgl-hdr-open .lgl-hdr-nav a{padding:14px 0;border-top:1px solid #EEF1F5;font-size:16px}
+}
+@media (max-width:560px){
+  .lgl-hdr-signin{display:none!important}
+  .lgl-hdr-cta{padding:0 14px!important}
+  .lgl-hero-ctas a{flex:1 1 100%;justify-content:center}
+}

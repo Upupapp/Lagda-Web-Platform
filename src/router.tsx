@@ -2,6 +2,7 @@ import { PlanGate } from "./app/components/platform/PlanGate";
 import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate } from "react-router";
 import { PublicLayout } from "./app/layouts/PublicLayout";
+import { LandingLayout } from "./app/layouts/LandingLayout";
 import { AuthLayout } from "./app/layouts/AuthLayout";
 import { CreateAccountLayout } from "./app/layouts/CreateAccountLayout";
 import { PlatformLayout } from "./app/layouts/PlatformLayout";
@@ -121,9 +122,13 @@ const OnboardingComplete = lazy(() =>
   })),
 );
 
-// Home — original marketing landing page. "/" now renders EsigOverview
-// (the eSignature product overview) instead; Home stays reachable at
-// /home rather than being deleted.
+// Home — the landing page at "/", with its own layout (LandingLayout): it
+// brings its own announcement bar, header and footer.
+const LandingPage = lazy(() =>
+  import("./app/pages/public/home/LandingPage").then((m) => ({
+    default: m.LandingPage,
+  })),
+);
 
 // eSignature family
 const EsigOverview = lazy(() =>
@@ -3162,6 +3167,15 @@ export const router = createBrowserRouter([
     ],
   },
 
+  // ── Home page ────────────────────────────────────────────────────────────────
+  // "/" only. LandingLayout renders no PublicHeader, PublicFooter or backdrop.
+  {
+    path: "/",
+    errorElement: <PublicRouteError />,
+    element: <LandingLayout />,
+    children: [{ index: true, element: <LandingPage /> }],
+  },
+
   // ── Public portal ────────────────────────────────────────────────────────────
   // PublicLayout wraps <Outlet> in <Suspense> so lazy pages get a spinner.
   {
@@ -3169,7 +3183,6 @@ export const router = createBrowserRouter([
     errorElement: <PublicRouteError />,
     element: <PublicLayout />,
     children: [
-      { index: true, element: <EsigOverview /> },
       // The old second home page. Nothing links to it; `/` is the home page.
       { path: "home", element: <Navigate to="/" replace /> },
 

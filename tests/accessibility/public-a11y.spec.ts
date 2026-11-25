@@ -81,7 +81,8 @@ const contrast = (nodes: number): TrackedDefect => ({
 
 // Baselines measured against this build at 1440x900.
 const ROUTES: readonly PublicRoute[] = [
-  { path: "/",           name: "home",       trackedDefects: [contrast(7)] },
+  // Clean since the landing page (design-handoff/landing) replaced it.
+  { path: "/",           name: "home" },
   { path: "/esignature", name: "eSignature", trackedDefects: [contrast(7)] },
   { path: "/workflow",   name: "workflow",   trackedDefects: [contrast(4)] },
   // Clean: any contrast failure here is now a plain violation, not a tracked one.
