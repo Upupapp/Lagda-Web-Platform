@@ -90,3 +90,13 @@
   .lgl-hdr-cta{padding:0 14px!important}
   .lgl-hero-ctas a{flex:1 1 100%;justify-content:center}
 }
+
+/* Wide but short windows: a 1920x1080 laptop with Windows display scaling at
+   125% gives a window of about 1536x700, where the page looks 25% too big. On
+   those the page is drawn at 80%, so it looks as it does on a 1920px window at
+   100%. The first screen still fills the window (100vh / 0.8 = 125vh).
+   Desktop monitors and smaller laptops are untouched. */
+@media (min-width:1500px) and (max-height:800px){
+  .lgl-root{zoom:.8}
+  .lgl-first-screen{min-height:125vh;min-height:125svh}
+}
