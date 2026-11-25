@@ -1024,18 +1024,18 @@ export function LandingPage() {
       </section>
       {/* Footer */}
       <footer style={{ background: "#082A60", color: "#C7D3E6", borderTop: "4px solid #5B2A86" }}>
-        <div className="lgl-wide" style={{ maxWidth: "1240px", margin: "0 auto", boxSizing: "border-box", padding: "72px 32px 0" }}>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "48px 72px", paddingBottom: "64px" }}>
-            <div style={{ flex: "1 1 300px", maxWidth: "360px" }}>
-              <img src={imgLagdaLogoNavy} alt="LAGDA.io" style={{ width: "176px", height: "auto", display: "block", marginBottom: "22px", mixBlendMode: "lighten" }} />
-              <p style={{ margin: "0 0 28px", color: "#E2E9F3", fontSize: "16px", lineHeight: "1.6" }}>
+        <div className="lgl-wide" style={{ maxWidth: "1240px", margin: "0 auto", boxSizing: "border-box", padding: "44px 32px 0" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "32px 64px", paddingBottom: "36px" }}>
+            <div style={{ flex: "1 1 400px", maxWidth: "400px" }}>
+              <img src={imgLagdaLogoNavy} alt="LAGDA.io" style={{ width: "136px", height: "auto", display: "block", marginBottom: "14px", mixBlendMode: "lighten" }} />
+              <p style={{ margin: "0 0 18px", color: "#E2E9F3", fontSize: "14px", lineHeight: "1.55" }}>
                 The Philippine-first electronic signature and document verification platform for legal, business, and institutional work.
               </p>
-              <div style={{ padding: "18px 20px", borderRadius: "16px", background: "rgba(255,255,255,0.06)", border: "1px solid #24508F" }}>
+              <div style={{ padding: "14px 16px", borderRadius: "14px", background: "rgba(255,255,255,0.06)", border: "1px solid #24508F" }}>
                 <p style={{ margin: "0 0 4px", color: "#ffffff", fontSize: "14px", fontWeight: "600" }}>
                   Have a LAGDA-signed document?
                 </p>
-                <p style={{ margin: "0 0 12px", color: "#B3C3DC", fontSize: "13px", lineHeight: "1.5" }}>
+                <p style={{ margin: "0 0 8px", color: "#B3C3DC", fontSize: "13px", lineHeight: "1.5" }}>
                   Check it with its Verification ID — no account needed.
                 </p>
                 <a href="#verify" style={{ color: "#C9B2EC", fontSize: "14px", fontWeight: "600" }}>
@@ -1043,12 +1043,12 @@ export function LandingPage() {
                 </a>
               </div>
             </div>
-            <nav aria-label="Footer" className="lgl-ftr-nav" style={{ flex: "999 1 600px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "40px 24px" }}>
+            <nav aria-label="Footer" className="lgl-ftr-nav" style={{ flex: "999 1 600px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "28px 24px" }}>
               <div>
-                <p style={{ margin: "0 0 18px", color: "#C9B2EC", fontSize: "12px", fontWeight: "600", letterSpacing: "0.08em" }}>
+                <p style={{ margin: "0 0 12px", color: "#C9B2EC", fontSize: "12px", fontWeight: "600", letterSpacing: "0.08em" }}>
                   PRODUCT
                 </p>
-                <ul style={{ margin: "0", padding: "0", listStyle: "none", display: "flex", flexDirection: "column", gap: "12px", fontSize: "14px" }}>
+                <ul style={{ margin: "0", padding: "0", listStyle: "none", display: "flex", flexDirection: "column", gap: "8px", fontSize: "14px" }}>
                   <li>
                     <Link style={{ color: "#E2E9F3" }} to="/esignature">
                       eSignature
@@ -1077,10 +1077,10 @@ export function LandingPage() {
                 </ul>
               </div>
               <div>
-                <p style={{ margin: "0 0 18px", color: "#C9B2EC", fontSize: "12px", fontWeight: "600", letterSpacing: "0.08em" }}>
+                <p style={{ margin: "0 0 12px", color: "#C9B2EC", fontSize: "12px", fontWeight: "600", letterSpacing: "0.08em" }}>
                   SOLUTIONS
                 </p>
-                <ul style={{ margin: "0", padding: "0", listStyle: "none", display: "flex", flexDirection: "column", gap: "12px", fontSize: "14px" }}>
+                <ul style={{ margin: "0", padding: "0", listStyle: "none", display: "flex", flexDirection: "column", gap: "8px", fontSize: "14px" }}>
                   <li>
                     <Link style={{ color: "#E2E9F3" }} to="/solutions/law-firms">
                       Lawyers &amp; law firms
@@ -1109,10 +1109,10 @@ export function LandingPage() {
                 </ul>
               </div>
               <div>
-                <p style={{ margin: "0 0 18px", color: "#C9B2EC", fontSize: "12px", fontWeight: "600", letterSpacing: "0.08em" }}>
+                <p style={{ margin: "0 0 12px", color: "#C9B2EC", fontSize: "12px", fontWeight: "600", letterSpacing: "0.08em" }}>
                   TRUST
                 </p>
-                <ul style={{ margin: "0", padding: "0", listStyle: "none", display: "flex", flexDirection: "column", gap: "12px", fontSize: "14px" }}>
+                <ul style={{ margin: "0", padding: "0", listStyle: "none", display: "flex", flexDirection: "column", gap: "8px", fontSize: "14px" }}>
                   <li>
                     <Link style={{ color: "#E2E9F3" }} to="/security">
                       Security overview
@@ -1141,10 +1141,10 @@ export function LandingPage() {
                 </ul>
               </div>
               <div>
-                <p style={{ margin: "0 0 18px", color: "#C9B2EC", fontSize: "12px", fontWeight: "600", letterSpacing: "0.08em" }}>
+                <p style={{ margin: "0 0 12px", color: "#C9B2EC", fontSize: "12px", fontWeight: "600", letterSpacing: "0.08em" }}>
                   HELP
                 </p>
-                <ul style={{ margin: "0", padding: "0", listStyle: "none", display: "flex", flexDirection: "column", gap: "12px", fontSize: "14px" }}>
+                <ul style={{ margin: "0", padding: "0", listStyle: "none", display: "flex", flexDirection: "column", gap: "8px", fontSize: "14px" }}>
                   <li>
                     <Link style={{ color: "#E2E9F3" }} to="/help">
                       Help center
@@ -1173,10 +1173,10 @@ export function LandingPage() {
                 </ul>
               </div>
               <div>
-                <p style={{ margin: "0 0 18px", color: "#C9B2EC", fontSize: "12px", fontWeight: "600", letterSpacing: "0.08em" }}>
+                <p style={{ margin: "0 0 12px", color: "#C9B2EC", fontSize: "12px", fontWeight: "600", letterSpacing: "0.08em" }}>
                   ENOTARY
                 </p>
-                <ul style={{ margin: "0", padding: "0", listStyle: "none", display: "flex", flexDirection: "column", gap: "12px", fontSize: "14px" }}>
+                <ul style={{ margin: "0", padding: "0", listStyle: "none", display: "flex", flexDirection: "column", gap: "8px", fontSize: "14px" }}>
                   <li>
                     <a style={{ color: "#E2E9F3" }} href={ENOTARY_DIRECTORY_PATH}>
                       Notary directory
@@ -1196,12 +1196,12 @@ export function LandingPage() {
               </div>
             </nav>
           </div>
-          <div style={{ padding: "24px 0", borderTop: "1px solid #24508F" }}>
+          <div style={{ padding: "16px 0", borderTop: "1px solid #24508F" }}>
             <p style={{ margin: "0", maxWidth: "900px", color: "#B3C3DC", fontSize: "12px", lineHeight: "1.6" }}>
               Some documents may still require wet signatures, notarization, personal appearance, or other formalities. Users remain responsible for the requirements that apply to each transaction. LAGDA eNotary is coming soon, subject to Supreme Court accreditation and applicable rules.
             </p>
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "12px 24px", padding: "20px 0 32px", borderTop: "1px solid #24508F", color: "#B3C3DC", fontSize: "13px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "12px 24px", padding: "16px 0 24px", borderTop: "1px solid #24508F", color: "#B3C3DC", fontSize: "13px" }}>
             <p style={{ margin: "0" }}>
               © 2026 UpUp Technologies. LAGDA and the LAGDA shield mark are trademarks of UpUp Technologies.
             </p>
