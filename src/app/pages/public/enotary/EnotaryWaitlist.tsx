@@ -1,18 +1,23 @@
-import { useState } from "react";
-import {
-  EnotaryPageShell, EnotaryStatusBanner, EnotaryDisclaimer,
-  EnotarySection,
-} from "../../../components/enotary/EnotaryComponents";
+import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { ENOTARY_DISCLAIMER } from "./content";
 import { ENOTARY_DIRECTORY_PATH } from "../../../config/enotary-directory";
-import { Link } from "react-router";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { withProcess } from "../../../config/process-screens";
 import { publicInquiriesService, inquiryErrorMessage } from "../../../services/real/public-inquiries.service";
+import { LandingHeader, LandingFooter } from "../home/LandingChrome";
 
-const GF = { fontFamily: "'Geist', sans-serif" };
-const GM = { fontFamily: "'Geist Mono', monospace" };
-const BURGUNDY = "#67023B";
+// Drawn in the landing page's style (pages/public/home): its header and
+// footer, Geist, the navy buttons and the purple eNotary accent. Rendered by
+// LandingLayout, so the public site's header, footer and waves are not shown.
+
+const INK = "#0B1730";
+const BODY = "#3D4A63";
+const MUTED = "#4A5772";
+const NAVY = "#0B3981";
+const PURPLE = "#5B2A86";
+const LINE = "#E3E8EF";
+const ERROR = "#B42318";
 
 type Audience = "individual" | "organization" | "notary" | "legal-professional" | "government" | "";
 type FormState = "idle" | "submitting" | "success" | "error";
@@ -46,17 +51,87 @@ const NON_GUARANTEES = [
   "Does not constitute a commercial offer or agreement",
 ];
 
+const MORE_ENOTARY: { label: string; to: string; staticPage?: boolean }[] = [
+  { label: "Notary Directory", to: ENOTARY_DIRECTORY_PATH, staticPage: true },
+  { label: "Future capabilities", to: "/enotary/future-capabilities" },
+  { label: "Accreditation roadmap", to: "/enotary/accreditation-roadmap" },
+  { label: "eNotary FAQ", to: "/enotary/faq" },
+];
+
+const WIDE: React.CSSProperties = { maxWidth: "1240px", margin: "0 auto", boxSizing: "border-box" };
+
+const inputStyle: React.CSSProperties = {
+  width: "100%", boxSizing: "border-box", height: "52px", padding: "0 16px",
+  border: "1px solid #C3CCD8", borderRadius: "12px", background: "#ffffff",
+  color: INK, font: "16px 'Geist', sans-serif", outline: "none",
+};
+
 function FieldLabel({ htmlFor, children, required }: { htmlFor: string; children: React.ReactNode; required?: boolean }) {
   return (
-    <label htmlFor={htmlFor} style={{ display: "block", color: "#334155", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>
-      {children}{required && <span aria-hidden style={{ color: "#ef4444" }}> *</span>}
+    <label htmlFor={htmlFor} style={{ display: "block", marginBottom: "8px", color: INK, fontSize: "14px", fontWeight: 600 }}>
+      {children}{required && <span aria-hidden style={{ color: ERROR }}> *</span>}
     </label>
   );
 }
 
 function FieldError({ id, message }: { id: string; message?: string }) {
   if (!message) return null;
-  return <p id={id} role="alert" style={{ color: "#ef4444", ...GF, fontSize: 12, margin: "4px 0 0" }}>{message}</p>;
+  return <p id={id} role="alert" style={{ margin: "6px 0 0", color: ERROR, fontSize: "13px" }}>{message}</p>;
+}
+
+/** The accreditation disclaimer, in the landing page's purple. */
+function Disclaimer({ children }: { children?: React.ReactNode }) {
+  return (
+    <div style={{ padding: "16px 18px", borderRadius: "12px", background: "#F3EDFA", border: "1px solid #E2D6F3", borderLeft: `4px solid ${PURPLE}` }}>
+      <p style={{ margin: 0, color: "#3E1C5E", fontSize: "14px", lineHeight: 1.6 }}>
+        {children ?? (
+          <>
+            <strong style={{ fontWeight: 700 }}>LAGDA eNotary is Coming Soon</strong> and Subject to Supreme Court Accreditation and applicable rules. LAGDA does not currently represent this service as accredited, approved, or available.
+          </>
+        )}
+      </p>
+    </div>
+  );
+}
+
+/** The landing page's shell: its header, the page, its footer. */
+function Shell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="lgl-root" style={{ fontFamily: "'Geist', sans-serif", color: INK, background: "#ffffff", minWidth: 0 }}>
+      <LandingHeader />
+      {children}
+      <LandingFooter />
+    </div>
+  );
+}
+
+function MoreAboutEnotary() {
+  const tile: React.CSSProperties = {
+    display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px",
+    padding: "18px 20px", borderRadius: "16px", border: `1px solid ${LINE}`, background: "#ffffff",
+    color: INK, fontSize: "16px", fontWeight: 600,
+  };
+  return (
+    <section aria-labelledby="wl-more-h" style={{ background: "#ffffff", borderTop: "1px solid #EEF1F5" }}>
+      <div className="lgl-wide" style={{ ...WIDE, padding: "56px 32px 64px" }}>
+        <h2 id="wl-more-h" style={{ margin: "0 0 20px", color: INK, fontSize: "22px", fontWeight: 700, letterSpacing: "-0.02em" }}>
+          More about LAGDA eNotary
+        </h2>
+        <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
+          {MORE_ENOTARY.map((item) => (
+            <li key={item.to}>
+              {item.staticPage ? (
+                // A static page outside the app: a full page load.
+                <a href={item.to} className="lgl-btn-ghost" style={tile}>{item.label}<span aria-hidden style={{ color: NAVY }}>→</span></a>
+              ) : (
+                <Link to={item.to} className="lgl-btn-ghost" style={tile}>{item.label}<span aria-hidden style={{ color: NAVY }}>→</span></Link>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
 }
 
 export function EnotaryWaitlist() {
@@ -64,6 +139,11 @@ export function EnotaryWaitlist() {
   const [errors, setErrors] = useState<Partial<Record<keyof WaitlistFields, string>>>({});
   const [formState, setFormState] = useState<FormState>("idle");
   const [errorText, setErrorText] = useState("Something went wrong. Please try again.");
+
+  // The confirmation replaces a long form: start it at the top of the page.
+  useEffect(() => {
+    if (formState === "success") window.scrollTo({ top: 0, behavior: "instant" });
+  }, [formState]);
 
   const set = <K extends keyof WaitlistFields>(key: K, value: WaitlistFields[K]) =>
     setFields((f) => ({ ...f, [key]: value }));
@@ -107,164 +187,166 @@ export function EnotaryWaitlist() {
     setTimeout(() => { setFormState("success"); }, 900);
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%", background: "#ffffff", border: "1px solid rgba(0,0,0,0.14)",
-    borderRadius: 8, color: "#07111F", ...GF, fontSize: 14, padding: "11px 14px", outline: "none", boxSizing: "border-box",
-  };
+  const border = (bad?: string) => (bad ? ERROR : "#C3CCD8");
 
   if (formState === "success") {
     return (
-      <EnotaryPageShell>
-        <EnotaryStatusBanner />
-        <section style={{ padding: "80px 24px", minHeight: "50vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ maxWidth: 580, width: "100%", textAlign: "center" }}>
-            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(103,2,59,0.1)", border: "1px solid rgba(176,18,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: 24 }}>✓</div>
-            <h2 style={{ color: "#07111F", ...GF, fontSize: "clamp(20px, 3vw, 28px)", fontWeight: 900, margin: "0 0 12px" }}>{USE_REAL_BACKEND ? "You are on the list" : "Information validated"}</h2>
-            <p data-testid="waitlist-received" role="status" style={{ color: "#334155", ...GF, fontSize: 15, lineHeight: 1.7, margin: "0 0 20px" }}>
-              {USE_REAL_BACKEND
-                ? <>We will email <strong>{fields.email.trim()}</strong> when there is news about LAGDA eNotary.</>
-                : "Your information has been validated in this frontend demonstration. Nothing was sent: the live site stores the sign-up and tells LAGDA."}
-            </p>
-            <div style={{ background: "rgba(103,2,59,0.06)", border: "1px solid rgba(176,18,98,0.2)", borderRadius: 10, padding: "14px 18px", marginBottom: 24 }}>
-              <p style={{ color: "#67023B", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-                {ENOTARY_DISCLAIMER} Your waitlist registration does not create a LAGDA account, confirm eligibility, or guarantee access to any future service.
+      <Shell>
+        <section aria-labelledby="wl-done-h" style={{ background: "#F7F9FC", borderBottom: "1px solid #EEF1F5" }}>
+          <div className="lgl-wide" style={{ ...WIDE, padding: "96px 32px", display: "flex", justifyContent: "center" }}>
+            <div style={{ maxWidth: "600px", width: "100%", textAlign: "center" }}>
+              <div aria-hidden style={{ width: "64px", height: "64px", margin: "0 auto 24px", borderRadius: "50%", background: "#F3EDFA", border: "1px solid #E2D6F3", color: PURPLE, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", fontWeight: 700 }}>✓</div>
+              <h1 id="wl-done-h" style={{ margin: "0 0 14px", color: INK, fontSize: "clamp(32px, 3.6vw, 44px)", fontWeight: 700, lineHeight: 1.05, letterSpacing: "-0.03em" }}>
+                {USE_REAL_BACKEND ? "You are on the list" : "Information validated"}
+              </h1>
+              <p data-testid="waitlist-received" role="status" style={{ margin: "0 0 28px", color: BODY, fontSize: "17px", lineHeight: 1.6 }}>
+                {USE_REAL_BACKEND
+                  ? <>We will email <strong>{fields.email.trim()}</strong> when there is news about LAGDA eNotary.</>
+                  : "Your information has been validated in this frontend demonstration. Nothing was sent: the live site stores the sign-up and tells LAGDA."}
               </p>
-            </div>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-              <a href={ENOTARY_DIRECTORY_PATH} style={{ background: BURGUNDY, color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "11px 22px", borderRadius: 7, textDecoration: "none" }}>Notary Directory</a>
-              <Link to="/enotary/faq" style={{ background: "#ffffff", color: "#07111F", ...GF, fontSize: 14, fontWeight: 600, padding: "11px 22px", borderRadius: 7, textDecoration: "none", border: "1px solid rgba(0,0,0,0.14)" }}>eNotary FAQ</Link>
+              <div style={{ textAlign: "left", marginBottom: "28px" }}>
+                <Disclaimer>
+                  {ENOTARY_DISCLAIMER} Your waitlist registration does not create a LAGDA account, confirm eligibility, or guarantee access to any future service.
+                </Disclaimer>
+              </div>
+              <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+                <a href={ENOTARY_DIRECTORY_PATH} className="lgl-btn-light" style={{ display: "inline-flex", alignItems: "center", minHeight: "54px", padding: "0 28px", borderRadius: "12px", background: NAVY, color: "#ffffff", fontSize: "16px", fontWeight: 700 }}>Notary Directory</a>
+                <Link to="/enotary/faq" className="lgl-btn-ghost" style={{ display: "inline-flex", alignItems: "center", minHeight: "54px", padding: "0 24px", border: "1px solid #B9C3D3", borderRadius: "12px", background: "#ffffff", color: INK, fontSize: "16px", fontWeight: 600 }}>eNotary FAQ</Link>
+              </div>
             </div>
           </div>
         </section>
-      </EnotaryPageShell>
+      </Shell>
     );
   }
 
   return (
-    <EnotaryPageShell>
-      <EnotaryStatusBanner />
+    <Shell>
+      <section aria-labelledby="wl-h" style={{ background: "#F7F9FC", borderBottom: "1px solid #EEF1F5" }}>
+        <div className="lgl-wide" style={{ ...WIDE, padding: "clamp(40px, 6vw, 80px) 32px clamp(48px, 7vw, 96px)", display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: "48px 72px" }}>
 
-      {/* Hero */}
-      <section style={{ padding: "64px 24px 48px", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
-        <div style={{ maxWidth: 680, margin: "0 auto" }}>
-          <p style={{ color: BURGUNDY, ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", marginBottom: 14 }}>ENOTARY / WAITLIST</p>
-          <h1 style={{ color: "#07111F", ...GF, fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 14px" }}>
-            Join the eNotary waitlist
-          </h1>
-          <p style={{ color: "#334155", ...GF, fontSize: 15, lineHeight: 1.7, margin: "0 0 20px" }}>
-            Register to receive updates on LAGDA eNotary as we work toward Supreme Court accreditation.
-          </p>
-          <EnotaryDisclaimer />
-        </div>
-      </section>
+          {/* Left: what this is */}
+          <div style={{ flex: "1 1 420px", maxWidth: "560px", minWidth: 0 }}>
+            <p style={{ display: "inline-flex", alignItems: "center", margin: "0 0 24px", padding: "6px 14px", borderRadius: "999px", background: "#F3EDFA", border: "1px solid #E2D6F3", color: PURPLE, fontSize: "14px", fontWeight: 600 }}>
+              LAGDA eNotary · Coming soon
+            </p>
+            <h1 id="wl-h" style={{ margin: "0 0 20px", color: INK, fontSize: "clamp(40px, 4.6vw, 64px)", fontWeight: 700, lineHeight: 1, letterSpacing: "-0.04em" }}>
+              Join the eNotary <span style={{ color: NAVY }}>waitlist.</span>
+            </h1>
+            <p style={{ margin: "0 0 28px", color: BODY, fontSize: "clamp(17px, 1.4vw, 19px)", lineHeight: 1.55 }}>
+              Register to receive updates on LAGDA eNotary as we work toward Supreme Court accreditation.
+            </p>
+            <Disclaimer />
 
-      <EnotarySection id="form">
-        <div style={{ maxWidth: 640, margin: "0 auto" }}>
-
-          {/* What this is not */}
-          <div style={{ marginBottom: 28 }}>
-            <p style={{ color: "#94A3B8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>JOINING THE WAITLIST</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {NON_GUARANTEES.map((item) => (
-                <div key={item} style={{ display: "flex", gap: 10, padding: "9px 14px", background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 7 }}>
-                  <span style={{ color: BURGUNDY, flexShrink: 0 }}>—</span>
-                  <span style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5 }}>{item}</span>
-                </div>
-              ))}
+            {/* What this is not */}
+            <div style={{ marginTop: "36px" }}>
+              <h2 style={{ margin: "0 0 14px", color: PURPLE, fontSize: "15px", fontWeight: 700 }}>Joining the waitlist</h2>
+              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "10px" }}>
+                {NON_GUARANTEES.map((item) => (
+                  <li key={item} style={{ display: "flex", alignItems: "flex-start", gap: "12px", color: MUTED, fontSize: "15px", lineHeight: 1.5 }}>
+                    <span aria-hidden style={{ flex: "none", color: PURPLE, fontWeight: 700 }}>—</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} noValidate aria-label="eNotary waitlist registration">
-            {formState === "error" && (
-              <div role="alert" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "12px 16px", marginBottom: 20 }}>
-                <p style={{ color: "#ef4444", ...GF, fontSize: 13, margin: 0 }}>{errorText}</p>
-              </div>
-            )}
+          {/* Right: the form */}
+          <div style={{ flex: "1 1 440px", maxWidth: "580px", minWidth: 0, boxSizing: "border-box", padding: "clamp(22px, 3vw, 36px)", borderRadius: "22px", background: "#ffffff", border: `1px solid ${LINE}`, boxShadow: "0 24px 48px -28px rgba(11,23,48,0.25)" }}>
+            <h2 style={{ margin: "0 0 6px", color: INK, fontSize: "24px", fontWeight: 700, letterSpacing: "-0.02em" }}>Register your interest</h2>
+            <p style={{ margin: "0 0 24px", color: MUTED, fontSize: "14px", lineHeight: 1.5 }}>Fields marked * are required.</p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              {/* Name */}
-              <div>
-                <FieldLabel htmlFor="wl-name" required>Full name</FieldLabel>
-                <input id="wl-name" type="text" value={fields.name} onChange={(e) => set("name", e.target.value)}
-                  aria-describedby={errors.name ? "wl-name-err" : undefined}
-                  aria-invalid={!!errors.name} style={{ ...inputStyle, borderColor: errors.name ? "rgba(239,68,68,0.4)" : "rgba(0,0,0,0.14)" }} />
-                <FieldError id="wl-name-err" message={errors.name} />
-              </div>
+            <form onSubmit={handleSubmit} noValidate aria-label="eNotary waitlist registration">
+              {formState === "error" && (
+                <div role="alert" style={{ background: "#FEF3F2", border: "1px solid #FECDCA", borderRadius: "12px", padding: "12px 16px", marginBottom: "20px" }}>
+                  <p style={{ margin: 0, color: ERROR, fontSize: "14px" }}>{errorText}</p>
+                </div>
+              )}
 
-              {/* Email */}
-              <div>
-                <FieldLabel htmlFor="wl-email" required>Email address</FieldLabel>
-                <input id="wl-email" type="email" value={fields.email} onChange={(e) => set("email", e.target.value)}
-                  aria-describedby={errors.email ? "wl-email-err" : undefined}
-                  aria-invalid={!!errors.email} style={{ ...inputStyle, borderColor: errors.email ? "rgba(239,68,68,0.4)" : "rgba(0,0,0,0.14)" }} />
-                <FieldError id="wl-email-err" message={errors.email} />
-              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+                <div>
+                  <FieldLabel htmlFor="wl-name" required>Full name</FieldLabel>
+                  <input id="wl-name" type="text" autoComplete="name" value={fields.name} onChange={(e) => set("name", e.target.value)}
+                    aria-describedby={errors.name ? "wl-name-err" : undefined}
+                    aria-invalid={!!errors.name} style={{ ...inputStyle, borderColor: border(errors.name) }} />
+                  <FieldError id="wl-name-err" message={errors.name} />
+                </div>
 
-              {/* Organization */}
-              <div>
-                <FieldLabel htmlFor="wl-org">Organization (optional)</FieldLabel>
-                <input id="wl-org" type="text" value={fields.organization} onChange={(e) => set("organization", e.target.value)} style={inputStyle} />
-              </div>
+                <div>
+                  <FieldLabel htmlFor="wl-email" required>Email address</FieldLabel>
+                  <input id="wl-email" type="email" autoComplete="email" value={fields.email} onChange={(e) => set("email", e.target.value)}
+                    aria-describedby={errors.email ? "wl-email-err" : undefined}
+                    aria-invalid={!!errors.email} style={{ ...inputStyle, borderColor: border(errors.email) }} />
+                  <FieldError id="wl-email-err" message={errors.email} />
+                </div>
 
-              {/* Audience */}
-              <div>
-                <FieldLabel htmlFor="wl-audience" required>I am registering as</FieldLabel>
-                <select id="wl-audience" value={fields.audience} onChange={(e) => set("audience", e.target.value as Audience)}
-                  aria-describedby={errors.audience ? "wl-audience-err" : undefined}
-                  aria-invalid={!!errors.audience}
-                  style={{ ...inputStyle, cursor: "pointer", borderColor: errors.audience ? "rgba(239,68,68,0.4)" : "rgba(0,0,0,0.14)" }}
+                <div>
+                  <FieldLabel htmlFor="wl-org">Organization (optional)</FieldLabel>
+                  <input id="wl-org" type="text" autoComplete="organization" value={fields.organization} onChange={(e) => set("organization", e.target.value)} style={inputStyle} />
+                </div>
+
+                <div>
+                  <FieldLabel htmlFor="wl-audience" required>I am registering as</FieldLabel>
+                  <select id="wl-audience" value={fields.audience} onChange={(e) => set("audience", e.target.value as Audience)}
+                    aria-describedby={errors.audience ? "wl-audience-err" : undefined}
+                    aria-invalid={!!errors.audience}
+                    style={{ ...inputStyle, cursor: "pointer", borderColor: border(errors.audience) }}
+                  >
+                    <option value="">Select a category…</option>
+                    {AUDIENCE_OPTIONS.map(({ value, label }) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                  <FieldError id="wl-audience-err" message={errors.audience} />
+                </div>
+
+                <div>
+                  <FieldLabel htmlFor="wl-interest">What interests you most about LAGDA eNotary? (optional)</FieldLabel>
+                  <textarea id="wl-interest" value={fields.interest} onChange={(e) => set("interest", e.target.value)} rows={3}
+                    style={{ ...inputStyle, height: "auto", minHeight: "96px", padding: "14px 16px", lineHeight: 1.5, resize: "vertical" }} />
+                </div>
+
+                <div style={{ padding: "14px 16px", borderRadius: "12px", background: "#F7F9FC", border: `1px solid ${errors.consent ? ERROR : LINE}` }}>
+                  <label style={{ display: "flex", gap: "12px", cursor: "pointer", alignItems: "flex-start" }}>
+                    <input type="checkbox" id="wl-consent" checked={fields.consent} onChange={(e) => set("consent", e.target.checked)}
+                      aria-describedby={errors.consent ? "wl-consent-err" : undefined}
+                      style={{ width: "18px", height: "18px", margin: "2px 0 0", flexShrink: 0, accentColor: NAVY }} />
+                    <span style={{ color: BODY, fontSize: "14px", lineHeight: 1.55 }}>
+                      I understand that LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules, that this registration does not create an account or guarantee access, and that I may receive update emails about LAGDA eNotary.
+                    </span>
+                  </label>
+                  <FieldError id="wl-consent-err" message={errors.consent} />
+                </div>
+
+                <button
+                  type="submit"
+                  className={formState === "submitting" ? undefined : "lgl-btn-light"}
+                  disabled={formState === "submitting"}
+                  aria-busy={formState === "submitting"}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center", width: "100%", minHeight: "54px",
+                    margin: 0, padding: "0 28px", border: "none", borderRadius: "12px",
+                    background: formState === "submitting" ? "#6B85B0" : NAVY, color: "#ffffff",
+                    fontFamily: "inherit", fontSize: "16px", fontWeight: 700,
+                    cursor: formState === "submitting" ? "not-allowed" : "pointer",
+                  }}
                 >
-                  <option value="">Select a category…</option>
-                  {AUDIENCE_OPTIONS.map(({ value, label }) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </select>
-                <FieldError id="wl-audience-err" message={errors.audience} />
+                  {formState === "submitting" ? "Registering…" : "Join the waitlist"}
+                </button>
+
+                <p style={{ margin: 0, color: MUTED, fontSize: "13px", lineHeight: 1.55 }}>
+                  {USE_REAL_BACKEND
+                    ? "We'll email you when LAGDA eNotary opens."
+                    : "This is a frontend demonstration. Waitlist registrations are not currently stored or processed. Live registration will be connected during backend integration."}
+                </p>
               </div>
-
-              {/* Interest */}
-              <div>
-                <FieldLabel htmlFor="wl-interest">What interests you most about LAGDA eNotary? (optional)</FieldLabel>
-                <textarea id="wl-interest" value={fields.interest} onChange={(e) => set("interest", e.target.value)} rows={3}
-                  style={{ ...inputStyle, resize: "vertical", minHeight: 72 }} />
-              </div>
-
-              {/* Consent */}
-              <div style={{ padding: "14px 16px", background: "rgba(103,2,59,0.04)", border: errors.consent ? "1px solid rgba(239,68,68,0.3)" : "1px solid rgba(176,18,98,0.2)", borderRadius: 9 }}>
-                <label style={{ display: "flex", gap: 12, cursor: "pointer", alignItems: "flex-start" }}>
-                  <input type="checkbox" id="wl-consent" checked={fields.consent} onChange={(e) => set("consent", e.target.checked)}
-                    aria-describedby={errors.consent ? "wl-consent-err" : undefined}
-                    style={{ marginTop: 2, flexShrink: 0, accentColor: BURGUNDY }} />
-                  <span style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.6 }}>
-                    I understand that LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules, that this registration does not create an account or guarantee access, and that I may receive update emails about LAGDA eNotary.
-                  </span>
-                </label>
-                <FieldError id="wl-consent-err" message={errors.consent} />
-              </div>
-
-              <button
-                type="submit"
-                disabled={formState === "submitting"}
-                style={{
-                  background: formState === "submitting" ? "rgba(103,2,59,0.5)" : BURGUNDY,
-                  color: "white", ...GF, fontSize: 15, fontWeight: 700,
-                  padding: "14px 24px", borderRadius: 8, border: "none", cursor: formState === "submitting" ? "not-allowed" : "pointer",
-                  transition: "background 0.15s",
-                }}
-                aria-busy={formState === "submitting"}
-              >
-                {formState === "submitting" ? "Registering…" : "Join the waitlist"}
-              </button>
-
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.6, margin: 0 }}>
-                {USE_REAL_BACKEND
-                  ? "We'll email you when LAGDA eNotary opens."
-                  : "This is a frontend demonstration. Waitlist registrations are not currently stored or processed. Live registration will be connected during backend integration."}
-              </p>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
-      </EnotarySection>
-    </EnotaryPageShell>
+      </section>
+
+      <MoreAboutEnotary />
+    </Shell>
   );
 }

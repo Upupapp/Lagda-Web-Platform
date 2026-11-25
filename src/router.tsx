@@ -3173,7 +3173,11 @@ export const router = createBrowserRouter([
     path: "/",
     errorElement: <PublicRouteError />,
     element: <LandingLayout />,
-    children: [{ index: true, element: <LandingPage /> }],
+    children: [
+      { index: true, element: <LandingPage /> },
+      // Drawn in the landing page's style, with its header and footer.
+      { path: "enotary/waitlist", element: <EnotaryWaitlist /> },
+    ],
   },
 
   // ── Public portal ────────────────────────────────────────────────────────────
@@ -3285,7 +3289,6 @@ export const router = createBrowserRouter([
         path: "enotary/accreditation-roadmap",
         element: <AccreditationRoadmap />,
       },
-      { path: "enotary/waitlist", element: <EnotaryWaitlist /> },
       { path: "enotary/faq", element: <EnotaryFaq /> },
 
       // ── Conversion flows (Command 10) ─────────────────────────────────────
