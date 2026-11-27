@@ -12,8 +12,8 @@ import type { PublicSectionProps } from "../public/PublicKit";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
-const BURGUNDY = "#67023B";
-const SOFT_BURGUNDY = "rgba(103,2,59,0.06)";
+const BURGUNDY = "#5B2A86";
+const SOFT_BURGUNDY = "rgba(91,42,134,0.06)";
 
 // ── SubNav ──────────────────────────────────────────────────────────────────
 
@@ -47,7 +47,6 @@ export function EnotarySubNav() {
 export function EnotaryPageShell({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ background: "#ffffff", minHeight: "100vh", color: "#07111F", ...GF }}>
-      <EnotarySubNav />
       {children}
     </div>
   );
@@ -57,12 +56,12 @@ export function EnotaryPageShell({ children }: { children: React.ReactNode }) {
 
 export function EnotaryStatusBanner() {
   return (
-    <div style={{ background: SOFT_BURGUNDY, borderBottom: `1px solid rgba(103,2,59,0.25)`, padding: "12px 24px" }}>
+    <div style={{ background: SOFT_BURGUNDY, borderBottom: `1px solid rgba(91,42,134,0.25)`, padding: "12px 24px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <span style={{ color: BURGUNDY, ...GM, fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 4, background: "rgba(103,2,59,0.18)", border: `1px solid rgba(103,2,59,0.3)`, whiteSpace: "nowrap" }}>
+        <span style={{ color: BURGUNDY, ...GM, fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 4, background: "rgba(91,42,134,0.18)", border: `1px solid rgba(91,42,134,0.3)`, whiteSpace: "nowrap" }}>
           COMING SOON
         </span>
-        <p style={{ color: "#67023B", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>
+        <p style={{ color: "#5B2A86", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>
           {ENOTARY_DISCLAIMER}
         </p>
       </div>
@@ -81,8 +80,8 @@ export function EnotaryDisclaimer({ variant = "default" }: { variant?: "default"
     );
   }
   return (
-    <div style={{ background: SOFT_BURGUNDY, border: `1px solid rgba(103,2,59,0.25)`, borderRadius: 10, padding: "14px 18px" }}>
-      <p style={{ color: "#67023B", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
+    <div style={{ background: SOFT_BURGUNDY, border: `1px solid rgba(91,42,134,0.25)`, borderRadius: 10, padding: "14px 18px" }}>
+      <p style={{ color: "#5B2A86", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
         <strong style={{ color: BURGUNDY }}>LAGDA eNotary is Coming Soon</strong> and Subject to Supreme Court Accreditation and applicable rules. LAGDA does not currently represent this service as accredited, approved, or available.
       </p>
     </div>
@@ -111,7 +110,7 @@ export function EnotaryHeading({ children, sub }: { children: React.ReactNode; s
 
 export function FutureConceptCard({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: "rgba(103,2,59,0.05)", border: `1px solid rgba(176,18,98,0.2)`, borderRadius: 12, padding: "20px 24px", position: "relative" }}>
+    <div style={{ background: "rgba(91,42,134,0.05)", border: `1px solid rgba(122,68,168,0.2)`, borderRadius: 12, padding: "20px 24px", position: "relative" }}>
       <span style={{ position: "absolute", top: 12, right: 14, color: "#94A3B8", ...GM, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em" }}>FUTURE CONCEPT — NOT AN AVAILABLE SERVICE</span>
       <h3 style={{ color: "#07111F", ...GF, fontSize: 16, fontWeight: 700, margin: "20px 0 10px" }}>{label}</h3>
       <div style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.7 }}>{children}</div>

@@ -119,7 +119,7 @@ export function LegalFramework() {
           <GuideCallout
             label="LAGDA ENOTARY — FUTURE PRODUCT"
             text="LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules. It is not currently available. Electronic notarization through LAGDA is not currently possible."
-            color="#67023B"
+            color="#5B2A86"
           />
         </GuideSection>
 

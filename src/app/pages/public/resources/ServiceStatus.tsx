@@ -29,7 +29,7 @@ const STATUS_DISPLAY: Record<ServiceStatusValue, { label: string; color: string;
   "unavailable":    { label: "Not responding", color: "#B91C1C", bg: "rgba(239,68,68,0.1)",   meaning: "The server did not answer, or is not ready" },
   "not-checked":    { label: "Not checked",    color: "#64748B", bg: "rgba(100,116,139,0.1)", meaning: "This build has no server to ask" },
   "planned":        { label: "Planned",        color: "#B45309", bg: "rgba(201,150,12,0.12)", meaning: "Not built yet" },
-  "future-product": { label: "Future Product", color: "#67023B", bg: "rgba(103,2,59,0.1)",    meaning: "Not available; depends on accreditation" },
+  "future-product": { label: "Future Product", color: "#5B2A86", bg: "rgba(91,42,134,0.1)",    meaning: "Not available; depends on accreditation" },
 };
 
 type Probe = "checking" | "up" | "down";

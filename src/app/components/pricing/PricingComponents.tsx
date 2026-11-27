@@ -48,7 +48,6 @@ export function PricingSubNav() {
 export function PricingPageShell({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ background: "#ffffff", minHeight: "100vh", color: "#07111F", ...GF }}>
-      <PricingSubNav />
       {children}
     </div>
   );

@@ -97,7 +97,7 @@ function Disclaimer({ children }: { children?: React.ReactNode }) {
 /** The landing page's shell: its header, the page, its footer. */
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="lgl-root" style={{ fontFamily: "'Geist', sans-serif", color: INK, background: "#ffffff", minWidth: 0 }}>
+    <div className="lgl-root lgl-page" style={{ fontFamily: "'Geist', sans-serif", color: INK, background: "#ffffff", minWidth: 0 }}>
       <LandingHeader />
       {children}
       <LandingFooter />

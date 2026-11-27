@@ -37,7 +37,7 @@ export function LandingPage() {
   }
 
   return (
-    <div className="lgl-root" style={{ fontFamily: "'Geist', sans-serif", color: "#0B1730", background: "#ffffff", minWidth: "0" }}>
+    <div className="lgl-root lgl-page" style={{ fontFamily: "'Geist', sans-serif", color: "#0B1730", background: "#ffffff", minWidth: "0" }}>
       {/* First screen: announcement + header + hero + fact strip fill exactly one viewport */}
       <div className="lgl-first-screen">
         {/* Announcement bar */}

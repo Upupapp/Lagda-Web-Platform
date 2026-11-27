@@ -1,5 +1,5 @@
 import {
-  EnotaryPageShell, EnotaryStatusBanner, EnotaryDisclaimer,
+  EnotaryPageShell, EnotaryDisclaimer,
   EnotarySection, EnotaryHeading, FutureConceptCard,
 } from "../../../components/enotary/EnotaryComponents";
 import { FUTURE_CAPABILITY_CATEGORIES } from "./content";
@@ -7,7 +7,7 @@ import { Link } from "react-router";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
-const BURGUNDY = "#67023B";
+const BURGUNDY = "#5B2A86";
 
 const WHAT_NOTARY_DOES = [
   { label: "Confirms identity", body: "A Notary Public confirms the identity of the person appearing before them, through personal appearance or, where allowed, through approved remote means." },
@@ -20,7 +20,6 @@ const WHAT_NOTARY_DOES = [
 export function FutureCapabilities() {
   return (
     <EnotaryPageShell>
-      <EnotaryStatusBanner />
 
       {/* Hero */}
       <section style={{ padding: "64px 24px 48px", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
@@ -51,8 +50,8 @@ export function FutureCapabilities() {
               </div>
             ))}
           </div>
-          <div style={{ marginTop: 20, padding: "14px 18px", background: "rgba(103,2,59,0.06)", border: "1px solid rgba(176,18,98,0.2)", borderRadius: 9 }}>
-            <p style={{ color: "#67023B", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
+          <div style={{ marginTop: 20, padding: "14px 18px", background: "rgba(91,42,134,0.06)", border: "1px solid rgba(122,68,168,0.2)", borderRadius: 9 }}>
+            <p style={{ color: "#5B2A86", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
               Electronic notarization requires technology that can support all of these steps in compliance with the Rules on Notarial Practice and any future Supreme Court rules on remote notarization. LAGDA is researching and designing for this — subject to accreditation.
             </p>
           </div>
@@ -74,7 +73,7 @@ export function FutureCapabilities() {
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 8 }}>
                   {capabilities.map((cap) => (
-                    <div key={cap} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 14px", background: "rgba(103,2,59,0.04)", border: "1px solid rgba(176,18,98,0.15)", borderRadius: 8 }}>
+                    <div key={cap} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 14px", background: "rgba(91,42,134,0.04)", border: "1px solid rgba(122,68,168,0.15)", borderRadius: 8 }}>
                       <span style={{ color: BURGUNDY, fontSize: 14, marginTop: 1, flexShrink: 0 }}>○</span>
                       <span style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6 }}>{cap}</span>
                     </div>

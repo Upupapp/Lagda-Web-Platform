@@ -130,12 +130,7 @@ const LandingPage = lazy(() =>
   })),
 );
 
-// eSignature family
-const EsigOverview = lazy(() =>
-  import("./app/pages/public/esignature/EsigOverview").then((m) => ({
-    default: m.EsigOverview,
-  })),
-);
+// eSignature family ("/esignature" itself is the landing page, above)
 const WorkflowPortalPage = lazy(() =>
   import("./app/pages/public/workflow/WorkflowPortalPage").then((m) => ({
     default: m.WorkflowPortalPage,
@@ -3175,6 +3170,9 @@ export const router = createBrowserRouter([
     element: <LandingLayout />,
     children: [
       { index: true, element: <LandingPage /> },
+      // The eSignature product page is the landing page too; its canonical
+      // URL is "/" (config/routes.ts).
+      { path: "esignature", element: <LandingPage /> },
       // Drawn in the landing page's style, with its header and footer.
       { path: "enotary/waitlist", element: <EnotaryWaitlist /> },
     ],
@@ -3191,7 +3189,6 @@ export const router = createBrowserRouter([
       { path: "home", element: <Navigate to="/" replace /> },
 
       // ── eSignature product pages ──────────────────────────────────────────
-      { path: "esignature", element: <EsigOverview /> },
       // Public marketing for the Workflow product area (/app/workflow).
       { path: "workflow", element: <WorkflowPortalPage /> },
       { path: "esignature/core-workflow", element: <EsigCoreWorkflow /> },

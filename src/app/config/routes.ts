@@ -77,6 +77,8 @@ export const PUBLIC_ROUTES: RouteMeta[] = [
     requiresAuth: false,
     isPublic: true,
     isIndexable: true,
+    // It shows the landing page, which lives at "/".
+    canonicalPath: "/",
     status: "implemented",
     analyticsName: "esignature_overview",
     tabGroup: "esig",

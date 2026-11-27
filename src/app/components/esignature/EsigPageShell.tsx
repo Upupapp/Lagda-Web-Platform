@@ -1,6 +1,5 @@
 import { ON_LIGHT } from "../../utils/on-light";
 import { Link } from "react-router";
-import { EsigSubNav } from "./EsigSubNav";
 import {
   LEGAL_NOTE,
   ENOTARY_NOTE,
@@ -538,7 +537,6 @@ export function AvailBadge({
 export function EsigPageShell({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <EsigSubNav />
       {children}
     </>
   );

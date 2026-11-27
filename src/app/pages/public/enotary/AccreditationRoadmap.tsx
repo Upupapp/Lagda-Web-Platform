@@ -1,13 +1,13 @@
 import { Link } from "react-router";
 import {
-  EnotaryPageShell, EnotaryStatusBanner, EnotaryDisclaimer,
+  EnotaryPageShell, EnotaryDisclaimer,
   EnotarySection, EnotaryHeading, AccreditationTimeline,
 } from "../../../components/enotary/EnotaryComponents";
 import { ROADMAP_STAGES } from "./content";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
-const BURGUNDY = "#67023B";
+const BURGUNDY = "#5B2A86";
 
 const STATUS_LEGEND = [
   { color: "#16A34A",  label: "In progress",            desc: "Currently underway" },
@@ -26,7 +26,6 @@ const WHY_ACCREDITATION = [
 export function AccreditationRoadmap() {
   return (
     <EnotaryPageShell>
-      <EnotaryStatusBanner />
 
       {/* Hero */}
       <section style={{ padding: "64px 24px 48px", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>

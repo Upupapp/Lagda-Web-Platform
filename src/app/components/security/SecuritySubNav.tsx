@@ -45,7 +45,6 @@ export function SecuritySubNav() {
 export function SecurityPageShell({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <SecuritySubNav />
       {children}
     </>
   );

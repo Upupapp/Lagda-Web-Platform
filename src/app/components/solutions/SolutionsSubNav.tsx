@@ -53,7 +53,6 @@ export function SolutionsSubNav() {
 export function SolPageShell({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <SolutionsSubNav />
       {children}
     </>
   );

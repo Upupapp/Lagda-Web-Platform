@@ -15,27 +15,30 @@
   --pub-serif-display: "Libre Caslon Display", "Libre Caslon Text", Georgia, "Times New Roman", serif;
   --pub-serif-text: "Libre Caslon Text", Georgia, "Times New Roman", serif;
   --pub-sans: "Geist", system-ui, sans-serif;
-  /* The header's height: 64px at the top of a page, 54px once it scrolls
-     (PublicHeader sets the live value on <html>). Sticky section tabs and the
-     top-right wave sit under it. */
-  --phdr-h: 64px;
+  /* The header no longer floats over the page (it is the landing page's,
+     in the flow), so nothing sticky needs to clear it. */
+  --phdr-h: 0px;
+  /* The landing page's navy for buttons, links and the current page, and
+     its ink for headings (app-shell.css paints dark headings with -strong). */
+  --app-navy: #0B3981;
+  --app-navy-strong: #0B1730;
   --pub-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ── Type ─────────────────────────────────────────────────────────────────────
-   Two families: Libre Caslon for headings, Geist for everything else (the
-   app's face). Large headings take the Display cut; a heading set small (a
-   card title marked up as h2) and every h3 take the sturdier Text cut. */
+   The landing page's type everywhere: Geist, headings bold and tight
+   (pages/public/home). A heading set small (a card title marked up as h2) and
+   every h3 stay bold with a little less tightening. */
 :root[data-lagda-public] :is(#main-content, .auth-shell, .create-account-shell) :is(h1, h2) {
-  font-family: var(--pub-serif-display) !important;
-  font-weight: 400 !important;
-  letter-spacing: -0.01em !important;
+  font-family: var(--pub-sans) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.03em !important;
 }
 :root[data-lagda-public] :is(#main-content, .auth-shell, .create-account-shell) :is(h1, h2):is([style*="font-size: 1"], .pub-small-heading, .auth-proof-item h2),
 :root[data-lagda-public] :is(#main-content, .auth-shell, .create-account-shell) h3 {
-  font-family: var(--pub-serif-text) !important;
+  font-family: var(--pub-sans) !important;
   font-weight: 700 !important;
-  letter-spacing: 0 !important;
+  letter-spacing: -0.01em !important;
 }
 /* A few headings are really small uppercase labels: they stay in Geist. */
 :root[data-lagda-public] :is(#main-content, .auth-shell, .create-account-shell) :is(.auth-mobile-modal-title, .pub-label-heading) {
@@ -122,4 +125,10 @@
 }
 @media print {
   [data-reveal], [data-reveal-item] { opacity: 1 !important; transform: none !important; }
+}
+
+/* Headings drawn in the old dark navy take the landing page's heading ink, so
+   every page's headings match the home page's. */
+:root[data-lagda-public] #main-content :is(h1, h2, h3)[style*="color: rgb(20, 41, 77)"] {
+  color: #0B1730 !important;
 }

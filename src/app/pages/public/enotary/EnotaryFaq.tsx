@@ -1,18 +1,17 @@
 import { Link } from "react-router";
 import {
-  EnotaryPageShell, EnotaryStatusBanner, EnotaryDisclaimer,
+  EnotaryPageShell, EnotaryDisclaimer,
   EnotarySection, EnotaryHeading, EnotaryFaqGroup,
 } from "../../../components/enotary/EnotaryComponents";
 import { ENOTARY_FAQ_GROUPS } from "./content";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
-const BURGUNDY = "#67023B";
+const BURGUNDY = "#5B2A86";
 
 export function EnotaryFaq() {
   return (
     <EnotaryPageShell>
-      <EnotaryStatusBanner />
 
       {/* Hero */}
       <section style={{ padding: "64px 24px 48px", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
@@ -41,8 +40,8 @@ export function EnotaryFaq() {
       <EnotarySection id="responsible-use" light bordered>
         <div style={{ maxWidth: 820, margin: "0 auto" }}>
           <EnotaryHeading>Legal formalities reminder</EnotaryHeading>
-          <div style={{ background: "rgba(103,2,59,0.06)", border: "1px solid rgba(176,18,98,0.2)", borderRadius: 10, padding: "16px 20px", marginBottom: 20 }}>
-            <p style={{ color: "#67023B", ...GF, fontSize: 14, lineHeight: 1.7, margin: 0 }}>
+          <div style={{ background: "rgba(91,42,134,0.06)", border: "1px solid rgba(122,68,168,0.2)", borderRadius: 10, padding: "16px 20px", marginBottom: 20 }}>
+            <p style={{ color: "#5B2A86", ...GF, fontSize: 14, lineHeight: 1.7, margin: 0 }}>
               Some documents may still require wet signatures, notarization, personal appearance, witnesses, or other legal formalities. Users remain responsible for determining the requirements that apply to each transaction. Neither LAGDA eSignature nor LAGDA eNotary (when available) eliminates this responsibility.
             </p>
           </div>

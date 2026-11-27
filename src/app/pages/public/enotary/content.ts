@@ -1,6 +1,6 @@
 // LAGDA eNotary section — content, nav, FAQ.
 // HARD CONSTRAINT: Every page must include "LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules."
-// Burgundy (#67023B) is the controlled future-product accent for eNotary.
+// Burgundy (#5B2A86) is the controlled future-product accent for eNotary.
 // No purchase actions, no active notary roles, no accreditation claims.
 
 import { ENOTARY_DIRECTORY_PATH } from "../../../config/enotary-directory";

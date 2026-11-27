@@ -83,7 +83,7 @@ export function IdentityVerification() {
 
       <PageSection id="enotary-separation" light bordered>
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
-          <p style={{ color: "#67023B", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>LAGDA eNOTARY — SEPARATE AND COMING SOON</p>
+          <p style={{ color: "#5B2A86", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>LAGDA eNOTARY — SEPARATE AND COMING SOON</p>
           <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.7, margin: 0 }}>
             Electronic notarization involves a Notary Public who performs identity verification as part of a notarial act. This is distinct from electronic signing. LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules. It is not part of LAGDA eSignature identity features.
           </p>

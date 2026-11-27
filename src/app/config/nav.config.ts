@@ -43,6 +43,7 @@ export const TOP_NAV: NavSection[] = [
       { label: "Advanced Capabilities", path: "/esignature/advanced-capabilities",  description: "Parallel signing, storage, and advanced workflows." },
       { label: "Templates & Branding",  path: "/esignature/templates-and-branding", description: "Reusable templates and company branding controls." },
       { label: "Team & Enterprise",     path: "/esignature/team-and-enterprise",     description: "Workspaces, roles, reports, and enterprise controls." },
+      { label: "All Features",          path: "/features",                           description: "Every eSignature capability, one page each." },
     ],
   },
   {

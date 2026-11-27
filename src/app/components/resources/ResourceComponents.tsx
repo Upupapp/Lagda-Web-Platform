@@ -42,7 +42,6 @@ export function ResourcesSubNav() {
 export function ResourcesPageShell({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ background: "#ffffff", minHeight: "100vh", color: "#07111F", ...GF }}>
-      <ResourcesSubNav />
       {children}
     </div>
   );

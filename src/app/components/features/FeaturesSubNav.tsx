@@ -41,7 +41,6 @@ export function FeaturesSubNav() {
 export function FeaturesPageShell({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <FeaturesSubNav />
       {children}
     </>
   );

@@ -1,52 +1,128 @@
-import { useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router";
 import { useAccountCta } from "@/app/hooks/useSignedIn";
-import { ENOTARY_DIRECTORY_PATH } from "@/app/config/enotary-directory";
+import { ENOTARY_DIRECTORY_PATH, isStaticSitePath } from "@/app/config/enotary-directory";
+import { TOP_NAV, type NavSection } from "@/app/config/nav.config";
+import { Z } from "@/app/utils/z-index";
 import imgLagdaLogo from "@/assets/landing/lagda-logo.png";
 import imgLagdaLogoNavy from "@/assets/landing/lagda-logo-navy.png";
 import "./landing.css";
 
 /*
- * The landing page's header and footer, shared by the pages built in its style
- * (the home page and the eNotary waitlist). Both must sit inside an element
- * with className="lgl-root", which landing.css scopes its rules to.
+ * The site's header and footer, in the landing page's style. The home page,
+ * the waitlist and every page under PublicLayout use them. Both must sit
+ * inside an element with className="lgl-root", which landing.css scopes its
+ * rules to.
  */
 
-/** Logo, main navigation, Sign in and the account button; a menu toggle below 1024px. */
+/** The section a path belongs to: its own page or one of its menu pages. */
+function sectionOf(pathname: string): NavSection | undefined {
+  const within = (path: string) => pathname === path || pathname.startsWith(path.replace(/\/$/, "") + "/");
+  if (pathname.startsWith("/features")) return TOP_NAV[0];
+  return TOP_NAV.find((section) => [section.path, ...section.items.map((item) => item.path)].some(within));
+}
+
+/** A client-side link, or a full page load for the static Notary Directory. */
+function NavLink({ to, className, children, current }: { to: string; className?: string; children: ReactNode; current?: boolean }) {
+  const aria = current ? "page" : undefined;
+  return isStaticSitePath(to)
+    ? <a href={to} className={className} aria-current={aria}>{children}</a>
+    : <Link to={to} className={className} aria-current={aria}>{children}</Link>;
+}
+
+/**
+ * Logo, main navigation, Sign in and the account button. Each section opens a
+ * menu of its pages on hover or keyboard focus, so no page needs a second bar
+ * of tabs. Below 1024px a toggle shows the sections, each of which expands.
+ */
 export function LandingHeader() {
   const cta = useAccountCta();
+  const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  // After a menu link is used the menu closes, even with the pointer still on
+  // it, until the pointer leaves the navigation or it takes focus again.
+  const [rested, setRested] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+  const lastPath = useRef(pathname);
+  const active = sectionOf(pathname);
+
+  useEffect(() => {
+    if (lastPath.current === pathname) return;
+    lastPath.current = pathname;
+    setMenuOpen(false);
+    setExpanded(null);
+    setRested(true);
+    const focused = document.activeElement;
+    if (focused instanceof HTMLElement && navRef.current?.contains(focused)) focused.blur();
+  }, [pathname]);
+
   return (
-    <header id="site-header" className={menuOpen ? "lgl-hdr-open" : undefined} style={{ position: "relative", zIndex: "5", background: "#ffffff", borderBottom: "1px solid #EEF1F5" }}>
+    <>
+    {/* Below 1024px the open menu dims the page; a tap outside it closes it. */}
+    {menuOpen && <div className="lgl-hdr-scrim" aria-hidden="true" onClick={() => setMenuOpen(false)} />}
+    <header id="site-header" className={menuOpen ? "lgl-hdr-open" : undefined} style={{ position: "relative", zIndex: Z.shell, background: "#ffffff", borderBottom: "1px solid #EEF1F5" }}>
       <div className="lgl-wide" style={{ boxSizing: "border-box", padding: "0 32px", minHeight: "72px", display: "flex", alignItems: "center", gap: "12px 32px" }}>
         <div className="lgl-hdr-left">
           <Link aria-label="LAGDA home" style={{ display: "flex", flex: "none" }} to="/">
             <img src={imgLagdaLogo} alt="LAGDA.io" style={{ width: "140px", height: "auto", display: "block" }} />
           </Link>
-          <nav id="main-nav" className="lgl-hdr-nav" aria-label="Main">
-            <Link to="/esignature">
-              eSignature
-            </Link>
-            {" "}
-            <Link to="/solutions">
-              Solutions
-            </Link>
-            {" "}
-            <Link to="/pricing">
-              Pricing
-            </Link>
-            {" "}
-            <Link to="/security">
-              Security
-            </Link>
-            {" "}
-            <Link to="/resources">
-              Resources
-            </Link>
-            {" "}
-            <Link to="/enotary">
-              eNotary
-            </Link>
+          <nav
+            id="main-nav"
+            ref={navRef}
+            className={rested ? "lgl-hdr-nav lgl-nav-rested" : "lgl-hdr-nav"}
+            aria-label="Main"
+            onMouseLeave={() => setRested(false)}
+            onFocus={() => setRested(false)}
+            onKeyDown={(e) => {
+              if (e.key !== "Escape") return;
+              setRested(true);
+              setExpanded(null);
+              setMenuOpen(false);
+            }}
+          >
+            {TOP_NAV.map((section, index) => {
+              const isActive = section === active;
+              const isOpen = expanded === section.label;
+              const listId = `lgl-nav-${section.id}`;
+              // The last two sections open their menus leftwards, inside the window.
+              const atEnd = index >= TOP_NAV.length - 2;
+              return (
+                <div key={section.label} className={["lgl-nav-item", isActive && "lgl-nav-active", isOpen && "lgl-nav-expanded", atEnd && "lgl-nav-end"].filter(Boolean).join(" ")}>
+                  <NavLink to={section.path} className="lgl-nav-top" current={isActive && pathname === section.path}>
+                    {section.label}
+                  </NavLink>
+                  <button
+                    type="button"
+                    className="lgl-nav-more"
+                    aria-expanded={isOpen}
+                    aria-controls={listId}
+                    aria-label={`${section.label} pages`}
+                    onClick={() => setExpanded(isOpen ? null : section.label)}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M4 6l4 4 4-4" />
+                    </svg>
+                  </button>
+                  <div className="lgl-nav-panel">
+                    <ul id={listId} className={section.items.length > 4 ? "lgl-nav-list lgl-nav-two" : "lgl-nav-list"}>
+                      {section.items.map((item) => (
+                        <li key={item.path + item.label}>
+                          <NavLink to={item.path} current={pathname === item.path}>
+                            <span className="lgl-nav-label">{item.label}</span>
+                            {item.description && <span className="lgl-nav-desc">{item.description}</span>}
+                          </NavLink>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              );
+            })}
+            {/* Phones hide the header's Sign in (landing.css); the menu offers it. */}
+            {!cta.signedIn && (
+              <Link to="/sign-in" className="lgl-nav-signin">Sign in</Link>
+            )}
           </nav>
         </div>
         <div className="lgl-hdr-actions">
@@ -62,19 +138,22 @@ export function LandingHeader() {
           {" "}
           <button type="button" className="lgl-hdr-toggle" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-controls="main-nav" aria-expanded={menuOpen} onClick={() => setMenuOpen((o) => !o)}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <path d="M3 6h14M3 10h14M3 14h14" />
+              <path d={menuOpen ? "M5 5l10 10M15 5L5 15" : "M3 6h14M3 10h14M3 14h14"} />
             </svg>
           </button>
         </div>
       </div>
     </header>
+    </>
   );
 }
 
 /** Brand, link columns, the eNotary disclaimer and the legal links. */
 export function LandingFooter() {
-  // The home page has a Verify section to scroll to; elsewhere, the Verify page.
-  const onHome = useLocation().pathname === "/";
+  // The landing page (at / and /esignature) has a Verify section to scroll
+  // to; elsewhere, the Verify page.
+  const { pathname } = useLocation();
+  const onHome = pathname === "/" || pathname === "/esignature";
   const verifyStyle = { color: "#C9B2EC", fontSize: "13px", fontWeight: "600" };
   return (
     <footer style={{ background: "#082A60", color: "#C7D3E6", borderTop: "4px solid #5B2A86" }}>

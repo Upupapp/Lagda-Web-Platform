@@ -14,7 +14,7 @@ import { ENOTARY_STATUS, ENOTARY_QUALIFIER } from "../../../config/enotary-discl
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
 const AZURE = "#0078D4";
-const BURGUNDY = "#67023B";
+const BURGUNDY = "#5B2A86";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const INDUSTRY_OPTIONS = [
@@ -249,7 +249,7 @@ export function BookADemo() {
           </Field>
 
           {isEnotaryInterest && (
-            <div style={{ background: "rgba(103,2,59,0.06)", border: "1px solid rgba(103,2,59,0.25)", borderRadius: 9, padding: "12px 16px" }}>
+            <div style={{ background: "rgba(91,42,134,0.06)", border: "1px solid rgba(91,42,134,0.25)", borderRadius: 9, padding: "12px 16px" }}>
               <p style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
                 <strong style={{ color: BURGUNDY }}>{ENOTARY_STATUS}</strong>{ENOTARY_QUALIFIER}{DEMO_ENOTARY_CAVEAT}
               </p>

@@ -1,9 +1,9 @@
 import { Outlet, useLocation } from "react-router";
 import { useEffect, Suspense } from "react";
-import { SkipLink, PublicHeader, PublicFooter } from "@/app/components/shell";
+import { SkipLink } from "@/app/components/shell";
+import { LandingHeader, LandingFooter } from "@/app/pages/public/home/LandingChrome";
 import { usePageMeta } from "@/app/hooks/usePageMeta";
 import { useStructuredData } from "@/app/hooks/useStructuredData";
-import { AppWaveBackdrop } from "@/app/components/platform/AppWaveBackdrop";
 import { useAppShellTheme } from "@/app/hooks/useAppShellTheme";
 import { usePublicMotion, usePublicReveal } from "@/app/hooks/usePublicMotion";
 
@@ -23,25 +23,29 @@ function PageLoader() {
         style={{
           width: 32,
           height: 32,
-          border: "2px solid rgba(0,120,212,0.2)",
-          borderTopColor: "#0078D4",
+          border: "2px solid rgba(11,57,129,0.2)",
+          borderTopColor: "#0B3981",
           borderRadius: "50%",
           animation: "spin 0.8s linear infinite",
         }}
         aria-hidden
       />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } } @media (prefers-reduced-motion: reduce) { [style*="spin"] { animation: none; border: 2px solid #0078D4; } }`}</style>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } } @media (prefers-reduced-motion: reduce) { [style*="spin"] { animation: none; border: 2px solid #0B3981; } }`}</style>
     </div>
   );
 }
+
+/** The landing page's header and footer sit in their own .lgl-root, the
+ *  scope landing.css styles, so the pages between them keep the app's CSS. */
+const CHROME: React.CSSProperties = { fontFamily: "'Geist', sans-serif", color: "#0B1730" };
 
 export function PublicLayout() {
   const { pathname } = useLocation();
 
   usePageMeta();
   useStructuredData();
-  // The navy accents, the Libre Caslon headings and the wave backdrop's
-  // colours (styles/app-shell.css, styles/public-shell.css).
+  // The public type, the navy accents and the section bands
+  // (styles/app-shell.css, styles/public-shell.css).
   useAppShellTheme("public");
   // Each page opens with its heading rising; sections below the fold rise into
   // view as the page scrolls. Never with reduced motion (hooks/usePublicMotion.ts).
@@ -53,32 +57,33 @@ export function PublicLayout() {
   }, [pathname]);
 
   return (
+    // .lgl-page: on wide, short laptop windows the whole page is drawn at 80%,
+    // the same as the landing page (landing.css).
     <div
+      className="lgl-page"
       style={{
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
+        background: "#ffffff",
       }}
     >
-      {/* The wave backdrop, pinned to the window behind every public page,
-          its top-right wave starting under the fixed header. It eases in from
-          the corners when the site first opens and then stays put: it belongs
-          to this layout, so moving between pages does not replay it. */}
-      <AppWaveBackdrop fixed underHeader enter />
       <SkipLink />
-      <PublicHeader />
-      {/* Positioned (no z-index) so the page paints above the backdrop. */}
+      {/* The landing page's header: one bar, each section's pages in its menu. */}
+      <div className="lgl-root" style={CHROME}>
+        <LandingHeader />
+      </div>
       <main
         id="main-content"
         tabIndex={-1}
-        style={{ flex: 1, paddingTop: 64, outline: "none", position: "relative" }}
+        style={{ flex: 1, outline: "none", position: "relative" }}
       >
         <Suspense fallback={<PageLoader />}>
           <Outlet />
         </Suspense>
       </main>
-      <div style={{ position: "relative" }}>
-        <PublicFooter />
+      <div className="lgl-root" style={CHROME}>
+        <LandingFooter />
       </div>
     </div>
   );

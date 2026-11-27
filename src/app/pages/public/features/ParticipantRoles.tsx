@@ -105,8 +105,8 @@ export function ParticipantRoles() {
       </PageSection>
 
       <PageSection id="enotary-note">
-        <div style={{ background: "rgba(103,2,59,0.06)", border: "1px solid rgba(103,2,59,0.2)", borderRadius: 12, padding: "16px 18px" }}>
-          <p style={{ color: "#B01262", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 6 }}>eNOTARY — NOT AN ACTIVE ROLE</p>
+        <div style={{ background: "rgba(91,42,134,0.06)", border: "1px solid rgba(91,42,134,0.2)", borderRadius: 12, padding: "16px 18px" }}>
+          <p style={{ color: "#7A44A8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 6 }}>eNOTARY — NOT AN ACTIVE ROLE</p>
           <p style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>
             Notary Public is not an active participant role in LAGDA eSignature. Electronic signing and electronic notarization are separate processes. LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules.
           </p>
